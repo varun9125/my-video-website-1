@@ -3,26 +3,86 @@
 <head>
 <meta name="viewport" content="width=device-width">
 <title>KamaBaba Viral</title>
+
 <style>
 body{margin:0;background:#0d0d0d;color:#fff;font-family:system-ui}
-header{text-align:center;padding:14px;background:#111;font-weight:700}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px}
+header{
+  position:sticky;top:0;z-index:10;
+  background:#111;padding:10px
+}
+.top{
+  display:flex;gap:8px
+}
+input{
+  flex:1;padding:8px;border-radius:6px;border:none
+}
+.tags{
+  margin-top:8px;display:flex;gap:6px;overflow-x:auto
+}
+.tag{
+  background:#222;padding:6px 10px;border-radius:20px;
+  white-space:nowrap;font-size:13px;cursor:pointer
+}
+.grid{
+  display:grid;grid-template-columns:repeat(2,1fr);
+  gap:10px;padding:10px
+}
 .card{cursor:pointer}
-.thumb{height:180px;background:#222;border-radius:8px}
+.thumb{
+  height:180px;background:#222;border-radius:8px
+}
 .card p{font-size:13px;margin:5px 0;text-align:center}
+.loader{text-align:center;padding:20px;color:#888}
 </style>
 </head>
+
 <body>
 
-<header>🔥 KamaBaba Viral 🔥</header>
+<header>
+  <div class="top">
+    <input id="search" placeholder="Search videos...">
+  </div>
+
+  <div class="tags">
+    <div class="tag" onclick="setTag('')">All</div>
+    <div class="tag" onclick="setTag('Gaming')">Gaming</div>
+    <div class="tag" onclick="setTag('Viral')">Viral</div>
+    <div class="tag" onclick="setTag('Desi')">Desi</div>
+    <div class="tag" onclick="setTag('Hot')">Hot</div>
+  </div>
+</header>
+
 <div class="grid" id="grid"></div>
+<div class="loader" id="loader">Loading...</div>
 
 <script>
+let allVideos=[];
+let page=1;
+let limit=6;
+let loading=false;
+let currentTag="";
+let keyword="";
+
 fetch("/api/videos")
 .then(r=>r.json())
-.then(videos=>{
-  const g=document.getElementById("grid");
-  videos.forEach(v=>{
+.then(v=>{
+  allVideos=v.reverse();
+  loadMore();
+});
+
+function loadMore(){
+  if(loading) return;
+  loading=true;
+
+  let filtered=allVideos.filter(v=>
+    v.title.toLowerCase().includes(keyword) &&
+    (currentTag=="" || v.title.includes(currentTag))
+  );
+
+  let start=(page-1)*limit;
+  let slice=filtered.slice(start,start+limit);
+
+  slice.forEach(v=>{
     const d=document.createElement("div");
     d.className="card";
     d.innerHTML=`
@@ -30,9 +90,36 @@ fetch("/api/videos")
       <p>${v.title}</p>
     `;
     d.onclick=()=>location.href="/watch?id="+v.id;
-    g.appendChild(d);
+    grid.appendChild(d);
   });
+
+  if(slice.length>0) page++;
+  loader.style.display=slice.length?"none":"block";
+  loading=false;
+}
+
+window.addEventListener("scroll",()=>{
+  if(window.innerHeight+window.scrollY>=document.body.offsetHeight-200){
+    loadMore();
+  }
 });
+
+search.oninput=()=>{
+  keyword=search.value.toLowerCase();
+  reset();
+};
+
+function setTag(t){
+  currentTag=t;
+  reset();
+}
+
+function reset(){
+  grid.innerHTML="";
+  page=1;
+  loadMore();
+}
 </script>
+
 </body>
 </html>
