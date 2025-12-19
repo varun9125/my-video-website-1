@@ -1,17 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Watch</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watch Video</title>
 
 <style>
-body{margin:0;background:#000;color:#fff;font-family:system-ui}
-video{width:100%}
-.box{padding:10px}
-.actions button{margin-right:10px}
-.comment{background:#111;padding:6px;margin-top:6px;border-radius:6px}
-.related{display:flex;gap:10px;margin-top:12px;overflow-x:auto}
-.related img{width:120px;border-radius:6px}
+body {
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: system-ui, Arial;
+}
+
+video {
+  width: 100%;
+  max-height: 300px;
+  background: #111;
+}
+
+.box {
+  padding: 10px;
+}
+
+.actions button {
+  margin-right: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  background: #0f9d58;
+  border: none;
+  color: white;
+  border-radius: 4px;
+}
+
+.comment-input {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.comment-input input {
+  flex: 1;
+  padding: 6px;
+  border-radius: 4px;
+  border: none;
+}
+
+.comment-input button {
+  padding: 6px 12px;
+  background: #2196f3;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.comment {
+  background: #111;
+  padding: 6px;
+  margin-top: 6px;
+  border-radius: 6px;
+}
+
+.related {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.related .card {
+  min-width: 120px;
+  cursor: pointer;
+}
+
+.related .card img {
+  width: 100%;
+  border-radius: 6px;
+}
+
+.related .card p {
+  font-size: 12px;
+  margin: 4px 0 0;
+  text-align: center;
+}
 </style>
 </head>
 
@@ -20,45 +92,83 @@ video{width:100%}
 <video id="player" controls></video>
 
 <div class="box">
-<h3 id="title"></h3>
-<p id="views"></p>
+  <h3 id="title"></h3>
+  <p id="views"></p>
 
-<div class="actions">
-<button onclick="like()">👍 Like</button>
-<button onclick="dislike()">👎 Dislike</button>
-</div>
+  <div class="actions">
+    <button onclick="like()">👍 Like</button>
+    <button onclick="dislike()">👎 Dislike</button>
+  </div>
 
-<h4>Comments</h4>
-<input id="cmt" placeholder="Write comment">
-<button onclick="comment()">Post</button>
-<div id="comments"></div>
+  <h4>Comments</h4>
+  <div class="comment-input">
+    <input id="cmt" placeholder="Write comment">
+    <button onclick="postComment()">Post</button>
+  </div>
+  <div id="comments"></div>
 
-<h4>Related Videos</h4>
-<div class="related" id="related"></div>
+  <h4>Related Videos</h4>
+  <div class="related" id="related"></div>
 </div>
 
 <script>
-const id=new URLSearchParams(location.search).get("id");
+const params = new URLSearchParams(location.search);
+const id = params.get("id");
 
-fetch("/video/"+id)
-.then(r=>r.json())
-.then(v=>{
-  player.src=v.url;
-  title.innerText=v.title;
-  views.innerText="👁 "+v.views;
-  v.comments.forEach(c=>{
-    comments.innerHTML+=`<div class="comment">${c}</div>`;
+// Load video data
+fetch("/api/videos")
+  .then(res => res.json())
+  .then(videos => {
+    const video = videos.find(v => v.id == id);
+    if (!video) {
+      document.body.innerHTML = "<p style='padding:12px'>❌ Video not found</p>";
+      return;
+    }
+
+    document.getElementById("player").src = video.url;
+    document.getElementById("title").innerText = video.title;
+    document.getElementById("views").innerText = "👁 " + video.views;
+
+    const commentsDiv = document.getElementById("comments");
+    video.comments.forEach(c => {
+      const div = document.createElement("div");
+      div.className = "comment";
+      div.innerText = c;
+      commentsDiv.appendChild(div);
+    });
+
+    // Related videos
+    const relatedDiv = document.getElementById("related");
+    videos.filter(v => v.id != video.id).forEach(v => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <img src="/placeholder-thumb.png">
+        <p>${v.title}</p>
+      `;
+      card.onclick = () => location.href = "/watch?id=" + v.id;
+      relatedDiv.appendChild(card);
+    });
   });
-});
 
-function like(){ fetch("/like/"+id,{method:"POST"}); }
-function dislike(){ fetch("/dislike/"+id,{method:"POST"}); }
-function comment(){
-  fetch("/comment/"+id,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text:cmt.value})
-  }).then(()=>location.reload());
+// Like / Dislike
+function like() {
+  fetch("/api/like/" + id, { method: "POST" }).then(() => location.reload());
+}
+
+function dislike() {
+  fetch("/api/dislike/" + id, { method: "POST" }).then(() => location.reload());
+}
+
+// Post comment
+function postComment() {
+  const text = document.getElementById("cmt").value;
+  if (!text) return;
+  fetch("/api/comment/" + id, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  }).then(() => location.reload());
 }
 </script>
 
