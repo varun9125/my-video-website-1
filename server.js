@@ -1,67 +1,74 @@
 const express = require("express");
-const multer = require("multer");
-const path = require("path");
 const fs = require("fs");
+const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-// 🔐 ADMIN PASSWORD (यहीं change करना)
-const ADMIN_PASSWORD = "ravi@1234";
+app.use(express.json());
+app.use(express.static("public"));
+app.use("/videos", express.static("uploads"));
+app.use("/thumbs", express.static("thumbs"));
 
-// ✅ uploads folder check
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
+/* ------------------ DATA LOAD ------------------ */
+let videos = [];
+if (fs.existsSync("videos.json")) {
+  videos = JSON.parse(fs.readFileSync("videos.json"));
 }
 
-// ✅ multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ storage });
-
-// ✅ STATIC FOLDERS (IMPORTANT FIX)
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/videos", express.static(path.join(__dirname, "uploads")));
-
-// 🔐 ADMIN CHECK MIDDLEWARE
-function adminAuth(req, res, next) {
-  const password = req.headers["x-admin-password"];
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  next();
-}
-
-// 🔐 upload route (ADMIN ONLY)
-app.post("/upload", adminAuth, upload.single("video"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
-  res.json({ success: true });
-});
-
-// 📺 videos list (PUBLIC)
+/* ------------------ VIDEO LIST ------------------ */
 app.get("/videos-list", (req, res) => {
-  fs.readdir("uploads", (err, files) => {
-    if (err) return res.json([]);
-
-    const videos = files.map(file => ({
-      name: file,
-      url: "/videos/" + file
-    }));
-
-    res.json(videos);
-  });
+  res.json(
+    videos.map(v => ({
+      id: v.id,
+      title: v.title,
+      thumb: v.thumb
+    }))
+  );
 });
 
-// ✅ SERVER START (Render compatible)
+/* ------------------ WATCH VIDEO ------------------ */
+app.get("/video/:id", (req, res) => {
+  const video = videos.find(v => v.id == req.params.id);
+  if (!video) return res.status(404).json({ error: "Video not found" });
+
+  video.views++;
+  fs.writeFileSync("videos.json", JSON.stringify(videos, null, 2));
+
+  res.json(video);
+});
+
+/* ------------------ LIKE ------------------ */
+app.post("/like/:id", (req, res) => {
+  const v = videos.find(x => x.id == req.params.id);
+  if (!v) return res.sendStatus(404);
+  v.likes++;
+  fs.writeFileSync("videos.json", JSON.stringify(videos, null, 2));
+  res.sendStatus(200);
+});
+
+/* ------------------ DISLIKE ------------------ */
+app.post("/dislike/:id", (req, res) => {
+  const v = videos.find(x => x.id == req.params.id);
+  if (!v) return res.sendStatus(404);
+  v.dislikes++;
+  fs.writeFileSync("videos.json", JSON.stringify(videos, null, 2));
+  res.sendStatus(200);
+});
+
+/* ------------------ COMMENT ------------------ */
+app.post("/comment/:id", (req, res) => {
+  const v = videos.find(x => x.id == req.params.id);
+  if (!v) return res.sendStatus(404);
+
+  if (!req.body.text) return res.sendStatus(400);
+
+  v.comments.push(req.body.text);
+  fs.writeFileSync("videos.json", JSON.stringify(videos, null, 2));
+  res.sendStatus(200);
+});
+
+/* ------------------ SERVER START ------------------ */
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log("Server running at http://localhost:" + PORT);
 });
