@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>KamaBaba Viral Mms</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Segoe UI",Tahoma,Verdana,sans-serif;
+}
+
+body{
+  background:#0d0d0d;
+  color:#fff;
+}
+
+/* HEADER */
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:15px 30px;
+  background:#111;
+  border-bottom:1px solid #222;
+}
+
+.logo{
+  font-size:26px;
+  font-weight:bold;
+  color:#ff3e6c;
+}
+
+.logo span{ color:#fff; }
+
+.upload-box{
+  display:none;
+}
+
+.upload-box input{
+  background:#222;
+  color:#fff;
+  padding:6px;
+  border-radius:4px;
+}
+
+.upload-box button{
+  padding:6px 14px;
+  margin-left:6px;
+  background:#ff3e6c;
+  border:none;
+  cursor:pointer;
+  color:#fff;
+  border-radius:4px;
+}
+
+/* GRID */
+.container{
+  padding:30px 40px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+  gap:18px;
+  margin-top:20px;
+}
+
+.card{
+  background:#1a1a1a;
+  border-radius:10px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:0.25s;
+}
+
+.card:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 14px #ff3e6c;
+}
+
+.card video{
+  width:100%;
+  height:145px;
+  object-fit:cover;
+}
+
+.card p{
+  padding:8px;
+  text-align:center;
+  font-size:14px;
+  background:#111;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* PLAYER */
+.player-box{
+  margin-top:35px;
+  text-align:center;
+}
+
+.player-box video{
+  width:90%;
+  max-height:480px;
+  border-radius:12px;
+  background:#000;
+}
+
+/* FOOTER */
+footer{
+  text-align:center;
+  padding:14px;
+  color:#888;
+  margin-top:40px;
+  border-top:1px solid #222;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">Kama Baba <span>ViralVideos</span></div>
+  <div class="upload-box" id="adminBox">
+    <input type="file" id="videoFile" accept="video/*">
+    <button onclick="upload()">Upload</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="grid" id="videoGrid"></div>
+
+  <div class="player-box">
+    <video id="player" controls></video>
+  </div>
+</div>
+
+<footer>
+  © 2025–26 KamaBaba — All Rights Reserved
+</footer>
+
+<script>
+// ADMIN PANEL SHOW (Ctrl + U)
+document.addEventListener("keydown", e=>{
+  if(e.ctrlKey && e.key === "u"){
+    document.getElementById("adminBox").style.display="block";
+  }
+});
+
+function upload(){
+  const file=document.getElementById("videoFile").files[0];
+  if(!file) return alert("Select a video first");
+
+  const pass=prompt("Enter Admin Password:");
+  if(!pass) return;
+
+  const fd=new FormData();
+  fd.append("video",file);
+
+  fetch("/upload",{
+    method:"POST",
+    headers:{ "x-admin-password": pass },
+    body:fd
+  })
+  .then(res=>{
+    if(res.status===401) throw new Error("Wrong password");
+    if(!res.ok) throw new Error("Upload failed");
+    return res.json();
+  })
+  .then(()=>{
+    alert("Video uploaded successfully");
+    document.getElementById("videoFile").value="";
+    loadVideos();
+  })
+  .catch(err=>alert(err.message));
+}
+
+function loadVideos(){
+  fetch("/videos-list")
+    .then(res=>res.json())
+    .then(videos=>{
+      const grid=document.getElementById("videoGrid");
+      grid.innerHTML="";
+      videos.forEach(v=>{
+        const card=document.createElement("div");
+        card.className="card";
+        card.innerHTML=`
+          <video src="${v.url}#t=1" preload="metadata" muted></video>
+          <p>${v.name}</p>
+        `;
+        card.onclick=()=>{
+          const player=document.getElementById("player");
+          player.src=v.url;
+          player.play();
+          window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+        };
+        grid.appendChild(card);
+      });
+    });
+}
+
+loadVideos();
+</script>
+
+</body>
+</html>

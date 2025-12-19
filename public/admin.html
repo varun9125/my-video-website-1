@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Upload</title>
+</head>
+<body>
+
+<h2>Admin Upload (Only You)</h2>
+
+<input type="password" id="pass" placeholder="Enter password">
+<br><br>
+
+<input type="file" id="videoFile" style="display:none">
+<button onclick="check()">Upload Video</button>
+
+<hr>
+
+<video id="player" controls width="80%"></video>
+
+<script>
+const PASSWORD = "ravi123";  // 👈 yahan apna password rakho
+
+function check() {
+  const p = document.getElementById("pass").value;
+  if (p !== PASSWORD) {
+    alert("Wrong password");
+    return;
+  }
+
+  document.getElementById("videoFile").click();
+
+  document.getElementById("videoFile").onchange = () => {
+    const file = document.getElementById("videoFile").files[0];
+    const formData = new FormData();
+    formData.append("video", file);
+
+    fetch("/upload", {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("player").src = data.videoUrl;
+    });
+  };
+}
+</script>
+
+</body>
+</html>
