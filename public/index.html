@@ -10,7 +10,7 @@
   margin:0;
   padding:0;
   box-sizing:border-box;
-  font-family:system-ui, sans-serif;
+  font-family:system-ui,sans-serif;
 }
 
 body{
@@ -20,138 +20,92 @@ body{
 
 /* HEADER */
 header{
-  padding:12px;
   text-align:center;
-  background:#111;
-  font-weight:700;
+  padding:12px;
   font-size:18px;
+  font-weight:700;
+  background:#111;
   border-bottom:1px solid #222;
 }
 
-/* VIDEO FEED */
+/* FEED */
 .feed{
   max-width:480px;
   margin:auto;
 }
 
+/* VIDEO CARD */
 .video-card{
   margin-bottom:25px;
   border-bottom:1px solid #222;
 }
 
-video{
+.video-card video{
   width:100%;
-  max-height:75vh;
+  height:75vh;
   background:#000;
 }
 
-/* ACTION BAR */
+/* ACTIONS */
 .actions{
   display:flex;
   justify-content:space-around;
   padding:10px 0;
-  font-size:14px;
 }
 
 .actions button{
   background:none;
   border:none;
   color:#fff;
+  font-size:16px;
   cursor:pointer;
-}
-
-.actions span{
-  display:block;
-  font-size:12px;
-  color:#aaa;
 }
 
 /* TITLE */
 .title{
-  padding:6px 10px;
+  padding:0 12px 12px;
   font-size:14px;
-}
-
-/* COMMENT BOX */
-.comments{
-  padding:10px;
-}
-
-.comments input{
-  width:100%;
-  padding:8px;
-  background:#111;
-  border:1px solid #333;
-  color:#fff;
-  border-radius:6px;
+  opacity:.9;
 }
 </style>
 </head>
 
 <body>
 
-<header>🔥 KamaBaba Viral Videos</header>
+<header>KamaBaba Viral</header>
 
 <div class="feed" id="feed"></div>
 
 <script>
-const videos=[
-  {name:"Video 1",url:"/videos/sample1.mp4"},
-  {name:"Video 2",url:"/videos/sample2.mp4"}
-];
+function loadVideos(){
+  fetch("/videos-list")
+    .then(res=>res.json())
+    .then(videos=>{
+      const feed=document.getElementById("feed");
+      feed.innerHTML="";
 
-// LOAD DATA
-function getData(key){
-  return JSON.parse(localStorage.getItem(key)) || 0;
+      videos.reverse().forEach(v=>{
+        const div=document.createElement("div");
+        div.className="video-card";
+
+        div.innerHTML=`
+          <video src="/videos/${v.file}" controls loop></video>
+
+          <div class="actions">
+            <button>❤️ ${v.likes || 0}</button>
+            <button>👁 ${v.views || 0}</button>
+            <button>💬 ${v.comments ? v.comments.length : 0}</button>
+          </div>
+
+          <div class="title">${v.title}</div>
+        `;
+
+        feed.appendChild(div);
+      });
+    });
 }
-function setData(key,val){
-  localStorage.setItem(key,JSON.stringify(val));
-}
 
-const feed=document.getElementById("feed");
-
-videos.forEach((v,i)=>{
-  const viewsKey="views_"+i;
-  const likesKey="likes_"+i;
-
-  let views=getData(viewsKey);
-  let likes=getData(likesKey);
-
-  const card=document.createElement("div");
-  card.className="video-card";
-
-  card.innerHTML=`
-    <video src="${v.url}" controls playsinline></video>
-
-    <div class="actions">
-      <button onclick="like(${i})">❤️ <span id="like${i}">${likes}</span></button>
-      <button>👁 <span id="view${i}">${views}</span></button>
-      <button>💬 Comment</button>
-    </div>
-
-    <div class="title">${v.name}</div>
-
-    <div class="comments">
-      <input placeholder="Add a comment...">
-    </div>
-  `;
-
-  const vid=card.querySelector("video");
-  vid.onplay=()=>{
-    views++;
-    setData(viewsKey,views);
-    document.getElementById("view"+i).innerText=views;
-  };
-
-  feed.appendChild(card);
-});
-
-function like(i){
-  const key="likes_"+i;
-  let val=getData(key)+1;
-  setData(key,val);
-  document.getElementById("like"+i).innerText=val;
-}
+loadVideos();
 </script>
 
 </body>
