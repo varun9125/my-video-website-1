@@ -42,3 +42,24 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+app.post("/api/upload", upload.single("video"), (req, res) => {
+  const fileName = req.file.filename;
+
+  const data = JSON.parse(fs.readFileSync("videos.json", "utf-8"));
+
+  const newVideo = {
+    id: data.length + 1,
+    title: req.body.title || "New Video",
+    filename: fileName,
+    url: "/videos/" + fileName,
+    views: 0,
+    likes: 0,
+    dislikes: 0,
+    comments: []
+  };
+
+  data.push(newVideo);
+  fs.writeFileSync("videos.json", JSON.stringify(data, null, 2));
+
+  res.json({ success: true });
+});
