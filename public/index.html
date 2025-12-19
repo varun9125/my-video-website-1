@@ -2,197 +2,156 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>KamaBaba Viral Mms</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KamaBaba Viral</title>
 
 <style>
 *{
   margin:0;
   padding:0;
   box-sizing:border-box;
-  font-family:"Segoe UI",Tahoma,Verdana,sans-serif;
+  font-family:system-ui, sans-serif;
 }
 
 body{
-  background:#0d0d0d;
+  background:#000;
   color:#fff;
 }
 
 /* HEADER */
 header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:15px 30px;
+  padding:12px;
+  text-align:center;
   background:#111;
+  font-weight:700;
+  font-size:18px;
   border-bottom:1px solid #222;
 }
 
-.logo{
-  font-size:26px;
-  font-weight:bold;
-  color:#ff3e6c;
+/* VIDEO FEED */
+.feed{
+  max-width:480px;
+  margin:auto;
 }
 
-.logo span{ color:#fff; }
-
-.upload-box{
-  display:none;
+.video-card{
+  margin-bottom:25px;
+  border-bottom:1px solid #222;
 }
 
-.upload-box input{
-  background:#222;
-  color:#fff;
-  padding:6px;
-  border-radius:4px;
-}
-
-.upload-box button{
-  padding:6px 14px;
-  margin-left:6px;
-  background:#ff3e6c;
-  border:none;
-  cursor:pointer;
-  color:#fff;
-  border-radius:4px;
-}
-
-/* GRID */
-.container{
-  padding:30px 40px;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-  gap:18px;
-  margin-top:20px;
-}
-
-.card{
-  background:#1a1a1a;
-  border-radius:10px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:0.25s;
-}
-
-.card:hover{
-  transform:scale(1.05);
-  box-shadow:0 0 14px #ff3e6c;
-}
-
-.card video{
+video{
   width:100%;
-  height:145px;
-  object-fit:cover;
+  max-height:75vh;
+  background:#000;
 }
 
-.card p{
-  padding:8px;
-  text-align:center;
+/* ACTION BAR */
+.actions{
+  display:flex;
+  justify-content:space-around;
+  padding:10px 0;
   font-size:14px;
-  background:#111;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 
-/* FOOTER */
-footer{
-  text-align:center;
-  padding:14px;
-  color:#888;
-  margin-top:40px;
-  border-top:1px solid #222;
+.actions button{
+  background:none;
+  border:none;
+  color:#fff;
+  cursor:pointer;
+}
+
+.actions span{
+  display:block;
+  font-size:12px;
+  color:#aaa;
+}
+
+/* TITLE */
+.title{
+  padding:6px 10px;
+  font-size:14px;
+}
+
+/* COMMENT BOX */
+.comments{
+  padding:10px;
+}
+
+.comments input{
+  width:100%;
+  padding:8px;
+  background:#111;
+  border:1px solid #333;
+  color:#fff;
+  border-radius:6px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <div class="logo">Kama Baba <span>ViralVideos</span></div>
-  <div class="upload-box" id="adminBox">
-    <input type="file" id="videoFile" accept="video/*">
-    <button onclick="upload()">Upload</button>
-  </div>
-</header>
+<header>🔥 KamaBaba Viral Videos</header>
 
-<div class="container">
-  <div class="grid" id="videoGrid"></div>
-</div>
-
-<footer>
-  © 2025–26 KamaBaba — All Rights Reserved
-</footer>
+<div class="feed" id="feed"></div>
 
 <script>
-// ADMIN PANEL SHOW (Ctrl + U)
-document.addEventListener("keydown", e=>{
-  if(e.ctrlKey && e.key === "u"){
-    document.getElementById("adminBox").style.display="block";
-  }
+const videos=[
+  {name:"Video 1",url:"/videos/sample1.mp4"},
+  {name:"Video 2",url:"/videos/sample2.mp4"}
+];
+
+// LOAD DATA
+function getData(key){
+  return JSON.parse(localStorage.getItem(key)) || 0;
+}
+function setData(key,val){
+  localStorage.setItem(key,JSON.stringify(val));
+}
+
+const feed=document.getElementById("feed");
+
+videos.forEach((v,i)=>{
+  const viewsKey="views_"+i;
+  const likesKey="likes_"+i;
+
+  let views=getData(viewsKey);
+  let likes=getData(likesKey);
+
+  const card=document.createElement("div");
+  card.className="video-card";
+
+  card.innerHTML=`
+    <video src="${v.url}" controls playsinline></video>
+
+    <div class="actions">
+      <button onclick="like(${i})">❤️ <span id="like${i}">${likes}</span></button>
+      <button>👁 <span id="view${i}">${views}</span></button>
+      <button>💬 Comment</button>
+    </div>
+
+    <div class="title">${v.name}</div>
+
+    <div class="comments">
+      <input placeholder="Add a comment...">
+    </div>
+  `;
+
+  const vid=card.querySelector("video");
+  vid.onplay=()=>{
+    views++;
+    setData(viewsKey,views);
+    document.getElementById("view"+i).innerText=views;
+  };
+
+  feed.appendChild(card);
 });
 
-function upload(){
-  const file=document.getElementById("videoFile").files[0];
-  if(!file) return alert("Select a video first");
-
-  const pass=prompt("Enter Admin Password:");
-  if(!pass) return;
-
-  const fd=new FormData();
-  fd.append("video",file);
-
-  fetch("/upload",{
-    method:"POST",
-    headers:{ "x-admin-password": pass },
-    body:fd
-  })
-  .then(res=>{
-    if(res.status===401) throw new Error("Wrong password");
-    if(!res.ok) throw new Error("Upload failed");
-    return res.json();
-  })
-  .then(()=>{
-    alert("Video uploaded successfully");
-    document.getElementById("videoFile").value="";
-    loadVideos();
-  })
-  .catch(err=>alert(err.message));
+function like(i){
+  const key="likes_"+i;
+  let val=getData(key)+1;
+  setData(key,val);
+  document.getElementById("like"+i).innerText=val;
 }
-
-function cleanTitle(name){
-  return name
-    .replace(/_/g," ")
-    .replace(/\.[^/.]+$/, "")
-    .slice(0,40);
-}
-
-function loadVideos(){
-  fetch("/videos-list")
-    .then(res=>res.json())
-    .then(videos=>{
-      const grid=document.getElementById("videoGrid");
-      grid.innerHTML="";
-      videos.forEach(v=>{
-        const card=document.createElement("div");
-        card.className="card";
-        card.innerHTML=`
-          <video src="${v.url}#t=1" preload="metadata" muted></video>
-          <p>${cleanTitle(v.name)}</p>
-        `;
-        card.onclick=()=>{
-          // ✅ REDIRECT TO WATCH PAGE
-          window.location.href =
-            "/watch.html?video=" + encodeURIComponent(v.name);
-        };
-        grid.appendChild(card);
-      });
-    });
-}
-
-loadVideos();
 </script>
 
 </body>
