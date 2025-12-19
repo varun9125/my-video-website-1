@@ -97,19 +97,6 @@ header{
   text-overflow:ellipsis;
 }
 
-/* PLAYER */
-.player-box{
-  margin-top:35px;
-  text-align:center;
-}
-
-.player-box video{
-  width:90%;
-  max-height:480px;
-  border-radius:12px;
-  background:#000;
-}
-
 /* FOOTER */
 footer{
   text-align:center;
@@ -133,10 +120,6 @@ footer{
 
 <div class="container">
   <div class="grid" id="videoGrid"></div>
-
-  <div class="player-box">
-    <video id="player" controls></video>
-  </div>
 </div>
 
 <footer>
@@ -179,6 +162,13 @@ function upload(){
   .catch(err=>alert(err.message));
 }
 
+function cleanTitle(name){
+  return name
+    .replace(/_/g," ")
+    .replace(/\.[^/.]+$/, "")
+    .slice(0,40);
+}
+
 function loadVideos(){
   fetch("/videos-list")
     .then(res=>res.json())
@@ -190,13 +180,12 @@ function loadVideos(){
         card.className="card";
         card.innerHTML=`
           <video src="${v.url}#t=1" preload="metadata" muted></video>
-          <p>${v.name}</p>
+          <p>${cleanTitle(v.name)}</p>
         `;
         card.onclick=()=>{
-          const player=document.getElementById("player");
-          player.src=v.url;
-          player.play();
-          window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+          // ✅ REDIRECT TO WATCH PAGE
+          window.location.href =
+            "/watch.html?video=" + encodeURIComponent(v.name);
         };
         grid.appendChild(card);
       });
