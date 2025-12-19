@@ -2,6 +2,17 @@
 <html>
 <head>
   <title>Admin Upload</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    button {
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
@@ -10,39 +21,49 @@
 <input type="password" id="pass" placeholder="Enter password">
 <br><br>
 
-<input type="file" id="videoFile" style="display:none">
-<button onclick="check()">Upload Video</button>
+<input type="file" id="videoFile">
+<br><br>
 
-<hr>
+<button onclick="upload()">Upload Video</button>
 
-<video id="player" controls width="80%"></video>
+<p id="msg"></p>
 
 <script>
-const PASSWORD = "ravi123";  // 👈 yahan apna password rakho
+function upload() {
+  const password = document.getElementById("pass").value;
+  const file = document.getElementById("videoFile").files[0];
 
-function check() {
-  const p = document.getElementById("pass").value;
-  if (p !== PASSWORD) {
-    alert("Wrong password");
+  if (!password) {
+    alert("Enter password");
     return;
   }
 
-  document.getElementById("videoFile").click();
+  if (!file) {
+    alert("Select a video");
+    return;
+  }
 
-  document.getElementById("videoFile").onchange = () => {
-    const file = document.getElementById("videoFile").files[0];
-    const formData = new FormData();
-    formData.append("video", file);
+  const formData = new FormData();
+  formData.append("video", file);
 
-    fetch("/upload", {
-      method: "POST",
-      body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("player").src = data.videoUrl;
-    });
-  };
+  fetch("/upload", {
+    method: "POST",
+    headers: {
+      "x-admin-password": password   // ✅ SERVER KO PASSWORD YAHI SE JAYEGA
+    },
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      document.getElementById("msg").innerText = "✅ Upload successful";
+    } else {
+      document.getElementById("msg").innerText = "❌ " + (data.error || "Error");
+    }
+  })
+  .catch(() => {
+    document.getElementById("msg").innerText = "❌ Upload failed";
+  });
 }
 </script>
 
