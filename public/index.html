@@ -6,12 +6,49 @@
 <title>KamaBaba Viral</title>
 
 <style>
-body{margin:0;background:#0d0d0d;color:#fff;font-family:system-ui}
-header{padding:14px;text-align:center;background:#111;font-weight:700}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:12px}
-.card{cursor:pointer}
-.card img{width:100%;border-radius:8px}
-.card p{font-size:13px;margin:6px 0 0}
+  body {
+    margin: 0;
+    background: #0d0d0d;
+    color: #fff;
+    font-family: system-ui, Arial;
+  }
+
+  header {
+    padding: 14px;
+    text-align: center;
+    background: #111;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .card {
+    cursor: pointer;
+  }
+
+  .thumb {
+    width: 100%;
+    height: 200px;
+    background: #222;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #aaa;
+  }
+
+  .card p {
+    font-size: 13px;
+    margin: 6px 0 0;
+    text-align: center;
+  }
 </style>
 </head>
 
@@ -22,21 +59,32 @@ header{padding:14px;text-align:center;background:#111;font-weight:700}
 <div class="grid" id="grid"></div>
 
 <script>
-fetch("/videos-list")
-.then(r=>r.json())
-.then(videos=>{
-  const grid=document.getElementById("grid");
-  videos.forEach(v=>{
-    const d=document.createElement("div");
-    d.className="card";
-    d.innerHTML=`
-      <img src="${v.thumb}">
-      <p>${v.title}</p>
-    `;
-    d.onclick=()=>location.href="/watch.html?id="+v.id;
-    grid.appendChild(d);
+fetch("/api/videos")
+  .then(res => res.json())
+  .then(videos => {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    videos.forEach(v => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = `
+        <div class="thumb">▶ Video</div>
+        <p>${v.title}</p>
+      `;
+
+      card.onclick = () => {
+        window.location.href = "/watch?id=" + v.id;
+      };
+
+      grid.appendChild(card);
+    });
+  })
+  .catch(() => {
+    document.getElementById("grid").innerHTML =
+      "<p style='padding:12px'>❌ Videos load nahi hui</p>";
   });
-});
 </script>
 
 </body>
