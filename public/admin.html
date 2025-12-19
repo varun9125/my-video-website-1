@@ -1,16 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Admin Upload</title>
   <style>
     body {
       background: #111;
       color: white;
-      font-family: Arial, sans-serif;
+      font-family: Arial;
+      padding: 20px;
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      max-width: 400px;
+      padding: 10px;
+      margin-top: 10px;
     }
     button {
-      padding: 10px 20px;
+      background: #0f9d58;
+      border: none;
+      color: white;
       cursor: pointer;
+      font-size: 16px;
+    }
+    #msg {
+      margin-top: 15px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -18,52 +34,53 @@
 
 <h2>Admin Upload (Only You)</h2>
 
-<input type="password" id="pass" placeholder="Enter password">
-<br><br>
-
-<input type="file" id="videoFile">
-<br><br>
+<input type="password" id="pass" placeholder="Admin password">
+<input type="text" id="title" placeholder="Video title">
+<input type="file" id="video" accept="video/mp4">
 
 <button onclick="upload()">Upload Video</button>
 
 <p id="msg"></p>
 
 <script>
-function upload() {
-  const password = document.getElementById("pass").value;
-  const file = document.getElementById("videoFile").files[0];
+async function upload() {
+  const pass = document.getElementById("pass").value;
+  const title = document.getElementById("title").value;
+  const video = document.getElementById("video").files[0];
+  const msg = document.getElementById("msg");
 
-  if (!password) {
-    alert("Enter password");
+  if (!pass || !video) {
+    msg.innerText = "❌ Password aur video zaroori hai";
     return;
   }
 
-  if (!file) {
-    alert("Select a video");
-    return;
-  }
+  const fd = new FormData();
+  fd.append("video", video);
+  fd.append("title", title);
 
-  const formData = new FormData();
-  formData.append("video", file);
+  msg.innerText = "⏳ Uploading...";
 
-  fetch("/upload", {
-    method: "POST",
-    headers: {
-      "x-admin-password": password   // ✅ SERVER KO PASSWORD YAHI SE JAYEGA
-    },
-    body: formData
-  })
-  .then(res => res.json())
-  .then(data => {
+  try {
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      headers: {
+        "x-admin-password": pass
+      },
+      body: fd
+    });
+
+    const data = await res.json();
+
     if (data.success) {
-      document.getElementById("msg").innerText = "✅ Upload successful";
+      msg.innerText = "✅ Upload successful";
+      document.getElementById("video").value = "";
+      document.getElementById("title").value = "";
     } else {
-      document.getElementById("msg").innerText = "❌ " + (data.error || "Error");
+      msg.innerText = "❌ " + data.error;
     }
-  })
-  .catch(() => {
-    document.getElementById("msg").innerText = "❌ Upload failed";
-  });
+  } catch {
+    msg.innerText = "❌ Server error";
+  }
 }
 </script>
 
