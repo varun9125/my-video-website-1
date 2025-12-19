@@ -13,16 +13,19 @@ body {
   font-family: system-ui, Arial;
 }
 
+/* HEADER */
 header {
   padding: 10px;
   background: #111;
   position: sticky;
   top: 0;
+  z-index: 10;
 }
 
 header h2 {
   margin: 5px 0;
   text-align: center;
+  font-size: 18px;
 }
 
 #search {
@@ -31,8 +34,10 @@ header h2 {
   border-radius: 6px;
   border: none;
   margin-top: 8px;
+  font-size: 14px;
 }
 
+/* GRID */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -44,23 +49,25 @@ header h2 {
   cursor: pointer;
 }
 
+/* REAL VIDEO THUMBNAIL */
 .thumb {
   width: 100%;
   height: 200px;
-  background: #222;
+  object-fit: cover;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #aaa;
+  background: #000;
 }
 
 .card p {
   font-size: 13px;
   margin: 6px 0 0;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* PAGINATION */
 .pagination {
   text-align: center;
   padding: 15px;
@@ -98,6 +105,7 @@ let currentPage = 1;
 const perPage = 6;
 let keyword = "";
 
+/* LOAD VIDEOS */
 fetch("/api/videos")
   .then(res => res.json())
   .then(data => {
@@ -123,10 +131,14 @@ function render() {
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <div class="thumb">▶ Video</div>
+      <video class="thumb" src="${v.url}#t=1" muted preload="metadata"></video>
       <p>${v.title}</p>
     `;
-    card.onclick = () => location.href = "/watch?id=" + v.id;
+
+    card.onclick = () => {
+      location.href = "/watch?id=" + v.id;
+    };
+
     grid.appendChild(card);
   });
 
@@ -143,6 +155,7 @@ function render() {
   }
 }
 
+/* SEARCH */
 document.getElementById("search").oninput = e => {
   keyword = e.target.value.toLowerCase();
   currentPage = 1;
