@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Watch Video</title>
+</head>
+<body style="background:#111;color:white">
+
+<h2 id="title"></h2>
+
+<video id="player" controls width="80%"></video>
+
+<h3>Recommended Videos</h3>
+<div id="reco"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const videoName = params.get("video");
+
+const player = document.getElementById("player");
+player.src = "/videos/" + videoName;
+
+// Title
+document.getElementById("title").innerText =
+  videoName.replace(/_/g," ").split(".")[0];
+
+// Load recommendations
+fetch("/videos-list")
+.then(res => res.json())
+.then(videos => {
+  const box = document.getElementById("reco");
+  videos.forEach(v => {
+    if (v.name !== videoName) {
+      box.innerHTML += `
+        <div onclick="location.href='watch.html?video=${v.name}'"
+             style="cursor:pointer">
+          <video src="${v.url}" width="150"></video>
+        </div>
+      `;
+    }
+  });
+});
+</script>
+
+</body>
+</html>
