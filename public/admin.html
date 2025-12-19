@@ -1,117 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Admin Upload</title>
-
-  <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-    }
-
-    input, button {
-      display: block;
-      width: 100%;
-      max-width: 400px;
-      padding: 10px;
-      margin-top: 12px;
-      font-size: 15px;
-    }
-
-    button {
-      background: #0f9d58;
-      border: none;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      background: #555;
-      cursor: not-allowed;
-    }
-
-    #msg {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-
-<h2>Admin Upload (Only You)</h2>
-
-<input type="password" id="pass" placeholder="Admin password">
-<input type="text" id="title" placeholder="Video title (optional)">
-<input type="file" id="video" accept="video/mp4">
-
-<button id="btn" onclick="upload()">Upload Video</button>
-
-<p id="msg"></p>
+<html>
+<body style="background:#111;color:#fff;padding:20px">
+<h2>Admin Upload</h2>
+<input id="pass" placeholder="password"><br><br>
+<input id="title" placeholder="title"><br><br>
+<input type="file" id="video"><br><br>
+<button onclick="up()">Upload</button>
+<p id="m"></p>
 
 <script>
-async function upload() {
-  const pass = document.getElementById("pass").value.trim();
-  const title = document.getElementById("title").value.trim();
-  const videoInput = document.getElementById("video");
-  const video = videoInput.files[0];
-  const msg = document.getElementById("msg");
-  const btn = document.getElementById("btn");
-
-  if (!pass) {
-    msg.innerText = "❌ Admin password daalo";
-    return;
-  }
-
-  if (!video) {
-    msg.innerText = "❌ Video select karo (.mp4)";
-    return;
-  }
-
-  // optional size check (20MB)
-  if (video.size > 20 * 1024 * 1024) {
-    msg.innerText = "❌ Video bahut badi hai (max 20MB)";
-    return;
-  }
-
-  const fd = new FormData();
-  fd.append("video", video);
-  fd.append("title", title || "New Video");
-
-  msg.innerText = "⏳ Uploading...";
-  btn.disabled = true;
-
-  try {
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      headers: {
-        "x-admin-password": pass
-      },
-      body: fd
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      msg.innerText = "✅ Upload successful";
-      videoInput.value = "";
-      document.getElementById("title").value = "";
-    } else {
-      msg.innerText = "❌ " + (data.error || "Upload failed");
-    }
-  } catch (err) {
-    msg.innerText = "❌ Server error";
-  } finally {
-    btn.disabled = false;
-  }
+function up(){
+  const fd=new FormData();
+  fd.append("video",video.files[0]);
+  fd.append("title",title.value);
+  fetch("/api/upload",{
+    method:"POST",
+    headers:{"x-admin-password":pass.value},
+    body:fd
+  }).then(r=>r.json()).then(d=>{
+    m.innerText=d.success?"Uploaded":"Error";
+  });
 }
 </script>
-
 </body>
 </html>
