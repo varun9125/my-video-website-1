@@ -6,17 +6,15 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
-
 // 🔐 ADMIN PASSWORD (यहीं change करना)
 const ADMIN_PASSWORD = "ravi@1234";
 
-// uploads folder check
+// ✅ uploads folder check
 if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
 
-// multer storage
+// ✅ multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -28,9 +26,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// static folders
-app.use(express.static("public"));
-app.use("/videos", express.static("uploads"));
+// ✅ STATIC FOLDERS (IMPORTANT FIX)
+app.use(express.static(path.join(__dirname, "public")));
+app.use("/videos", express.static(path.join(__dirname, "uploads")));
 
 // 🔐 ADMIN CHECK MIDDLEWARE
 function adminAuth(req, res, next) {
@@ -63,7 +61,7 @@ app.get("/videos-list", (req, res) => {
   });
 });
 
-// server start
+// ✅ SERVER START (Render compatible)
 app.listen(PORT, () => {
-  console.log("Server running on http://localhost:3000");
+  console.log("Server running on port", PORT);
 });
