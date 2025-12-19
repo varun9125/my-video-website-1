@@ -4,7 +4,8 @@ const path = require("path");
 const fs = require("fs");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
 
 // 🔐 ADMIN PASSWORD (यहीं change करना)
 const ADMIN_PASSWORD = "ravi@1234";
