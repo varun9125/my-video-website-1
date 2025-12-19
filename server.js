@@ -30,3 +30,15 @@ app.get("/api/videos", (req, res) => {
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
+const multer = require("multer");
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "videos/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + ".mp4";
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({ storage });
