@@ -1,44 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Watch Video</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Watch</title>
+
+<style>
+body{margin:0;background:#000;color:#fff;font-family:system-ui}
+video{width:100%}
+.box{padding:10px}
+.actions button{margin-right:10px}
+.comment{background:#111;padding:6px;margin-top:6px;border-radius:6px}
+.related{display:flex;gap:10px;margin-top:12px;overflow-x:auto}
+.related img{width:120px;border-radius:6px}
+</style>
 </head>
-<body style="background:#111;color:white">
 
-<h2 id="title"></h2>
+<body>
 
-<video id="player" controls width="80%"></video>
+<video id="player" controls></video>
 
-<h3>Recommended Videos</h3>
-<div id="reco"></div>
+<div class="box">
+<h3 id="title"></h3>
+<p id="views"></p>
+
+<div class="actions">
+<button onclick="like()">👍 Like</button>
+<button onclick="dislike()">👎 Dislike</button>
+</div>
+
+<h4>Comments</h4>
+<input id="cmt" placeholder="Write comment">
+<button onclick="comment()">Post</button>
+<div id="comments"></div>
+
+<h4>Related Videos</h4>
+<div class="related" id="related"></div>
+</div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const videoName = params.get("video");
+const id=new URLSearchParams(location.search).get("id");
 
-const player = document.getElementById("player");
-player.src = "/videos/" + videoName;
-
-// Title
-document.getElementById("title").innerText =
-  videoName.replace(/_/g," ").split(".")[0];
-
-// Load recommendations
-fetch("/videos-list")
-.then(res => res.json())
-.then(videos => {
-  const box = document.getElementById("reco");
-  videos.forEach(v => {
-    if (v.name !== videoName) {
-      box.innerHTML += `
-        <div onclick="location.href='watch.html?video=${v.name}'"
-             style="cursor:pointer">
-          <video src="${v.url}" width="150"></video>
-        </div>
-      `;
-    }
+fetch("/video/"+id)
+.then(r=>r.json())
+.then(v=>{
+  player.src=v.url;
+  title.innerText=v.title;
+  views.innerText="👁 "+v.views;
+  v.comments.forEach(c=>{
+    comments.innerHTML+=`<div class="comment">${c}</div>`;
   });
 });
+
+function like(){ fetch("/like/"+id,{method:"POST"}); }
+function dislike(){ fetch("/dislike/"+id,{method:"POST"}); }
+function comment(){
+  fetch("/comment/"+id,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({text:cmt.value})
+  }).then(()=>location.reload());
+}
 </script>
 
 </body>
