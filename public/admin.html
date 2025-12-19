@@ -1,29 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Admin Upload</title>
+
   <style>
     body {
       background: #111;
-      color: white;
-      font-family: Arial;
+      color: #fff;
+      font-family: Arial, sans-serif;
       padding: 20px;
     }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
     input, button {
       display: block;
       width: 100%;
       max-width: 400px;
       padding: 10px;
-      margin-top: 10px;
+      margin-top: 12px;
+      font-size: 15px;
     }
+
     button {
       background: #0f9d58;
       border: none;
       color: white;
       cursor: pointer;
-      font-size: 16px;
     }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
     #msg {
       margin-top: 15px;
       font-weight: bold;
@@ -35,30 +48,44 @@
 <h2>Admin Upload (Only You)</h2>
 
 <input type="password" id="pass" placeholder="Admin password">
-<input type="text" id="title" placeholder="Video title">
+<input type="text" id="title" placeholder="Video title (optional)">
 <input type="file" id="video" accept="video/mp4">
 
-<button onclick="upload()">Upload Video</button>
+<button id="btn" onclick="upload()">Upload Video</button>
 
 <p id="msg"></p>
 
 <script>
 async function upload() {
-  const pass = document.getElementById("pass").value;
-  const title = document.getElementById("title").value;
-  const video = document.getElementById("video").files[0];
+  const pass = document.getElementById("pass").value.trim();
+  const title = document.getElementById("title").value.trim();
+  const videoInput = document.getElementById("video");
+  const video = videoInput.files[0];
   const msg = document.getElementById("msg");
+  const btn = document.getElementById("btn");
 
-  if (!pass || !video) {
-    msg.innerText = "❌ Password aur video zaroori hai";
+  if (!pass) {
+    msg.innerText = "❌ Admin password daalo";
+    return;
+  }
+
+  if (!video) {
+    msg.innerText = "❌ Video select karo (.mp4)";
+    return;
+  }
+
+  // optional size check (20MB)
+  if (video.size > 20 * 1024 * 1024) {
+    msg.innerText = "❌ Video bahut badi hai (max 20MB)";
     return;
   }
 
   const fd = new FormData();
   fd.append("video", video);
-  fd.append("title", title);
+  fd.append("title", title || "New Video");
 
   msg.innerText = "⏳ Uploading...";
+  btn.disabled = true;
 
   try {
     const res = await fetch("/api/upload", {
@@ -73,13 +100,15 @@ async function upload() {
 
     if (data.success) {
       msg.innerText = "✅ Upload successful";
-      document.getElementById("video").value = "";
+      videoInput.value = "";
       document.getElementById("title").value = "";
     } else {
-      msg.innerText = "❌ " + data.error;
+      msg.innerText = "❌ " + (data.error || "Upload failed");
     }
-  } catch {
+  } catch (err) {
     msg.innerText = "❌ Server error";
+  } finally {
+    btn.disabled = false;
   }
 }
 </script>
