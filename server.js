@@ -5,51 +5,72 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+/* ========= CONFIG ========= */
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ravi@123";
 const VIDEOS_JSON = path.join(__dirname, "videos.json");
 
-app.use(express.json());
+/* ========= MIDDLEWARE ========= */
+app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
+/* ========= INIT videos.json ========= */
 if (!fs.existsSync(VIDEOS_JSON)) {
-  fs.writeFileSync(VIDEOS_JSON, "[]");
+  fs.writeFileSync(VIDEOS_JSON, "[]", "utf-8");
 }
 
-function readVideos(){
-  return JSON.parse(fs.readFileSync(VIDEOS_JSON));
+/* ========= HELPERS ========= */
+function readVideos() {
+  try {
+    return JSON.parse(fs.readFileSync(VIDEOS_JSON, "utf-8"));
+  } catch (e) {
+    console.error("❌ Failed to read videos.json", e);
+    return [];
+  }
 }
 
-function saveVideos(d){
-  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(d,null,2));
+function saveVideos(data) {
+  try {
+    fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.error("❌ Failed to save videos.json", e);
+  }
 }
 
-app.post("/api/save",(req,res)=>{
-  if(req.headers["x-admin-password"] !== ADMIN_PASSWORD){
-    return res.status(401).json({error:"Unauthorized"});
+/* ========= API: SAVE VIDEO URL ========= */
+app.post("/api/save", (req, res) => {
+  if (req.headers["x-admin-password"] !== ADMIN_PASSWORD) {
+    return res.status(401).json({ success:false, error:"Unauthorized" });
   }
 
   const { title, url } = req.body;
-  if(!url) return res.status(400).json({error:"Missing URL"});
+
+  if (!url) {
+    return res.status(400).json({ success:false, error:"Missing video URL" });
+  }
 
   const data = readVideos();
+
   data.push({
     id: Date.now().toString(),
-    title,
+    title: title || "Untitled Video",
     url,
-    views:0,
-    likes:0,
-    dislikes:0,
-    comments:[]
+    views: 0,
+    likes: 0,
+    dislikes: 0,
+    comments: []
   });
 
   saveVideos(data);
+
   res.json({ success:true });
 });
 
-app.get("/api/videos",(req,res)=>{
+/* ========= API: GET VIDEOS ========= */
+app.get("/api/videos", (req, res) => {
   res.json(readVideos());
 });
 
-app.listen(PORT,()=>{
-  console.log("Server running on",PORT);
+/* ========= START ========= */
+app.listen(PORT, () => {
+  console.log("✅ Server running on port", PORT);
 });
