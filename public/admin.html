@@ -1,149 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KamaBaba Admin</title>
-
+<title>Admin Upload (Direct)</title>
 <style>
-body{
-  margin:0;
-  background:#111;
-  color:#fff;
-  font-family:system-ui,Arial;
-  padding:20px;
-}
-#ageGate{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.97);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:9999;
-}
-.ageBox{
-  background:#151515;
-  padding:25px;
-  max-width:320px;
-  border-radius:12px;
-  text-align:center;
-  box-shadow:0 0 25px #ff0055;
-}
-.ageBox h2{color:#ff3e6c}
-.ageBtns{margin-top:20px;display:flex;gap:10px}
-.ageBtns button{flex:1;padding:10px;border:none;border-radius:6px;font-weight:600}
-.yes{background:#0f9d58;color:#fff}
-.no{background:#333;color:#fff}
-.adminBox{
-  max-width:420px;
-  margin:60px auto;
-  background:#1b1b1b;
-  padding:22px;
-  border-radius:12px;
-}
-.adminBox input,.adminBox button{
-  width:100%;
-  padding:11px;
-  margin-top:12px;
-  border-radius:6px;
-  border:none;
-}
-.adminBox input{background:#222;color:#fff}
-.adminBox button{background:#ff3e6c;color:#fff;font-weight:600}
-#msg{text-align:center;margin-top:12px}
+body{background:#111;color:#fff;font-family:system-ui;padding:20px}
+.box{max-width:420px;margin:auto;background:#1b1b1b;padding:20px;border-radius:10px}
+input,button{width:100%;padding:10px;margin-top:10px;border-radius:6px;border:none}
+button{background:#ff3e6c;color:#fff;font-weight:600}
+#msg{text-align:center;margin-top:10px}
 </style>
 </head>
 
 <body>
 
-<div id="ageGate">
-  <div class="ageBox">
-    <h2>🔞 Adult Content</h2>
-    <p>You must be 18+ to continue</p>
-    <div class="ageBtns">
-      <button class="yes" onclick="allowSite()">I am 18+</button>
-      <button class="no" onclick="denySite()">No</button>
-    </div>
-  </div>
-</div>
-
-<div class="adminBox">
-  <h2>Admin Upload</h2>
+<div class="box">
+  <h2>Admin Direct Upload</h2>
 
   <input id="pass" type="password" placeholder="Admin Password">
   <input id="title" placeholder="Video Title">
   <input id="video" type="file" accept="video/*">
 
-  <button id="btn" onclick="upload()">Upload Video</button>
+  <button onclick="upload()">Upload Video</button>
   <p id="msg"></p>
 </div>
 
 <script>
-const gate  = document.getElementById("ageGate");
-const msg   = document.getElementById("msg");
-const btn   = document.getElementById("btn");
-const pass  = document.getElementById("pass");
-const title = document.getElementById("title");
-const video = document.getElementById("video");
+const CLOUD_NAME = "doeuirhlh"; // 👈 your cloud name
+const UPLOAD_PRESET = "kamababa_unsigned";
 
-/* AGE GATE */
-if(localStorage.getItem("adultAllowed")==="yes"){
-  gate.style.display="none";
-}
-function allowSite(){
-  localStorage.setItem("adultAllowed","yes");
-  gate.style.display="none";
-}
-function denySite(){
-  window.location.href="https://www.google.com";
-}
-
-/* UPLOAD */
 function upload(){
-  msg.innerText="";
+  const pass  = document.getElementById("pass").value;
+  const title = document.getElementById("title").value;
+  const file  = document.getElementById("video").files[0];
+  const msg   = document.getElementById("msg");
 
-  if(!pass.value){
-    msg.innerText="❌ Enter admin password";
+  if(!pass || !file){
+    msg.innerText="Password aur video required";
     return;
   }
 
-  if(!video.files[0]){
-    msg.innerText="❌ Select a video file";
-    return;
-  }
+  msg.innerText="⏳ Uploading to Cloudinary...";
 
   const fd = new FormData();
-  fd.append("video", video.files[0]);
-  fd.append("title", title.value || "Untitled");
+  fd.append("file", file);
+  fd.append("upload_preset", UPLOAD_PRESET);
 
-  btn.disabled=true;
-  msg.innerText="⏳ Uploading...";
-
-  fetch("/api/upload",{
+  fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,{
     method:"POST",
-    headers:{
-      "x-admin-password": pass.value
-    },
     body: fd
   })
   .then(r=>r.json())
   .then(d=>{
-    if(d.success){
-      msg.innerText="✅ Upload successful";
-      pass.value="";
-      title.value="";
-      video.value="";
-    }else{
-      msg.innerText="❌ "+d.error;
+    if(!d.secure_url){
+      msg.innerText="❌ Cloudinary upload failed";
+      return;
     }
+
+    // Send URL to server
+    fetch("/api/save",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-admin-password": pass
+      },
+      body: JSON.stringify({
+        title: title || "Untitled",
+        url: d.secure_url
+      })
+    })
+    .then(r=>r.json())
+    .then(res=>{
+      msg.innerText = res.success ? "✅ Upload success" : "❌ " + res.error;
+    });
   })
-  .catch(err=>{
-    console.error(err);
-    msg.innerText="❌ Server error";
-  })
-  .finally(()=>{
-    btn.disabled=false;
+  .catch(()=>{
+    msg.innerText="❌ Upload error";
   });
 }
 </script>
