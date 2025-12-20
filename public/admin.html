@@ -1,26 +1,191 @@
 <!DOCTYPE html>
-<html>
-<body style="background:#111;color:#fff;padding:20px">
-<h2>Admin Upload</h2>
-<input id="pass" placeholder="password"><br><br>
-<input id="title" placeholder="title"><br><br>
-<input type="file" id="video"><br><br>
-<button onclick="up()">Upload</button>
-<p id="m"></p>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KamaBaba Admin</title>
+
+<style>
+body{
+  margin:0;
+  background:#111;
+  color:#fff;
+  font-family:system-ui,Arial;
+  padding:20px;
+}
+
+/* ===== AGE GATE ===== */
+#ageGate{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.96);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.ageBox{
+  background:#111;
+  padding:25px;
+  max-width:320px;
+  border-radius:10px;
+  text-align:center;
+  box-shadow:0 0 20px #ff0055;
+}
+
+.ageBox h2{
+  color:#ff3e6c;
+  margin-bottom:10px;
+}
+
+.ageBox p{
+  font-size:14px;
+  color:#ccc;
+}
+
+.ageBtns{
+  margin-top:20px;
+  display:flex;
+  gap:10px;
+}
+
+.ageBtns button{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+}
+
+.ageBtns button:first-child{
+  background:#0f9d58;
+  color:#fff;
+}
+
+.ageBtns button:last-child{
+  background:#333;
+  color:#fff;
+}
+
+/* ===== ADMIN PANEL ===== */
+.adminBox{
+  max-width:400px;
+  margin:auto;
+  margin-top:40px;
+  background:#1a1a1a;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 0 15px #000;
+}
+
+.adminBox h2{
+  text-align:center;
+  margin-bottom:15px;
+  color:#ff3e6c;
+}
+
+.adminBox input,
+.adminBox button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:6px;
+  border:none;
+  font-size:14px;
+}
+
+.adminBox input{
+  background:#222;
+  color:#fff;
+}
+
+.adminBox button{
+  background:#ff3e6c;
+  color:#fff;
+  cursor:pointer;
+  font-weight:600;
+}
+
+#msg{
+  margin-top:12px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔞 AGE RESTRICTION -->
+<div id="ageGate">
+  <div class="ageBox">
+    <h2>🔞 Adult Content</h2>
+    <p>This website contains adult material.<br>You must be 18+ to continue.</p>
+    <div class="ageBtns">
+      <button onclick="allowSite()">I am 18+</button>
+      <button onclick="denySite()">No</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔐 ADMIN UPLOAD -->
+<div class="adminBox">
+  <h2>Admin Upload</h2>
+
+  <input id="pass" placeholder="Admin Password">
+  <input id="title" placeholder="Video Title">
+  <input type="file" id="video" accept="video/*">
+
+  <button onclick="up()">Upload Video</button>
+  <p id="msg"></p>
+</div>
 
 <script>
+// ===== AGE GATE LOGIC =====
+if(localStorage.getItem("adultAllowed")==="yes"){
+  document.getElementById("ageGate").style.display="none";
+}
+
+function allowSite(){
+  localStorage.setItem("adultAllowed","yes");
+  document.getElementById("ageGate").style.display="none";
+}
+
+function denySite(){
+  window.location.href="https://www.google.com";
+}
+
+// ===== UPLOAD =====
 function up(){
+  if(!video.files[0]){
+    msg.innerText="❌ Select a video first";
+    return;
+  }
+
   const fd=new FormData();
   fd.append("video",video.files[0]);
   fd.append("title",title.value);
+
   fetch("/api/upload",{
     method:"POST",
     headers:{"x-admin-password":pass.value},
     body:fd
-  }).then(r=>r.json()).then(d=>{
-    m.innerText=d.success?"Uploaded":"Error";
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    msg.innerText=d.success ? "✅ Uploaded Successfully" : "❌ Error / Wrong Password";
+    if(d.success){
+      video.value="";
+      title.value="";
+      pass.value="";
+    }
+  })
+  .catch(()=>{
+    msg.innerText="❌ Server error";
   });
 }
 </script>
+
 </body>
 </html>
