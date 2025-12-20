@@ -3,74 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin Upload</title>
-<meta name="viewport" content="width=device-width">
-
 <style>
-body{
-  background:#111;
-  color:#fff;
-  font-family:system-ui;
-  padding:20px
-}
-.box{
-  max-width:420px;
-  margin:auto;
-  background:#1b1b1b;
-  padding:20px;
-  border-radius:10px
-}
-input,button{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border-radius:6px;
-  border:none
-}
-button{
-  background:#ff3e6c;
-  color:#fff;
-  font-weight:600;
-  cursor:pointer
-}
-#msg{
-  text-align:center;
-  margin-top:10px
-}
+body{background:#111;color:#fff;font-family:system-ui;padding:20px}
+.box{max-width:420px;margin:auto;background:#1b1b1b;padding:20px;border-radius:10px}
+input,button{width:100%;padding:10px;margin-top:10px;border-radius:6px;border:none}
+button{background:#ff3e6c;color:#fff;font-weight:600}
+#msg{text-align:center;margin-top:10px}
 </style>
 </head>
 
 <body>
-
 <div class="box">
-  <h2>Admin Direct Upload</h2>
-
+  <h2>Admin Upload</h2>
   <input id="pass" type="password" placeholder="Admin Password">
-  <input id="title" placeholder="Video Title (optional)">
+  <input id="title" placeholder="Video Title">
   <input id="video" type="file" accept="video/*">
-
-  <button onclick="upload()">Upload Video</button>
+  <button onclick="upload()">Upload</button>
   <p id="msg"></p>
 </div>
 
 <script>
-/* ====== CLOUDINARY CONFIG ====== */
-const CLOUD_NAME   = "doeuirhlh";
+const CLOUD_NAME = "doeuirhlh";
 const UPLOAD_PRESET = "kamababa_unsigned";
-/* =============================== */
 
 function upload(){
-  const pass  = document.getElementById("pass").value.trim();
-  const title = document.getElementById("title").value.trim();
-  const file  = document.getElementById("video").files[0];
-  const msg   = document.getElementById("msg");
+  const pass = document.getElementById("pass").value;
+  const title = document.getElementById("title").value;
+  const file = document.getElementById("video").files[0];
+  const msg = document.getElementById("msg");
 
-  if(!pass){
-    msg.innerText="❌ Admin password required";
-    return;
-  }
-
-  if(!file){
-    msg.innerText="❌ Video select karo";
+  if(!pass || !file){
+    msg.innerText="❌ Password & video required";
     return;
   }
 
@@ -79,6 +42,7 @@ function upload(){
   const fd = new FormData();
   fd.append("file", file);
   fd.append("upload_preset", UPLOAD_PRESET);
+  fd.append("resource_type", "video");
 
   fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,{
     method:"POST",
@@ -87,17 +51,11 @@ function upload(){
   .then(r=>r.json())
   .then(d=>{
     if(d.error){
-      console.error(d);
-      msg.innerText = "❌ " + d.error.message;
+      msg.innerText="❌ "+d.error.message;
       return;
     }
 
-    if(!d.secure_url){
-      msg.innerText="❌ Upload failed";
-      return;
-    }
-
-    msg.innerText="⏳ Saving video data...";
+    msg.innerText="⏳ Saving video...";
 
     fetch("/api/save",{
       method:"POST",
@@ -106,27 +64,19 @@ function upload(){
         "x-admin-password": pass
       },
       body: JSON.stringify({
-        title: title || "Untitled Video",
+        title: title,
         url: d.secure_url
       })
     })
     .then(r=>r.json())
     .then(res=>{
-      if(res.success){
-        msg.innerText="✅ Upload successful";
-        document.getElementById("video").value="";
-        document.getElementById("title").value="";
-      }else{
-        msg.innerText="❌ " + res.error;
-      }
+      msg.innerText = res.success ? "✅ Upload Successful" : "❌ "+res.error;
     });
   })
-  .catch(err=>{
-    console.error(err);
+  .catch(()=>{
     msg.innerText="❌ Network / Cloudinary error";
   });
 }
 </script>
-
 </body>
 </html>
