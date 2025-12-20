@@ -6,30 +6,49 @@ const multer = require("multer");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ===== CONFIG =====
-const ADMIN_PASSWORD = "12345"; // 🔐 change if you want
-const VIDEOS_JSON = path.join(__dirname, "videos.json");
-const VIDEOS_DIR = path.join(__dirname, "videos");
+/* ================= CONFIG ================= */
+const ADMIN_PASSWORD = "12345"; // 🔐 change later
+const DATA_DIR = __dirname;
+const VIDEOS_JSON = path.join(DATA_DIR, "videos.json");
+const VIDEOS_DIR = path.join(DATA_DIR, "videos");
 
-// ===== ENSURE FILES/FOLDERS =====
-if (!fs.existsSync(VIDEOS_DIR)) fs.mkdirSync(VIDEOS_DIR);
-if (!fs.existsSync(VIDEOS_JSON)) fs.writeFileSync(VIDEOS_JSON, "[]");
+/* ================= SAFE INIT ================= */
+if (!fs.existsSync(VIDEOS_DIR)) {
+  fs.mkdirSync(VIDEOS_DIR, { recursive: true });
+}
 
-// ===== MIDDLEWARE =====
-app.use(express.json());
+if (!fs.existsSync(VIDEOS_JSON)) {
+  fs.writeFileSync(VIDEOS_JSON, "[]", "utf-8");
+}
+
+/* ================= MIDDLEWARE ================= */
+app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/videos", express.static(VIDEOS_DIR));
 
-// ===== MULTER =====
+/* basic security */
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  next();
+});
+
+/* ================= MULTER ================= */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, VIDEOS_DIR),
-  filename: (req, file, cb) =>
-    cb(null, Date.now() + path.extname(file.originalname))
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + ext);
+  }
 });
-const upload = multer({ storage });
 
-// ===== PAGES =====
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+});
+
+/* ================= PAGES ================= */
 app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html"))
 );
@@ -42,21 +61,40 @@ app.get("/admin", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "admin.html"))
 );
 
-// ===== APIs =====
+/* ================= HELPERS ================= */
+function readVideos() {
+  try {
+    return JSON.parse(fs.readFileSync(VIDEOS_JSON, "utf-8"));
+  } catch {
+    return [];
+  }
+}
+
+function saveVideos(data) {
+  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+}
+
+/* ================= APIs ================= */
+
+/* get videos */
 app.get("/api/videos", (req, res) => {
-  const data = JSON.parse(fs.readFileSync(VIDEOS_JSON));
-  res.json(data);
+  res.json(readVideos());
 });
 
-// upload
+/* upload */
 app.post("/api/upload", upload.single("video"), (req, res) => {
-  if (req.headers["x-admin-password"] !== ADMIN_PASSWORD)
+  if (req.headers["x-admin-password"] !== ADMIN_PASSWORD) {
     return res.json({ success: false, error: "Wrong password" });
+  }
 
-  const data = JSON.parse(fs.readFileSync(VIDEOS_JSON));
+  if (!req.file) {
+    return res.json({ success: false, error: "No video uploaded" });
+  }
+
+  const data = readVideos();
 
   data.push({
-    id: Date.now(),
+    id: Date.now().toString(),
     title: req.body.title || "Untitled Video",
     url: "/videos/" + req.file.filename,
     views: 0,
@@ -65,50 +103,57 @@ app.post("/api/upload", upload.single("video"), (req, res) => {
     comments: []
   });
 
-  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+  saveVideos(data);
   res.json({ success: true });
 });
 
-// views
+/* view count */
 app.post("/api/view/:id", (req, res) => {
-  const data = JSON.parse(fs.readFileSync(VIDEOS_JSON));
+  const data = readVideos();
   const v = data.find(x => x.id == req.params.id);
   if (!v) return res.sendStatus(404);
-  v.views++;
-  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+
+  v.views += 1;
+  saveVideos(data);
   res.json({ success: true });
 });
 
-// like
+/* like */
 app.post("/api/like/:id", (req, res) => {
-  const data = JSON.parse(fs.readFileSync(VIDEOS_JSON));
+  const data = readVideos();
   const v = data.find(x => x.id == req.params.id);
   if (!v) return res.sendStatus(404);
-  v.likes++;
-  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+
+  v.likes += 1;
+  saveVideos(data);
   res.json({ success: true });
 });
 
-// dislike
+/* dislike */
 app.post("/api/dislike/:id", (req, res) => {
-  const data = JSON.parse(fs.readFileSync(VIDEOS_JSON));
+  const data = readVideos();
   const v = data.find(x => x.id == req.params.id);
   if (!v) return res.sendStatus(404);
-  v.dislikes++;
-  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+
+  v.dislikes += 1;
+  saveVideos(data);
   res.json({ success: true });
 });
 
-// comment
+/* comment */
 app.post("/api/comment/:id", (req, res) => {
-  const data = JSON.parse(fs.readFileSync(VIDEOS_JSON));
+  const data = readVideos();
   const v = data.find(x => x.id == req.params.id);
   if (!v) return res.sendStatus(404);
+
   if (!req.body.text) return res.sendStatus(400);
+
   v.comments.push(req.body.text);
-  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+  saveVideos(data);
   res.json({ success: true });
 });
 
-// ===== START =====
-app.listen(PORT, () => console.log("Server running on", PORT));
+/* ================= START ================= */
+app.listen(PORT, () => {
+  console.log("✅ Server running on port", PORT);
+});
