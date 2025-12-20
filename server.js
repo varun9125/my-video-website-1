@@ -5,7 +5,7 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "12345";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ravi@123";
 const VIDEOS_JSON = path.join(__dirname, "videos.json");
 
 app.use(express.json());
