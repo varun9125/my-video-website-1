@@ -3,21 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin Upload</title>
+
 <style>
-body{background:#111;color:#fff;font-family:system-ui;padding:20px}
-.box{max-width:420px;margin:auto;background:#1b1b1b;padding:20px;border-radius:10px}
-input,button{width:100%;padding:10px;margin-top:10px;border-radius:6px;border:none}
-button{background:#ff3e6c;color:#fff;font-weight:600}
-#msg{text-align:center;margin-top:10px}
+body{
+  background:#111;
+  color:#fff;
+  font-family:system-ui;
+  padding:20px
+}
+.box{
+  max-width:420px;
+  margin:auto;
+  background:#1b1b1b;
+  padding:20px;
+  border-radius:10px
+}
+input,button{
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+  border-radius:6px;
+  border:none
+}
+button{
+  background:#ff3e6c;
+  color:#fff;
+  font-weight:600;
+  cursor:pointer
+}
+#msg{
+  text-align:center;
+  margin-top:10px
+}
 </style>
 </head>
 
 <body>
+
 <div class="box">
   <h2>Admin Upload</h2>
+
   <input id="pass" type="password" placeholder="Admin Password">
   <input id="title" placeholder="Video Title">
   <input id="video" type="file" accept="video/*">
+
   <button onclick="upload()">Upload</button>
   <p id="msg"></p>
 </div>
@@ -27,35 +56,35 @@ const CLOUD_NAME = "doeuirhlh";
 const UPLOAD_PRESET = "kamababa_unsigned";
 
 function upload(){
-  const pass = document.getElementById("pass").value;
-  const title = document.getElementById("title").value;
-  const file = document.getElementById("video").files[0];
-  const msg = document.getElementById("msg");
+  const pass  = document.getElementById("pass").value;
+  const title = document.getElementById("title").value || "Untitled Video";
+  const file  = document.getElementById("video").files[0];
+  const msg   = document.getElementById("msg");
 
   if(!pass || !file){
-    msg.innerText="❌ Password & video required";
+    msg.innerText = "❌ Password & video required";
     return;
   }
 
-  msg.innerText="⏳ Uploading to Cloudinary...";
+  msg.innerText = "⏳ Uploading to Cloudinary...";
 
   const fd = new FormData();
   fd.append("file", file);
   fd.append("upload_preset", UPLOAD_PRESET);
-  fd.append("resource_type", "video");
 
-  fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,{
-    method:"POST",
+  fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+    method: "POST",
     body: fd
   })
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.error){
-      msg.innerText="❌ "+d.error.message;
+  .then(res => res.json())
+  .then(data => {
+    if(data.error){
+      console.error(data.error);
+      msg.innerText = "❌ " + data.error.message;
       return;
     }
 
-    msg.innerText="⏳ Saving video...";
+    msg.innerText = "⏳ Saving video...";
 
     fetch("/api/save",{
       method:"POST",
@@ -65,18 +94,22 @@ function upload(){
       },
       body: JSON.stringify({
         title: title,
-        url: d.secure_url
+        url: data.secure_url
       })
     })
     .then(r=>r.json())
-    .then(res=>{
-      msg.innerText = res.success ? "✅ Upload Successful" : "❌ "+res.error;
+    .then(r=>{
+      msg.innerText = r.success
+        ? "✅ Upload Successful"
+        : "❌ " + r.error;
     });
   })
-  .catch(()=>{
+  .catch(err=>{
+    console.error(err);
     msg.innerText="❌ Network / Cloudinary error";
   });
 }
 </script>
+
 </body>
 </html>
