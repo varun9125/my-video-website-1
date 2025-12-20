@@ -8,10 +8,19 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ================= CONFIG ================= */
-const ADMIN_PASSWORD = "12345"; // 🔐 change later
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ravi@123";
 const VIDEOS_JSON = path.join(__dirname, "videos.json");
 
 /* ================= CLOUDINARY ================= */
+if (
+  !process.env.CLOUDINARY_CLOUD_NAME ||
+  !process.env.CLOUDINARY_API_KEY ||
+  !process.env.CLOUDINARY_API_SECRET
+) {
+  console.error("❌ Cloudinary env variables missing");
+  process.exit(1);
+}
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -24,32 +33,27 @@ if (!fs.existsSync(VIDEOS_JSON)) {
 }
 
 /* ================= MIDDLEWARE ================= */
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-/* ================= MULTER (MEMORY) ================= */
+/* ================= MULTER ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB (safe)
 });
 
 /* ================= HELPERS ================= */
 function readVideos() {
   try {
     return JSON.parse(fs.readFileSync(VIDEOS_JSON, "utf-8"));
-  } catch (e) {
-    console.error("Failed to read videos.json:", e);
+  } catch {
     return [];
   }
 }
 
 function saveVideos(data) {
-  try {
-    fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
-  } catch (e) {
-    console.error("Failed to save videos.json:", e);
-  }
+  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
 }
 
 /* ================= PAGES ================= */
@@ -65,50 +69,39 @@ app.get("/admin", (req, res) =>
 
 /* ================= APIs ================= */
 
-// get all videos
+// get videos
 app.get("/api/videos", (req, res) => {
-  const data = readVideos();
-  console.log("GET /api/videos →", data.length, "videos");
-  res.json(data);
+  res.json(readVideos());
 });
 
-// 🔥 UPLOAD → CLOUDINARY (PERMANENT)
+// 🔥 UPLOAD TO CLOUDINARY
 app.post("/api/upload", upload.single("video"), (req, res) => {
-  console.log("Upload request received");
-
   if (req.headers["x-admin-password"] !== ADMIN_PASSWORD) {
-    console.log("❌ Wrong admin password");
-    return res.json({ success: false, error: "Wrong password" });
+    return res.status(401).json({ success: false, error: "Unauthorized" });
   }
 
   if (!req.file) {
-    console.log("❌ No video uploaded");
-    return res.json({ success: false, error: "No video uploaded" });
+    return res.status(400).json({ success: false, error: "No file" });
   }
 
-  console.log("Uploading file to Cloudinary:", req.file.originalname);
-
-  const stream = cloudinary.uploader.upload_stream(
+  const uploadStream = cloudinary.uploader.upload_stream(
     {
       resource_type: "video",
       folder: "kamababa"
     },
     (err, result) => {
       if (err) {
-        console.error("Cloudinary upload error:", err);
-        return res.json({ 
-          success: false, 
-          error: "Cloud upload failed", 
-          details: err.message 
+        console.error(err);
+        return res.status(500).json({
+          success: false,
+          error: "Cloudinary upload failed"
         });
       }
-
-      console.log("Upload successful:", result.secure_url);
 
       const data = readVideos();
       data.push({
         id: Date.now().toString(),
-        title: req.body.title || "Untitled Video",
+        title: req.body.title || "Untitled",
         url: result.secure_url,
         views: 0,
         likes: 0,
@@ -121,52 +114,43 @@ app.post("/api/upload", upload.single("video"), (req, res) => {
     }
   );
 
-  try {
-    stream.end(req.file.buffer);
-  } catch (e) {
-    console.error("Failed to send buffer to Cloudinary:", e);
-    res.json({ success: false, error: "Upload failed", details: e.message });
-  }
+  uploadStream.end(req.file.buffer);
 });
 
-// view count
+/* ================= INTERACTIONS ================= */
 app.post("/api/view/:id", (req, res) => {
-  const data = readVideos();
-  const v = data.find(x => x.id == req.params.id);
+  const d = readVideos();
+  const v = d.find(x => x.id === req.params.id);
   if (!v) return res.sendStatus(404);
   v.views++;
-  saveVideos(data);
+  saveVideos(d);
   res.json({ success: true });
 });
 
-// like
 app.post("/api/like/:id", (req, res) => {
-  const data = readVideos();
-  const v = data.find(x => x.id == req.params.id);
+  const d = readVideos();
+  const v = d.find(x => x.id === req.params.id);
   if (!v) return res.sendStatus(404);
   v.likes++;
-  saveVideos(data);
+  saveVideos(d);
   res.json({ success: true });
 });
 
-// dislike
 app.post("/api/dislike/:id", (req, res) => {
-  const data = readVideos();
-  const v = data.find(x => x.id == req.params.id);
+  const d = readVideos();
+  const v = d.find(x => x.id === req.params.id);
   if (!v) return res.sendStatus(404);
   v.dislikes++;
-  saveVideos(data);
+  saveVideos(d);
   res.json({ success: true });
 });
 
-// comment
 app.post("/api/comment/:id", (req, res) => {
-  const data = readVideos();
-  const v = data.find(x => x.id == req.params.id);
-  if (!v) return res.sendStatus(404);
-  if (!req.body.text) return res.sendStatus(400);
+  const d = readVideos();
+  const v = d.find(x => x.id === req.params.id);
+  if (!v || !req.body.text) return res.sendStatus(400);
   v.comments.push(req.body.text);
-  saveVideos(data);
+  saveVideos(d);
   res.json({ success: true });
 });
 
