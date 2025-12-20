@@ -26,8 +26,8 @@ button{background:#ff3e6c;color:#fff;font-weight:600}
 </div>
 
 <script>
-const CLOUD_NAME = "doeuirhlh"; // 👈 your cloud name
-const UPLOAD_PRESET = "kamababa_unsigned";
+const CLOUD_NAME = "doeuirhlh";              // ✅ EXACT cloud name
+const UPLOAD_PRESET = "kamababa_unsigned";  // ✅ UNSIGNED + VIDEO preset
 
 function upload(){
   const pass  = document.getElementById("pass").value;
@@ -36,7 +36,7 @@ function upload(){
   const msg   = document.getElementById("msg");
 
   if(!pass || !file){
-    msg.innerText="Password aur video required";
+    msg.innerText="❌ Password aur video required";
     return;
   }
 
@@ -52,12 +52,19 @@ function upload(){
   })
   .then(r=>r.json())
   .then(d=>{
-    if(!d.secure_url){
-      msg.innerText="❌ Cloudinary upload failed";
+    if(d.error){
+      console.error("Cloudinary error:", d.error);
+      msg.innerText = "❌ " + d.error.message;
       return;
     }
 
-    // Send URL to server
+    if(!d.secure_url){
+      msg.innerText="❌ Upload failed (no URL)";
+      return;
+    }
+
+    msg.innerText="⏳ Saving video...";
+
     fetch("/api/save",{
       method:"POST",
       headers:{
@@ -65,17 +72,17 @@ function upload(){
         "x-admin-password": pass
       },
       body: JSON.stringify({
-        title: title || "Untitled",
+        title: title || "Untitled Video",
         url: d.secure_url
       })
     })
     .then(r=>r.json())
     .then(res=>{
-      msg.innerText = res.success ? "✅ Upload success" : "❌ " + res.error;
+      msg.innerText = res.success ? "✅ Upload successful" : "❌ " + res.error;
     });
   })
   .catch(()=>{
-    msg.innerText="❌ Upload error";
+    msg.innerText="❌ Network / Cloudinary error";
   });
 }
 </script>
