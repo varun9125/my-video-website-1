@@ -18,7 +18,7 @@ body{
 #ageGate{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,0.96);
+  background:rgba(0,0,0,0.97);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -26,12 +26,12 @@ body{
 }
 
 .ageBox{
-  background:#111;
+  background:#151515;
   padding:25px;
   max-width:320px;
-  border-radius:10px;
+  border-radius:12px;
   text-align:center;
-  box-shadow:0 0 20px #ff0055;
+  box-shadow:0 0 25px #ff0055;
 }
 
 .ageBox h2{
@@ -42,6 +42,7 @@ body{
 .ageBox p{
   font-size:14px;
   color:#ccc;
+  line-height:1.4;
 }
 
 .ageBtns{
@@ -59,38 +60,38 @@ body{
   font-weight:600;
 }
 
-.ageBtns button:first-child{
+.ageBtns .yes{
   background:#0f9d58;
   color:#fff;
 }
 
-.ageBtns button:last-child{
+.ageBtns .no{
   background:#333;
   color:#fff;
 }
 
 /* ===== ADMIN PANEL ===== */
 .adminBox{
-  max-width:400px;
+  max-width:420px;
   margin:auto;
-  margin-top:40px;
-  background:#1a1a1a;
-  padding:20px;
-  border-radius:10px;
-  box-shadow:0 0 15px #000;
+  margin-top:60px;
+  background:#1b1b1b;
+  padding:22px;
+  border-radius:12px;
+  box-shadow:0 0 18px #000;
 }
 
 .adminBox h2{
   text-align:center;
-  margin-bottom:15px;
+  margin-bottom:18px;
   color:#ff3e6c;
 }
 
 .adminBox input,
 .adminBox button{
   width:100%;
-  padding:10px;
-  margin-top:10px;
+  padding:11px;
+  margin-top:12px;
   border-radius:6px;
   border:none;
   font-size:14px;
@@ -108,9 +109,15 @@ body{
   font-weight:600;
 }
 
+.adminBox button:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
 #msg{
-  margin-top:12px;
+  margin-top:14px;
   text-align:center;
+  font-size:14px;
 }
 </style>
 </head>
@@ -121,68 +128,90 @@ body{
 <div id="ageGate">
   <div class="ageBox">
     <h2>🔞 Adult Content</h2>
-    <p>This website contains adult material.<br>You must be 18+ to continue.</p>
+    <p>
+      This admin panel contains adult material.<br>
+      You must be <b>18+</b> to continue.
+    </p>
     <div class="ageBtns">
-      <button onclick="allowSite()">I am 18+</button>
-      <button onclick="denySite()">No</button>
+      <button class="yes" onclick="allowSite()">I am 18+</button>
+      <button class="no" onclick="denySite()">No</button>
     </div>
   </div>
 </div>
 
-<!-- 🔐 ADMIN UPLOAD -->
+<!-- 🔐 ADMIN PANEL -->
 <div class="adminBox">
   <h2>Admin Upload</h2>
 
-  <input id="pass" placeholder="Admin Password">
+  <input id="pass" type="password" placeholder="Admin Password">
   <input id="title" placeholder="Video Title">
   <input type="file" id="video" accept="video/*">
 
-  <button onclick="up()">Upload Video</button>
+  <button id="btn" onclick="upload()">Upload Video</button>
   <p id="msg"></p>
 </div>
 
 <script>
-// ===== AGE GATE LOGIC =====
+const gate = document.getElementById("ageGate");
+const msg  = document.getElementById("msg");
+const btn  = document.getElementById("btn");
+
+/* ===== AGE GATE ===== */
 if(localStorage.getItem("adultAllowed")==="yes"){
-  document.getElementById("ageGate").style.display="none";
+  gate.style.display="none";
 }
 
 function allowSite(){
   localStorage.setItem("adultAllowed","yes");
-  document.getElementById("ageGate").style.display="none";
+  gate.style.display="none";
 }
 
 function denySite(){
   window.location.href="https://www.google.com";
 }
 
-// ===== UPLOAD =====
-function up(){
-  if(!video.files[0]){
-    msg.innerText="❌ Select a video first";
+/* ===== UPLOAD ===== */
+function upload(){
+  msg.innerText="";
+  
+  if(!pass.value){
+    msg.innerText="❌ Enter admin password";
     return;
   }
 
-  const fd=new FormData();
-  fd.append("video",video.files[0]);
-  fd.append("title",title.value);
+  if(!video.files[0]){
+    msg.innerText="❌ Select a video file";
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append("video", video.files[0]);
+  fd.append("title", title.value || "Untitled Video");
+
+  btn.disabled = true;
+  msg.innerText = "⏳ Uploading...";
 
   fetch("/api/upload",{
     method:"POST",
-    headers:{"x-admin-password":pass.value},
-    body:fd
+    headers:{ "x-admin-password": pass.value },
+    body: fd
   })
   .then(r=>r.json())
   .then(d=>{
-    msg.innerText=d.success ? "✅ Uploaded Successfully" : "❌ Error / Wrong Password";
     if(d.success){
+      msg.innerText="✅ Upload successful";
       video.value="";
       title.value="";
       pass.value="";
+    }else{
+      msg.innerText="❌ " + (d.error || "Upload failed");
     }
   })
   .catch(()=>{
     msg.innerText="❌ Server error";
+  })
+  .finally(()=>{
+    btn.disabled = false;
   });
 }
 </script>
