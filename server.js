@@ -36,33 +36,41 @@ function saveVideos(data) {
   }
 }
 
-/* ========= API: SAVE VIDEO URL ========= */
+/* =====================================================
+   API: SAVE CLOUDINARY VIDEO (ADMIN ONLY)
+   ===================================================== */
 app.post("/api/save", (req, res) => {
   if (req.headers["x-admin-password"] !== ADMIN_PASSWORD) {
-    return res.status(401).json({ success:false, error:"Unauthorized" });
+    return res.status(401).json({
+      success: false,
+      error: "Unauthorized"
+    });
   }
 
   const { title, url } = req.body;
 
   if (!url) {
-    return res.status(400).json({ success:false, error:"Missing video URL" });
+    return res.status(400).json({
+      success: false,
+      error: "Missing video URL"
+    });
   }
 
-  const data = readVideos();
+  const videos = readVideos();
 
-  data.push({
+  videos.push({
     id: Date.now().toString(),
     title: title || "Untitled Video",
-    url,
+    url: url,          // 🔥 Cloudinary secure_url
     views: 0,
     likes: 0,
     dislikes: 0,
     comments: []
   });
 
-  saveVideos(data);
+  saveVideos(videos);
 
-  res.json({ success:true });
+  res.json({ success: true });
 });
 
 /* ========= API: GET VIDEOS ========= */
@@ -70,7 +78,7 @@ app.get("/api/videos", (req, res) => {
   res.json(readVideos());
 });
 
-/* ========= START ========= */
+/* ========= START SERVER ========= */
 app.listen(PORT, () => {
   console.log("✅ Server running on port", PORT);
 });
