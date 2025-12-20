@@ -38,24 +38,27 @@ const upload = multer({
 function readVideos() {
   try {
     return JSON.parse(fs.readFileSync(VIDEOS_JSON, "utf-8"));
-  } catch {
+  } catch (e) {
+    console.error("Failed to read videos.json:", e);
     return [];
   }
 }
 
 function saveVideos(data) {
-  fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(VIDEOS_JSON, JSON.stringify(data, null, 2));
+  } catch (e) {
+    console.error("Failed to save videos.json:", e);
+  }
 }
 
 /* ================= PAGES ================= */
 app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html"))
 );
-
 app.get("/watch", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "watch.html"))
 );
-
 app.get("/admin", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "admin.html"))
 );
@@ -64,18 +67,26 @@ app.get("/admin", (req, res) =>
 
 // get all videos
 app.get("/api/videos", (req, res) => {
-  res.json(readVideos());
+  const data = readVideos();
+  console.log("GET /api/videos →", data.length, "videos");
+  res.json(data);
 });
 
 // 🔥 UPLOAD → CLOUDINARY (PERMANENT)
 app.post("/api/upload", upload.single("video"), (req, res) => {
+  console.log("Upload request received");
+
   if (req.headers["x-admin-password"] !== ADMIN_PASSWORD) {
+    console.log("❌ Wrong admin password");
     return res.json({ success: false, error: "Wrong password" });
   }
 
   if (!req.file) {
+    console.log("❌ No video uploaded");
     return res.json({ success: false, error: "No video uploaded" });
   }
+
+  console.log("Uploading file to Cloudinary:", req.file.originalname);
 
   const stream = cloudinary.uploader.upload_stream(
     {
@@ -84,16 +95,21 @@ app.post("/api/upload", upload.single("video"), (req, res) => {
     },
     (err, result) => {
       if (err) {
-        console.error(err);
-        return res.json({ success: false, error: "Cloud upload failed" });
+        console.error("Cloudinary upload error:", err);
+        return res.json({ 
+          success: false, 
+          error: "Cloud upload failed", 
+          details: err.message 
+        });
       }
 
-      const data = readVideos();
+      console.log("Upload successful:", result.secure_url);
 
+      const data = readVideos();
       data.push({
         id: Date.now().toString(),
         title: req.body.title || "Untitled Video",
-        url: result.secure_url, // 🔥 PERMANENT CLOUD URL
+        url: result.secure_url,
         views: 0,
         likes: 0,
         dislikes: 0,
@@ -105,7 +121,12 @@ app.post("/api/upload", upload.single("video"), (req, res) => {
     }
   );
 
-  stream.end(req.file.buffer);
+  try {
+    stream.end(req.file.buffer);
+  } catch (e) {
+    console.error("Failed to send buffer to Cloudinary:", e);
+    res.json({ success: false, error: "Upload failed", details: e.message });
+  }
 });
 
 // view count
