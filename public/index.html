@@ -34,6 +34,11 @@ body {
   font-family: system-ui, Arial;
 }
 
+/* 🔒 BODY LOCK */
+body.locked {
+  overflow: hidden;
+}
+
 /* ===== AGE GATE ===== */
 #ageGate{
   position:fixed;
@@ -164,7 +169,7 @@ header h1 {
 </style>
 </head>
 
-<body>
+<body class="locked">
 
 <!-- 🔞 AGE GATE -->
 <div id="ageGate">
@@ -202,16 +207,25 @@ header h1 {
 </script>
 
 <script>
-/* ===== AGE GATE ===== */
-if(localStorage.getItem("adultAllowed")==="yes"){
-  document.getElementById("ageGate").style.display="none";
+/* ===== AGE GATE FIX (FINAL) ===== */
+const ageGate = document.getElementById("ageGate");
+
+function unlockSite(){
+  ageGate.style.display = "none";
+  document.body.classList.remove("locked");
 }
+
+if(localStorage.getItem("adultAllowed")==="yes"){
+  unlockSite();
+}
+
 function allowSite(){
   localStorage.setItem("adultAllowed","yes");
-  document.getElementById("ageGate").style.display="none";
+  unlockSite();
 }
+
 function denySite(){
-  location.href="https://www.google.com";
+  window.location.href = "https://www.google.com";
 }
 
 /* ===== VIDEO LOGIC ===== */
@@ -253,20 +267,6 @@ function render() {
         title="${v.title}">
       </video>
       <p>${v.title}</p>
-
-      <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "VideoObject",
-        "name": "${v.title}",
-        "contentUrl": "${v.url}",
-        "uploadDate": "${v.createdAt || new Date().toISOString()}",
-        "publisher": {
-          "@type": "Organization",
-          "name": "KamaBaba"
-        }
-      }
-      </script>
     `;
 
     card.onclick = () => location.href = "/watch?id=" + v._id;
