@@ -20,6 +20,7 @@ if (!process.env.CLOUDINARY_CLOUD_NAME) {
 
 /* ================= CONFIG ================= */
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "changeme";
+const BASE_URL = "https://my-video-website-1-1.onrender.com";
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
@@ -71,11 +72,11 @@ app.get("/watch", (req, res) => {
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     if (req.headers["x-admin-password"] !== ADMIN_PASSWORD) {
-      return res.status(401).json({ success: false, error: "Unauthorized" });
+      return res.status(401).json({ success: false });
     }
 
     if (!req.file) {
-      return res.status(400).json({ success: false, error: "No file" });
+      return res.status(400).json({ success: false });
     }
 
     const title = req.body.title || "Untitled";
@@ -150,6 +151,43 @@ app.post("/api/comment/:id", async (req, res) => {
   });
 
   res.json({ success: true });
+});
+
+/* ================= 🔥 AUTO SITEMAP (SEO FIX) ================= */
+app.get("/sitemap.xml", async (req, res) => {
+  try {
+    const videos = await Video.find({}, "_id");
+
+    let urls = `
+<url>
+  <loc>${BASE_URL}/</loc>
+  <changefreq>daily</changefreq>
+  <priority>1.0</priority>
+</url>
+`;
+
+    videos.forEach(v => {
+      urls += `
+<url>
+  <loc>${BASE_URL}/watch?id=${v._id}</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+`;
+    });
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`;
+
+    res.header("Content-Type", "application/xml");
+    res.send(sitemap);
+
+  } catch (err) {
+    console.error("SITEMAP ERROR:", err);
+    res.status(500).send("Sitemap error");
+  }
 });
 
 /* ================= START ================= */
