@@ -2,8 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+
+<!-- MOBILE -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KamaBaba Viral</title>
+
+<!-- ===== BASIC SEO ===== -->
+<title>KamaBaba Viral Videos | Trending Adult Short Videos</title>
+
+<meta name="description" content="Watch trending viral adult short videos on KamaBaba. Mobile friendly, fast loading, updated daily. 18+ only.">
+<meta name="keywords" content="adult videos, viral videos, short videos, reels, hot videos, kamababa">
+<meta name="robots" content="index, follow">
+
+<!-- ADULT CONTENT SIGNAL -->
+<meta name="rating" content="adult">
+
+<!-- OPEN GRAPH -->
+<meta property="og:title" content="KamaBaba Viral Videos">
+<meta property="og:description" content="Trending viral adult short videos. 18+ only.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="KamaBaba">
 
 <style>
 body {
@@ -77,7 +94,7 @@ header {
   z-index: 10;
 }
 
-header h2 {
+header h1 {
   margin: 5px 0;
   text-align: center;
   font-size: 18px;
@@ -145,7 +162,7 @@ header h2 {
 
 <body>
 
-<!-- 🔞 AGE RESTRICTION -->
+<!-- 🔞 AGE GATE -->
 <div id="ageGate">
   <div class="ageBox">
     <h2>🔞 Adult Content</h2>
@@ -158,26 +175,39 @@ header h2 {
 </div>
 
 <header>
-  <h2>🔥 KamaBaba Viral Videos 🔥</h2>
+  <h1>🔥 KamaBaba Viral Videos 🔥</h1>
   <input id="search" placeholder="Search video...">
 </header>
 
-<div class="grid" id="grid"></div>
+<main class="grid" id="grid"></main>
 <div class="pagination" id="pagination"></div>
 
+<!-- ===== GLOBAL VIDEO SCHEMA (SEO BOOST) ===== -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "KamaBaba Viral Videos",
+  "url": "/",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
 <script>
-/* ===== AGE GATE LOGIC ===== */
+/* ===== AGE GATE ===== */
 if(localStorage.getItem("adultAllowed")==="yes"){
   document.getElementById("ageGate").style.display="none";
 }
-
 function allowSite(){
   localStorage.setItem("adultAllowed","yes");
   document.getElementById("ageGate").style.display="none";
 }
-
 function denySite(){
-  window.location.href="https://www.google.com";
+  location.href="https://www.google.com";
 }
 
 /* ===== VIDEO LOGIC ===== */
@@ -189,7 +219,7 @@ let keyword = "";
 fetch("/api/videos")
   .then(res => res.json())
   .then(data => {
-    allVideos = data.reverse();
+    allVideos = data;
     render();
   });
 
@@ -210,11 +240,34 @@ function render() {
   pageVideos.forEach(v => {
     const card = document.createElement("div");
     card.className = "card";
+
+    /* ===== PER VIDEO SEO ===== */
     card.innerHTML = `
-      <video class="thumb" src="${v.url}#t=1" muted preload="metadata"></video>
+      <video
+        class="thumb"
+        src="${v.url}#t=1"
+        muted
+        preload="metadata"
+        title="${v.title}"
+      ></video>
       <p>${v.title}</p>
+
+      <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoObject",
+        "name": "${v.title}",
+        "contentUrl": "${v.url}",
+        "uploadDate": "${v.createdAt || new Date().toISOString()}",
+        "publisher": {
+          "@type": "Organization",
+          "name": "KamaBaba"
+        }
+      }
+      </script>
     `;
-    card.onclick = () => location.href = "/watch?id=" + v.id;
+
+    card.onclick = () => location.href = "/watch?id=" + v._id;
     grid.appendChild(card);
   });
 
@@ -225,7 +278,7 @@ function render() {
     btn.onclick = () => {
       currentPage = i;
       render();
-      window.scrollTo(0, 0);
+      scrollTo(0,0);
     };
     pagination.appendChild(btn);
   }
