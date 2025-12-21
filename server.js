@@ -21,31 +21,32 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-/* ================= MONGODB (FIXED) ================= */
-let isDbReady = false;
+/* ================= MONGODB ================= */
+let dbReady = false;
 
 mongoose.connect(process.env.MONGO_URI, {
-  maxPoolSize: 10,
-  serverSelectionTimeoutMS: 30000, // ⬅️ VERY IMPORTANT
-  socketTimeoutMS: 45000
-})
-.then(() => {
-  isDbReady = true;
+  serverSelectionTimeoutMS: 15000
+});
+
+mongoose.connection.on("connected", () => {
   console.log("✅ MongoDB connected");
-})
-.catch(err => {
+  dbReady = true;
+});
+
+mongoose.connection.on("error", err => {
   console.error("❌ MongoDB error", err);
+  dbReady = false;
 });
 
 mongoose.connection.on("disconnected", () => {
-  isDbReady = false;
   console.error("❌ MongoDB disconnected");
+  dbReady = false;
 });
 
 /* ================= MODEL ================= */
 const videoSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  url: { type: String, required: true },
+  title: String,
+  url: String,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -58,7 +59,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 200 * 1024 * 1024 } // 200MB
+  limits: { fileSize: 100 * 1024 * 1024 }
 });
 
 /* ================= WATCH PAGE ================= */
@@ -66,76 +67,66 @@ app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-/* ================= 🔐 ADMIN UPLOAD (FINAL FIX) ================= */
+/* ================= ADMIN UPLOAD (FIXED) ================= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
-    if (!isDbReady) {
+    if (!dbReady) {
       return res.status(503).json({
         success: false,
-        error: "Database not ready. Try again in 10 seconds."
+        error: "Database is not ready. Try again in 10 seconds."
       });
     }
 
     const { password, title } = req.body;
 
     if (password !== ADMIN_PASSWORD) {
-      return res.status(401).json({ success: false, error: "Wrong password" });
+      return res.status(401).json({
+        success: false,
+        error: "Wrong admin password"
+      });
     }
 
     if (!req.file) {
-      return res.status(400).json({ success: false, error: "No video file" });
+      return res.status(400).json({
+        success: false,
+        error: "No video selected"
+      });
     }
 
-    // ⬅️ Upload to Cloudinary FIRST
-    const uploadResult = await new Promise((resolve, reject) => {
+    // ⬆️ Upload to Cloudinary
+    const cloudResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
-        {
-          resource_type: "video",
-          folder: "kamababa",
-          timeout: 180000
-        },
-        (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        }
+        { resource_type: "video", folder: "kamababa" },
+        (err, result) => err ? reject(err) : resolve(result)
       ).end(req.file.buffer);
     });
 
-    if (!uploadResult?.secure_url) {
-      throw new Error("Cloudinary upload failed");
-    }
-
-    // ⬅️ HARD DB INSERT (no buffering)
-    const video = new Video({
+    // ⬆️ Save to Mongo
+    const video = await Video.create({
       title: title || "Untitled",
-      url: uploadResult.secure_url
+      url: cloudResult.secure_url
     });
-
-    await video.save({ timeout: 30000 });
 
     res.json({
       success: true,
-      video
+      id: video._id
     });
 
   } catch (err) {
     console.error("UPLOAD ERROR:", err);
     res.status(500).json({
       success: false,
-      error: err.message
+      error: "Upload failed"
     });
   }
 });
 
 /* ================= GET VIDEOS ================= */
 app.get("/api/videos", async (req, res) => {
-  try {
-    if (!isDbReady) return res.json([]);
-    const videos = await Video.find().sort({ createdAt: -1 });
-    res.json(videos);
-  } catch {
-    res.json([]);
-  }
+  if (!dbReady) return res.json([]);
+
+  const videos = await Video.find().sort({ createdAt: -1 });
+  res.json(videos);
 });
 
 /* ================= SITEMAP ================= */
@@ -145,16 +136,14 @@ app.get("/sitemap.xml", async (req, res) => {
   let urls = `
 <url>
   <loc>${BASE_URL}/</loc>
-  <priority>1.0</priority>
 </url>`;
 
-  if (isDbReady) {
+  if (dbReady) {
     const videos = await Video.find({}, "_id");
     videos.forEach(v => {
       urls += `
 <url>
   <loc>${BASE_URL}/watch?id=${v._id}</loc>
-  <priority>0.8</priority>
 </url>`;
     });
   }
@@ -167,5 +156,5 @@ ${urls}
 
 /* ================= START ================= */
 app.listen(PORT, () => {
-  console.log("🚀 Server running on", PORT);
+  console.log("🚀 Server running on port", PORT);
 });
