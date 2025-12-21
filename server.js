@@ -10,14 +10,6 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ================= BASIC CHECK ================= */
-if (!process.env.MONGO_URI) {
-  console.error("❌ MONGO_URI missing");
-}
-if (!process.env.CLOUDINARY_CLOUD_NAME) {
-  console.error("❌ Cloudinary ENV missing");
-}
-
 /* ================= CONFIG ================= */
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "changeme";
 const BASE_URL = "https://my-video-website-1-1.onrender.com";
@@ -35,10 +27,6 @@ mongoose.connect(process.env.MONGO_URI, {
 })
 .then(() => console.log("✅ MongoDB connected"))
 .catch(err => console.error("❌ MongoDB error", err));
-
-mongoose.connection.on("disconnected", () => {
-  console.error("❌ MongoDB disconnected");
-});
 
 /* ================= MODEL ================= */
 const videoSchema = new mongoose.Schema({
@@ -60,7 +48,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
 });
 
 /* ================= WATCH PAGE ================= */
@@ -68,35 +56,60 @@ app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-/* ================= UPLOAD ================= */
+/* ================= ✅ FINAL ADMIN UPLOAD ================= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
-    if (req.headers["x-admin-password"] !== ADMIN_PASSWORD) {
-      return res.status(401).json({ success: false });
+    const { password, title } = req.body;
+
+    // ✅ BODY based admin check (mobile-safe)
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(401).json({
+        success: false,
+        error: "Wrong admin password"
+      });
     }
 
     if (!req.file) {
-      return res.status(400).json({ success: false });
+      return res.status(400).json({
+        success: false,
+        error: "No video selected"
+      });
     }
-
-    const title = req.body.title || "Untitled";
 
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
-        { resource_type: "video", folder: "kamababa" },
-        (err, result) => err ? reject(err) : resolve(result)
+        {
+          resource_type: "video",
+          folder: "kamababa",
+          timeout: 120000
+        },
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        }
       ).end(req.file.buffer);
     });
 
-    if (!result?.secure_url) throw new Error("Cloudinary upload failed");
+    if (!result?.secure_url) {
+      throw new Error("Cloudinary upload failed");
+    }
 
-    await Video.create({ title, url: result.secure_url });
+    await Video.create({
+      title: title || "Untitled",
+      url: result.secure_url
+    });
 
-    res.json({ success: true });
+    res.json({
+      success: true,
+      url: result.secure_url
+    });
 
   } catch (err) {
     console.error("UPLOAD ERROR:", err);
-    res.status(500).json({ success: false });
+    res.status(500).json({
+      success: false,
+      error: err.message || "Upload failed"
+    });
   }
 });
 
@@ -105,8 +118,7 @@ app.get("/api/videos", async (req, res) => {
   try {
     const videos = await Video.find().sort({ createdAt: -1 });
     res.json(videos);
-  } catch (err) {
-    console.error("FETCH ERROR:", err);
+  } catch {
     res.status(500).json([]);
   }
 });
@@ -146,7 +158,7 @@ app.post("/api/comment/:id", async (req, res) => {
   res.json({ success: true });
 });
 
-/* ================= ✅ FINAL, BULLETPROOF SITEMAP ================= */
+/* ================= SITEMAP ================= */
 app.get("/sitemap.xml", async (req, res) => {
   res.setHeader("Content-Type", "application/xml");
 
@@ -158,10 +170,8 @@ app.get("/sitemap.xml", async (req, res) => {
 </url>`;
 
   try {
-    // Mongo readyState === 1 means connected
     if (mongoose.connection.readyState === 1) {
       const videos = await Video.find({}, "_id");
-
       videos.forEach(v => {
         urls += `
 <url>
@@ -171,10 +181,7 @@ app.get("/sitemap.xml", async (req, res) => {
 </url>`;
       });
     }
-  } catch (err) {
-    console.error("SITEMAP DB ERROR (IGNORED):", err);
-    // IMPORTANT: error ignore → sitemap still valid
-  }
+  } catch (e) {}
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
