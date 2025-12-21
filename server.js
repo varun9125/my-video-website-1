@@ -21,12 +21,14 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-/* ================= MONGODB ================= */
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 10000
-})
-.then(() => console.log("✅ MongoDB connected"))
-.catch(err => console.error("❌ MongoDB error", err));
+/* ================= MONGODB (🔥 FIXED) ================= */
+mongoose
+  .connect(process.env.MONGO_URI, {
+    dbName: "kamababa",          // 🔥 FORCE database name
+    serverSelectionTimeoutMS: 10000
+  })
+  .then(() => console.log("✅ MongoDB connected (kamababa)"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 
 /* ================= MODEL ================= */
 const videoSchema = new mongoose.Schema({
@@ -46,6 +48,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+/* ================= MULTER ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 100 * 1024 * 1024 } // 100MB
@@ -62,20 +65,13 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
     const { password, title } = req.body;
 
     if (password !== ADMIN_PASSWORD) {
-      return res.status(401).json({
-        success: false,
-        error: "Wrong admin password"
-      });
+      return res.status(401).json({ success: false, error: "Wrong password" });
     }
 
     if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: "No video selected"
-      });
+      return res.status(400).json({ success: false, error: "No file" });
     }
 
-    // ⬆️ Upload to Cloudinary
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
@@ -94,15 +90,15 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       throw new Error("Cloudinary upload failed");
     }
 
-    // 💾 SAVE TO MONGODB (CRITICAL FIX)
-    const savedVideo = await Video.create({
+    const video = await Video.create({
       title: title || "Untitled",
       url: uploadResult.secure_url
     });
 
     res.json({
       success: true,
-      video: savedVideo
+      id: video._id,
+      url: video.url
     });
 
   } catch (err) {
@@ -125,7 +121,7 @@ app.get("/api/videos", async (req, res) => {
   }
 });
 
-/* ================= SAFE ID CHECK ================= */
+/* ================= SAFE ID ================= */
 const isValidId = id => mongoose.Types.ObjectId.isValid(id);
 
 /* ================= VIEW ================= */
@@ -182,7 +178,7 @@ app.get("/sitemap.xml", async (req, res) => {
 </url>`;
     });
   } catch (e) {
-    console.error("Sitemap error", e);
+    console.error("SITEMAP ERROR:", e);
   }
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
