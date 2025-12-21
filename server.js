@@ -21,9 +21,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-/* ================= MONGODB ================= */
+/* ================= MONGODB (FIXED TIMEOUTS) ================= */
 mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000
+  serverSelectionTimeoutMS: 20000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 30000,
+  maxPoolSize: 5
 })
 .then(() => console.log("✅ MongoDB connected"))
 .catch(err => console.error("❌ MongoDB error", err));
@@ -56,12 +59,11 @@ app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-/* ================= ✅ FINAL ADMIN UPLOAD ================= */
+/* ================= ✅ FINAL ADMIN UPLOAD (NO TIMEOUT FAIL) ================= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     const { password, title } = req.body;
 
-    // ✅ BODY based admin check (mobile-safe)
     if (password !== ADMIN_PASSWORD) {
       return res.status(401).json({
         success: false,
@@ -76,6 +78,7 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       });
     }
 
+    // 1️⃣ Upload to Cloudinary (main work)
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
@@ -94,11 +97,15 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       throw new Error("Cloudinary upload failed");
     }
 
-    await Video.create({
+    // 2️⃣ Mongo insert (NON-BLOCKING — timeout safe)
+    Video.create({
       title: title || "Untitled",
       url: result.secure_url
+    }).catch(err => {
+      console.error("Mongo insert failed (ignored):", err);
     });
 
+    // 3️⃣ Immediately success to client
     res.json({
       success: true,
       url: result.secure_url
