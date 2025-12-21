@@ -1,30 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watch Video | KamaBaba</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#0b0b0b;
+  color:#fff;
+  font-family:system-ui,-apple-system;
+}
+header{
+  padding:10px;
+  background:#000;
+  border-bottom:1px solid #222;
+  text-align:center;
+}
+header h2{
+  margin:4px 0;
+  color:#ff004f;
+  font-size:18px;
+}
+.player-wrap{
+  background:#000;
+}
+video{
+  width:100%;
+  max-height:360px;
+  background:#000;
+}
+.box{
+  padding:12px;
+}
+.title{
+  font-size:16px;
+  margin:6px 0;
+}
+.meta{
+  font-size:13px;
+  color:#aaa;
+  margin-bottom:10px;
+}
+.actions{
+  display:flex;
+  gap:10px;
+  margin:10px 0;
+}
+.actions button{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:#1b1b1b;
+  color:#fff;
+  cursor:pointer;
+}
+.actions button:hover{
+  background:#ff004f;
+}
+h3{
+  margin:16px 0 8px;
+  font-size:15px;
+}
+
+/* COMMENTS */
+.comment-input{
+  display:flex;
+  gap:6px;
+}
+.comment-input input{
+  flex:1;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+}
+.comment-input button{
+  padding:10px 14px;
+  border:none;
+  border-radius:8px;
+  background:#ff004f;
+  color:#fff;
+}
+.comment{
+  background:#151515;
+  padding:8px;
+  border-radius:8px;
+  margin-top:6px;
+  font-size:13px;
+}
+
+/* RELATED GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:10px;
+}
+.card{
+  background:#141414;
+  border-radius:10px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:.2s;
+}
+.card:hover{transform:scale(1.04)}
+.thumb{
+  width:100%;
+  height:120px;
+  object-fit:cover;
+  background:#000;
+}
+.card p{
+  font-size:12px;
+  padding:6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>🔥 KamaBaba</h2>
+</header>
+
+<div class="player-wrap">
+  <video id="player" controls autoplay playsinline></video>
+</div>
+
+<div class="box">
+  <div class="title" id="title"></div>
+  <div class="meta" id="meta"></div>
+
+  <div class="actions">
+    <button onclick="like()">👍 Like</button>
+    <button onclick="dislike()">👎 Dislike</button>
+  </div>
+
+  <h3>💬 Comments</h3>
+  <div class="comment-input">
+    <input id="cmt" placeholder="Write a comment">
+    <button onclick="comment()">Post</button>
+  </div>
+  <div id="comments"></div>
+
+  <h3>🔥 Related Videos</h3>
+  <div class="grid" id="related"></div>
+</div>
+
 <script>
-const params = new URLSearchParams(location.search);
-const currentId = params.get("id");
+const id = new URLSearchParams(location.search).get("id");
 
 let allVideos = [];
+let currentVideo = null;
 
-// 🔹 Fetch all videos
+/* LOAD ALL VIDEOS */
 fetch("/api/videos")
-  .then(res => res.json())
+  .then(r => r.json())
   .then(videos => {
     allVideos = videos;
+    currentVideo = videos.find(v => v._id === id);
 
-    // 🔹 Current video
-    const current = videos.find(v => v._id === currentId);
-
-    if (!current) return;
-
-    // 🔹 Load player
-    const player = document.getElementById("player");
-    if (player) {
-      player.src = current.url;
+    if (!currentVideo) {
+      document.body.innerHTML = "<h2 style='padding:20px'>❌ Video not found</h2>";
+      return;
     }
 
-    // 🔹 Related videos (exclude current)
-    const related = videos.filter(v => v._id !== currentId);
+    // PLAYER
+    player.src = currentVideo.url;
+    title.innerText = currentVideo.title;
+    meta.innerText = "Uploaded on " + new Date(currentVideo.createdAt).toDateString();
 
-    showRelated(related);
+    // INCREASE VIEW
+    fetch("/api/view/" + id, { method: "POST" });
+
+    // COMMENTS
+    (currentVideo.comments || []).forEach(addComment);
+
+    // RELATED
+    showRelated(videos.filter(v => v._id !== id));
   });
 
 function showRelated(videos){
@@ -32,23 +190,44 @@ function showRelated(videos){
   box.innerHTML = "";
 
   videos.slice(0, 8).forEach(v => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    card.innerHTML = `
-      <video class="thumb"
-        src="${v.url}#t=1"
-        muted
-        preload="metadata">
-      </video>
+    const c = document.createElement("div");
+    c.className = "card";
+    c.innerHTML = `
+      <video class="thumb" src="${v.url}#t=1" muted preload="metadata"></video>
       <p>${v.title}</p>
     `;
-
-    card.onclick = () => {
-      location.href = "/watch?id=" + v._id;
-    };
-
-    box.appendChild(card);
+    c.onclick = () => location.href = "/watch?id=" + v._id;
+    box.appendChild(c);
   });
 }
+
+/* ACTIONS */
+function like(){
+  fetch("/api/like/" + id, { method: "POST" })
+    .then(() => alert("👍 Liked"));
+}
+function dislike(){
+  fetch("/api/dislike/" + id, { method: "POST" })
+    .then(() => alert("👎 Disliked"));
+}
+
+/* COMMENTS */
+function addComment(text){
+  const d = document.createElement("div");
+  d.className = "comment";
+  d.innerText = text;
+  comments.appendChild(d);
+}
+
+function comment(){
+  if (!cmt.value) return;
+  fetch("/api/comment/" + id, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ text: cmt.value })
+  }).then(() => location.reload());
+}
 </script>
+
+</body>
+</html>
