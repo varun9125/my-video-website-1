@@ -146,39 +146,42 @@ app.post("/api/comment/:id", async (req, res) => {
   res.json({ success: true });
 });
 
-/* ================= ✅ FINAL AUTO SITEMAP ================= */
+/* ================= ✅ FINAL, BULLETPROOF SITEMAP ================= */
 app.get("/sitemap.xml", async (req, res) => {
-  try {
-    const videos = await Video.find({}, "_id");
+  res.setHeader("Content-Type", "application/xml");
 
-    let urls = `
+  let urls = `
 <url>
   <loc>${BASE_URL}/</loc>
   <changefreq>daily</changefreq>
   <priority>1.0</priority>
 </url>`;
 
-    videos.forEach(v => {
-      urls += `
+  try {
+    // Mongo readyState === 1 means connected
+    if (mongoose.connection.readyState === 1) {
+      const videos = await Video.find({}, "_id");
+
+      videos.forEach(v => {
+        urls += `
 <url>
   <loc>${BASE_URL}/watch?id=${v._id}</loc>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>`;
-    });
+      });
+    }
+  } catch (err) {
+    console.error("SITEMAP DB ERROR (IGNORED):", err);
+    // IMPORTANT: error ignore → sitemap still valid
+  }
 
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}
 </urlset>`;
 
-    res.setHeader("Content-Type", "application/xml");
-    res.status(200).send(sitemap);
-
-  } catch (err) {
-    console.error("SITEMAP ERROR:", err);
-    res.status(500).send("Sitemap error");
-  }
+  res.status(200).send(sitemap);
 });
 
 /* ================= START ================= */
