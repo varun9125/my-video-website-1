@@ -2,110 +2,112 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Upload</title>
+
 <style>
 body{
-  background:#111;
-  color:#fff;
+  margin:0;
+  background:#0d0d0d;
   font-family:system-ui;
-  padding:20px
+  color:#fff;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
 .box{
-  max-width:420px;
-  margin:auto;
-  background:#1b1b1b;
+  background:#111;
   padding:20px;
-  border-radius:10px
+  width:90%;
+  max-width:360px;
+  border-radius:12px;
+  box-shadow:0 0 30px #ff0055;
 }
+h2{text-align:center;margin-bottom:15px}
 input,button{
   width:100%;
   padding:10px;
   margin-top:10px;
   border-radius:6px;
-  border:none
+  border:none;
+  font-size:14px;
 }
+input{background:#222;color:#fff}
 button{
-  background:#ff3e6c;
+  background:#ff0055;
   color:#fff;
-  font-weight:600;
-  cursor:pointer
+  font-weight:bold;
+  cursor:pointer;
 }
-button:disabled{
-  opacity:.6;
-}
-#msg{
-  text-align:center;
-  margin-top:12px;
-  font-size:14px
-}
-progress{
-  width:100%;
-  margin-top:10px;
-}
+button:disabled{opacity:.6}
+#msg{margin-top:10px;text-align:center;font-size:14px}
+progress{width:100%;margin-top:10px}
 </style>
 </head>
 
 <body>
 <div class="box">
-  <h2>Admin Upload</h2>
+  <h2>🔐 Admin Upload</h2>
 
-  <input id="pass" type="password" placeholder="Admin Password">
-  <input id="title" placeholder="Video Title">
-  <input id="video" type="file" accept="video/*">
+  <input type="password" id="password" placeholder="Admin Password">
+  <input type="text" id="title" placeholder="Video Title">
+  <input type="file" id="video" accept="video/*">
 
-  <button id="btn" onclick="upload()">Upload Video</button>
+  <button onclick="upload()">Upload Video</button>
   <progress id="bar" value="0" max="100" style="display:none"></progress>
 
-  <p id="msg"></p>
+  <div id="msg"></div>
 </div>
 
 <script>
 function upload(){
-  const pass  = document.getElementById("pass").value.trim();
-  const title = document.getElementById("title").value.trim();
-  const file  = document.getElementById("video").files[0];
-
-  const msg = document.getElementById("msg");
-  const btn = document.getElementById("btn");
-  const bar = document.getElementById("bar");
+  const pass = password.value.trim();
+  const titleVal = title.value.trim();
+  const file = video.files[0];
 
   if(!pass || !file){
-    msg.innerText = "❌ Password & video required";
+    msg.innerText="❌ Password & video required";
     return;
   }
 
-  btn.disabled = true;
-  bar.style.display = "block";
-  bar.value = 10;
-  msg.innerText = "⏳ Uploading… please wait";
-
   const fd = new FormData();
+  fd.append("password", pass);
+  fd.append("title", titleVal);
   fd.append("video", file);
-  fd.append("title", title);
 
-  fetch("/api/upload", {
-    method: "POST",
-    headers: { "x-admin-password": pass },
-    body: fd
-  })
-  .then(r => r.json())
-  .then(d => {
-    bar.value = 100;
-    if(d.success){
-      msg.innerText = "✅ Upload successful";
-      document.getElementById("video").value = "";
-      document.getElementById("title").value = "";
-    } else {
-      msg.innerText = "❌ " + (d.error || "Upload failed");
+  bar.style.display="block";
+  bar.value=0;
+  msg.innerText="⏳ Uploading...";
+
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST","/api/upload");
+
+  xhr.upload.onprogress = e=>{
+    if(e.lengthComputable){
+      bar.value = (e.loaded / e.total) * 100;
     }
-  })
-  .catch(() => {
-    msg.innerText = "❌ Server error";
-  })
-  .finally(() => {
-    btn.disabled = false;
-    setTimeout(()=>bar.style.display="none", 1500);
-  });
+  };
+
+  xhr.onload = ()=>{
+    try{
+      const res = JSON.parse(xhr.responseText);
+      if(res.success){
+        msg.innerText="✅ Upload successful";
+        bar.value=100;
+      }else{
+        msg.innerText="❌ "+res.error;
+      }
+    }catch{
+      msg.innerText="❌ Upload failed";
+    }
+  };
+
+  xhr.onerror = ()=>{
+    msg.innerText="❌ Network error";
+  };
+
+  xhr.send(fd);
 }
 </script>
 </body>
