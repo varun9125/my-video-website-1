@@ -40,11 +40,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 const upload = multer({ storage: multer.memoryStorage() });
 
-/* ================= UPLOAD API ================= */
+/* ================= UPLOAD ================= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     if (req.headers["x-admin-password"] !== ADMIN_PASSWORD) {
-      return res.status(401).json({ success: false });
+      return res.status(401).json({ success: false, error: "Unauthorized" });
     }
 
     if (!req.file) {
@@ -77,6 +77,35 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
 app.get("/api/videos", async (req, res) => {
   const videos = await Video.find().sort({ createdAt: -1 });
   res.json(videos);
+});
+
+/* ================= VIEW ================= */
+app.post("/api/view/:id", async (req, res) => {
+  await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+  res.json({ success: true });
+});
+
+/* ================= LIKE ================= */
+app.post("/api/like/:id", async (req, res) => {
+  await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
+  res.json({ success: true });
+});
+
+/* ================= DISLIKE ================= */
+app.post("/api/dislike/:id", async (req, res) => {
+  await Video.findByIdAndUpdate(req.params.id, { $inc: { dislikes: 1 } });
+  res.json({ success: true });
+});
+
+/* ================= COMMENT ================= */
+app.post("/api/comment/:id", async (req, res) => {
+  if (!req.body.text) return res.json({ success: false });
+
+  await Video.findByIdAndUpdate(req.params.id, {
+    $push: { comments: req.body.text }
+  });
+
+  res.json({ success: true });
 });
 
 /* ================= START ================= */
