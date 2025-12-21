@@ -3,144 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Watch Video</title>
+<title>Watch Video | KamaBaba</title>
 
 <style>
 body{
   margin:0;
-  background:#0d0d0d;
+  background:#0b0b0b;
   color:#fff;
-  font-family:system-ui;
+  font-family:system-ui,Arial;
+}
+
+header{
+  background:#111;
+  padding:12px;
+  text-align:center;
+  font-size:18px;
+  font-weight:600;
 }
 
 .container{
   max-width:900px;
   margin:auto;
-  padding:10px;
+  padding:12px;
 }
 
+/* VIDEO */
 video{
   width:100%;
-  border-radius:10px;
+  max-height:60vh;
   background:#000;
+  border-radius:8px;
 }
 
-.actions{
-  display:flex;
-  gap:10px;
+/* TITLE */
+h2{
+  font-size:16px;
   margin:10px 0;
 }
 
+/* LIKE DISLIKE */
+.actions{
+  display:flex;
+  gap:15px;
+  margin-bottom:15px;
+}
+
 .actions button{
-  flex:1;
-  padding:10px;
   background:#222;
   border:none;
   color:#fff;
+  padding:8px 14px;
   border-radius:6px;
   cursor:pointer;
 }
 
-.count{
-  font-size:13px;
-  opacity:.8;
-  text-align:center;
-  margin-top:4px;
+/* RELATED */
+.related h3{
+  margin:15px 0 10px;
+  font-size:15px;
 }
 
-.related{
+.related-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:12px;
-  margin-top:15px;
+  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:10px;
 }
 
-.related video{
+.card{
+  cursor:pointer;
+}
+
+.card video{
   width:100%;
   aspect-ratio:16/9;
   object-fit:cover;
-  border-radius:8px;
-  cursor:pointer;
+  border-radius:6px;
+}
+
+.card p{
+  font-size:12px;
+  margin:5px 0 0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 </style>
 </head>
 
 <body>
 
+<header>🔥 KamaBaba Viral Videos 🔥</header>
+
 <div class="container">
+
   <video id="player" controls autoplay></video>
 
+  <h2 id="title">Loading...</h2>
+
   <div class="actions">
-    <button onclick="like()">👍 Like</button>
-    <button onclick="dislike()">👎 Dislike</button>
+    <button onclick="like()">👍 Like <span id="likeCount">0</span></button>
+    <button onclick="dislike()">👎 Dislike <span id="dislikeCount">0</span></button>
   </div>
 
-  <div class="count">
-    👍 <span id="likeCount">0</span> |
-    👎 <span id="dislikeCount">0</span> |
-    👁 <span id="viewCount">0</span>
+  <div class="related">
+    <h3>Related Videos</h3>
+    <div class="related-grid" id="related"></div>
   </div>
 
-  <h3>Related Videos</h3>
-  <div class="related" id="related"></div>
 </div>
 
 <script>
 const id = new URLSearchParams(location.search).get("id");
-
 const player = document.getElementById("player");
-const likeCount = document.getElementById("likeCount");
-const dislikeCount = document.getElementById("dislikeCount");
-const viewCount = document.getElementById("viewCount");
+const titleEl = document.getElementById("title");
+const relatedBox = document.getElementById("related");
 
-/* FETCH VIDEO DATA */
+// LIKE / DISLIKE (PERSISTENT)
+let likes = Number(localStorage.getItem("like_"+id)) || 0;
+let dislikes = Number(localStorage.getItem("dislike_"+id)) || 0;
+
+document.getElementById("likeCount").innerText = likes;
+document.getElementById("dislikeCount").innerText = dislikes;
+
+function like(){
+  likes++;
+  localStorage.setItem("like_"+id,likes);
+  document.getElementById("likeCount").innerText = likes;
+}
+
+function dislike(){
+  dislikes++;
+  localStorage.setItem("dislike_"+id,dislikes);
+  document.getElementById("dislikeCount").innerText = dislikes;
+}
+
+// FETCH VIDEOS
 fetch("/api/videos")
-.then(r=>r.json())
+.then(res=>res.json())
 .then(videos=>{
   const current = videos.find(v=>v._id===id);
   if(!current){
-    document.body.innerHTML="❌ Video not found";
+    titleEl.innerText="Video not found";
     return;
   }
 
   player.src = current.url;
-  likeCount.innerText = current.likes;
-  dislikeCount.innerText = current.dislikes;
-  viewCount.innerText = current.views;
+  titleEl.innerText = current.title;
 
-  // increase view (once)
-  fetch("/api/view/"+id,{method:"POST"});
-
-  // related videos
-  const related = videos.filter(v=>v._id!==id).slice(0,8);
-  const box = document.getElementById("related");
-
-  related.forEach(v=>{
-    const vid = document.createElement("video");
-    vid.src = v.url+"#t=1";
-    vid.muted = true;
-    vid.onclick = ()=>location.href="/watch.html?id="+v._id;
-    box.appendChild(vid);
-  });
+  // RELATED VIDEOS (simple)
+  videos
+    .filter(v=>v._id!==id)
+    .slice(0,6)
+    .forEach(v=>{
+      const div=document.createElement("div");
+      div.className="card";
+      div.innerHTML=`
+        <video src="${v.url}#t=1" muted></video>
+        <p>${v.title}</p>
+      `;
+      div.onclick=()=>location.href="/watch?id="+v._id;
+      relatedBox.appendChild(div);
+    });
 });
+</script>
 
-/* LIKE */
-function like(){
-  fetch("/api/like/"+id,{method:"POST"})
-  .then(()=>refreshCounts());
-}
-
-/* DISLIKE */
-function dislike(){
-  fetch("/api/dislike/"+id,{method:"POST"})
-  .then(()=>refreshCounts());
-}
-
-/* REFRESH COUNTS */
-function refreshCounts(){
-  fetch("/api/videos")
-  .then(r=>r.json())
+</body>
+</html>
   .then(videos=>{
     const v = videos.find(v=>v._id===id);
     if(!v) return;
