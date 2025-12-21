@@ -1,114 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin Upload</title>
-
 <style>
-body{
-  margin:0;
-  background:#0d0d0d;
-  font-family:system-ui;
-  color:#fff;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-.box{
-  background:#111;
-  padding:20px;
-  width:90%;
-  max-width:360px;
-  border-radius:12px;
-  box-shadow:0 0 30px #ff0055;
-}
-h2{text-align:center;margin-bottom:15px}
-input,button{
-  width:100%;
-  padding:10px;
-  margin-top:10px;
-  border-radius:6px;
-  border:none;
-  font-size:14px;
-}
-input{background:#222;color:#fff}
-button{
-  background:#ff0055;
-  color:#fff;
-  font-weight:bold;
-  cursor:pointer;
-}
-button:disabled{opacity:.6}
-#msg{margin-top:10px;text-align:center;font-size:14px}
-progress{width:100%;margin-top:10px}
+body{background:#000;color:#fff;font-family:system-ui}
+.box{max-width:400px;margin:40px auto;padding:20px}
+input,button{width:100%;margin:8px 0;padding:12px;border-radius:8px;border:none}
+button{background:#ff0055;color:#fff;font-weight:600}
 </style>
 </head>
-
 <body>
+
 <div class="box">
   <h2>🔐 Admin Upload</h2>
 
   <input type="password" id="password" placeholder="Admin Password">
-  <input type="text" id="title" placeholder="Video Title">
-  <input type="file" id="video" accept="video/*">
-
+  <input type="text" id="title" placeholder="Video title">
+  <input type="file" id="video">
   <button onclick="upload()">Upload Video</button>
-  <progress id="bar" value="0" max="100" style="display:none"></progress>
 
-  <div id="msg"></div>
+  <p id="msg"></p>
 </div>
 
 <script>
-function upload(){
-  const pass = password.value.trim();
-  const titleVal = title.value.trim();
-  const file = video.files[0];
-
-  if(!pass || !file){
-    msg.innerText="❌ Password & video required";
-    return;
-  }
-
+async function upload(){
   const fd = new FormData();
-  fd.append("password", pass);
-  fd.append("title", titleVal);
-  fd.append("video", file);
+  fd.append("password", document.getElementById("password").value);
+  fd.append("title", document.getElementById("title").value);
+  fd.append("video", document.getElementById("video").files[0]);
 
-  bar.style.display="block";
-  bar.value=0;
-  msg.innerText="⏳ Uploading...";
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: fd
+  });
 
-  const xhr = new XMLHttpRequest();
-  xhr.open("POST","/api/upload");
-
-  xhr.upload.onprogress = e=>{
-    if(e.lengthComputable){
-      bar.value = (e.loaded / e.total) * 100;
-    }
-  };
-
-  xhr.onload = ()=>{
-    try{
-      const res = JSON.parse(xhr.responseText);
-      if(res.success){
-        msg.innerText="✅ Upload successful";
-        bar.value=100;
-      }else{
-        msg.innerText="❌ "+res.error;
-      }
-    }catch{
-      msg.innerText="❌ Upload failed";
-    }
-  };
-
-  xhr.onerror = ()=>{
-    msg.innerText="❌ Network error";
-  };
-
-  xhr.send(fd);
+  const data = await res.json();
+  document.getElementById("msg").innerText =
+    data.success ? "✅ Upload successful" : "❌ " + data.error;
 }
 </script>
+
 </body>
 </html>
