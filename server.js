@@ -1,14 +1,25 @@
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const path = require("path");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+/* ================= BASIC CHECK ================= */
+if (!process.env.MONGO_URI) {
+  console.error("❌ MONGO_URI missing");
+}
+if (!process.env.CLOUDINARY_CLOUD_NAME) {
+  console.error("❌ Cloudinary ENV missing");
+}
+
 /* ================= CONFIG ================= */
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "changeme";
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
@@ -18,9 +29,15 @@ cloudinary.config({
 });
 
 /* ================= MONGODB ================= */
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error", err));
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 5000
+})
+.then(() => console.log("✅ MongoDB connected"))
+.catch(err => console.error("❌ MongoDB error", err));
+
+mongoose.connection.on("disconnected", () => {
+  console.error("❌ MongoDB disconnected");
+});
 
 /* ================= MODEL ================= */
 const videoSchema = new mongoose.Schema({
@@ -36,11 +53,16 @@ const videoSchema = new mongoose.Schema({
 const Video = mongoose.model("Video", videoSchema);
 
 /* ================= MIDDLEWARE ================= */
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
-const upload = multer({ storage: multer.memoryStorage() });
 
-/* ================= WATCH PAGE FIX ================= */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
+});
+
+/* ================= WATCH PAGE ================= */
 app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
@@ -65,6 +87,10 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       ).end(req.file.buffer);
     });
 
+    if (!result?.secure_url) {
+      throw new Error("Cloudinary upload failed");
+    }
+
     await Video.create({
       title,
       url: result.secure_url
@@ -73,38 +99,49 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
     res.json({ success: true });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: "Upload failed" });
+    console.error("UPLOAD ERROR:", err);
+    res.status(500).json({ success: false });
   }
 });
 
 /* ================= GET VIDEOS ================= */
 app.get("/api/videos", async (req, res) => {
-  const videos = await Video.find().sort({ createdAt: -1 });
-  res.json(videos);
+  try {
+    const videos = await Video.find().sort({ createdAt: -1 });
+    res.json(videos);
+  } catch (err) {
+    console.error("FETCH ERROR:", err);
+    res.status(500).json([]);
+  }
 });
+
+/* ================= SAFE ID CHECK ================= */
+const isValidId = id => mongoose.Types.ObjectId.isValid(id);
 
 /* ================= VIEW ================= */
 app.post("/api/view/:id", async (req, res) => {
+  if (!isValidId(req.params.id)) return res.json({ success: false });
   await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
   res.json({ success: true });
 });
 
 /* ================= LIKE ================= */
 app.post("/api/like/:id", async (req, res) => {
+  if (!isValidId(req.params.id)) return res.json({ success: false });
   await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
   res.json({ success: true });
 });
 
 /* ================= DISLIKE ================= */
 app.post("/api/dislike/:id", async (req, res) => {
+  if (!isValidId(req.params.id)) return res.json({ success: false });
   await Video.findByIdAndUpdate(req.params.id, { $inc: { dislikes: 1 } });
   res.json({ success: true });
 });
 
 /* ================= COMMENT ================= */
 app.post("/api/comment/:id", async (req, res) => {
-  if (!req.body.text) {
+  if (!isValidId(req.params.id) || !req.body.text) {
     return res.json({ success: false });
   }
 
