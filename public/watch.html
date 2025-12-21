@@ -4,143 +4,155 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Watch Video | KamaBaba</title>
-<meta name="robots" content="index, follow">
-<meta name="rating" content="adult">
+<title>Watch Video</title>
 
 <style>
 body{
   margin:0;
-  background:#0b0b0b;
+  background:#0d0d0d;
   color:#fff;
-  font-family:system-ui
+  font-family:system-ui;
 }
-header{
-  padding:10px;
-  background:#111;
-  text-align:center;
-  font-weight:700;
-  font-size:18px
-}
+
 .container{
   max-width:900px;
   margin:auto;
-  padding:10px
-}
-video{
-  width:100%;
-  border-radius:12px;
-  background:#000
-}
-.title{
-  font-size:16px;
-  margin:10px 0;
-  font-weight:600
+  padding:10px;
 }
 
-/* ACTIONS */
+video{
+  width:100%;
+  border-radius:10px;
+  background:#000;
+}
+
 .actions{
   display:flex;
   gap:10px;
-  margin:10px 0
+  margin:10px 0;
 }
+
 .actions button{
   flex:1;
   padding:10px;
   background:#222;
-  color:#fff;
   border:none;
+  color:#fff;
   border-radius:6px;
-  cursor:pointer
+  cursor:pointer;
 }
-.actions button:hover{background:#ff0055}
 
-/* RELATED */
-.related-title{
-  margin:20px 0 10px;
-  font-size:17px;
-  font-weight:700
+.count{
+  font-size:13px;
+  opacity:.8;
+  text-align:center;
+  margin-top:4px;
 }
-.grid{
+
+.related{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
-  gap:12px
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;
+  margin-top:15px;
 }
-.card{
-  cursor:pointer
-}
-.thumb{
+
+.related video{
   width:100%;
-  height:180px;
+  aspect-ratio:16/9;
   object-fit:cover;
   border-radius:8px;
-  background:#000
-}
-.card p{
-  font-size:13px;
-  margin:5px 0 0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  text-align:center
-}
-.adbox{
-  margin:15px 0;
-  text-align:center
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<header>🔥 KamaBaba 🔥</header>
-
 <div class="container">
-
-  <!-- ================= VIDEO PLAYER ================= -->
-  <video id="player" controls autoplay playsinline></video>
-  <div class="title" id="title">Loading...</div>
+  <video id="player" controls autoplay></video>
 
   <div class="actions">
     <button onclick="like()">👍 Like</button>
     <button onclick="dislike()">👎 Dislike</button>
-    <button onclick="share()">🔗 Share</button>
   </div>
 
-  <!-- ================= ADSTERRA NATIVE (TOP) ================= -->
-  <div class="adbox">
-    <!-- 🔽 ADSTERRA NATIVE / BANNER CODE HERE 🔽 -->
-    <!-- ADSTERRA_CODE_HERE -->
+  <div class="count">
+    👍 <span id="likeCount">0</span> |
+    👎 <span id="dislikeCount">0</span> |
+    👁 <span id="viewCount">0</span>
   </div>
 
-  <!-- ================= RELATED VIDEOS ================= -->
-  <div class="related-title">🔥 Related Videos</div>
-  <div class="grid" id="related"></div>
-
+  <h3>Related Videos</h3>
+  <div class="related" id="related"></div>
 </div>
 
-<!-- ================= ADSTERRA POPUNDER ================= -->
-<!-- 🔽 ADSTERRA POPUNDER CODE HERE 🔽 -->
-<!-- ADSTERRA_CODE_HERE -->
-<!-- ================= END AD ================= -->
-
 <script>
-const params = new URLSearchParams(location.search);
-const id = params.get("id");
+const id = new URLSearchParams(location.search).get("id");
 
-let allVideos = [];
-let currentVideo = null;
+const player = document.getElementById("player");
+const likeCount = document.getElementById("likeCount");
+const dislikeCount = document.getElementById("dislikeCount");
+const viewCount = document.getElementById("viewCount");
 
+/* FETCH VIDEO DATA */
 fetch("/api/videos")
 .then(r=>r.json())
 .then(videos=>{
-  allVideos = videos;
-  currentVideo = videos.find(v=>v._id===id);
-
-  if(!currentVideo){
-    alert("Video not found");
+  const current = videos.find(v=>v._id===id);
+  if(!current){
+    document.body.innerHTML="❌ Video not found";
     return;
   }
+
+  player.src = current.url;
+  likeCount.innerText = current.likes;
+  dislikeCount.innerText = current.dislikes;
+  viewCount.innerText = current.views;
+
+  // increase view (once)
+  fetch("/api/view/"+id,{method:"POST"});
+
+  // related videos
+  const related = videos.filter(v=>v._id!==id).slice(0,8);
+  const box = document.getElementById("related");
+
+  related.forEach(v=>{
+    const vid = document.createElement("video");
+    vid.src = v.url+"#t=1";
+    vid.muted = true;
+    vid.onclick = ()=>location.href="/watch.html?id="+v._id;
+    box.appendChild(vid);
+  });
+});
+
+/* LIKE */
+function like(){
+  fetch("/api/like/"+id,{method:"POST"})
+  .then(()=>refreshCounts());
+}
+
+/* DISLIKE */
+function dislike(){
+  fetch("/api/dislike/"+id,{method:"POST"})
+  .then(()=>refreshCounts());
+}
+
+/* REFRESH COUNTS */
+function refreshCounts(){
+  fetch("/api/videos")
+  .then(r=>r.json())
+  .then(videos=>{
+    const v = videos.find(v=>v._id===id);
+    if(!v) return;
+    likeCount.innerText = v.likes;
+    dislikeCount.innerText = v.dislikes;
+    viewCount.innerText = v.views;
+  });
+}
+</script>
+
+</body>
+</html>
 
   document.getElementById("player").src = currentVideo.url;
   document.getElementById("title").innerText = currentVideo.title;
