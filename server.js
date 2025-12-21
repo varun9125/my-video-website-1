@@ -21,12 +21,9 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-/* ================= MONGODB (FIXED TIMEOUTS) ================= */
+/* ================= MONGODB ================= */
 mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 20000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 30000,
-  maxPoolSize: 5
+  serverSelectionTimeoutMS: 10000
 })
 .then(() => console.log("✅ MongoDB connected"))
 .catch(err => console.error("❌ MongoDB error", err));
@@ -59,7 +56,7 @@ app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-/* ================= ✅ FINAL ADMIN UPLOAD (NO TIMEOUT FAIL) ================= */
+/* ================= ✅ FINAL ADMIN UPLOAD ================= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     const { password, title } = req.body;
@@ -78,8 +75,8 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       });
     }
 
-    // 1️⃣ Upload to Cloudinary (main work)
-    const result = await new Promise((resolve, reject) => {
+    // ⬆️ Upload to Cloudinary
+    const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
           resource_type: "video",
@@ -93,29 +90,26 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       ).end(req.file.buffer);
     });
 
-    if (!result?.secure_url) {
+    if (!uploadResult?.secure_url) {
       throw new Error("Cloudinary upload failed");
     }
 
-    // 2️⃣ Mongo insert (NON-BLOCKING — timeout safe)
-    Video.create({
+    // 💾 SAVE TO MONGODB (CRITICAL FIX)
+    const savedVideo = await Video.create({
       title: title || "Untitled",
-      url: result.secure_url
-    }).catch(err => {
-      console.error("Mongo insert failed (ignored):", err);
+      url: uploadResult.secure_url
     });
 
-    // 3️⃣ Immediately success to client
     res.json({
       success: true,
-      url: result.secure_url
+      video: savedVideo
     });
 
   } catch (err) {
     console.error("UPLOAD ERROR:", err);
     res.status(500).json({
       success: false,
-      error: err.message || "Upload failed"
+      error: err.message
     });
   }
 });
@@ -125,7 +119,8 @@ app.get("/api/videos", async (req, res) => {
   try {
     const videos = await Video.find().sort({ createdAt: -1 });
     res.json(videos);
-  } catch {
+  } catch (err) {
+    console.error("FETCH ERROR:", err);
     res.status(500).json([]);
   }
 });
@@ -177,18 +172,18 @@ app.get("/sitemap.xml", async (req, res) => {
 </url>`;
 
   try {
-    if (mongoose.connection.readyState === 1) {
-      const videos = await Video.find({}, "_id");
-      videos.forEach(v => {
-        urls += `
+    const videos = await Video.find({}, "_id");
+    videos.forEach(v => {
+      urls += `
 <url>
   <loc>${BASE_URL}/watch?id=${v._id}</loc>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>`;
-      });
-    }
-  } catch (e) {}
+    });
+  } catch (e) {
+    console.error("Sitemap error", e);
+  }
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
