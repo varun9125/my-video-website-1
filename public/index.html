@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<!-- ✅ GOOGLE SEARCH CONSOLE VERIFICATION -->
+<meta name="google-site-verification" content="paEoviSa_jY998m08Zu_NkrballqlpG-I9YfpmRFB10" />
+
 <meta charset="UTF-8">
 
 <!-- MOBILE -->
@@ -182,16 +186,16 @@ header h1 {
 <main class="grid" id="grid"></main>
 <div class="pagination" id="pagination"></div>
 
-<!-- ===== GLOBAL VIDEO SCHEMA (SEO BOOST) ===== -->
+<!-- ===== GLOBAL SITE SCHEMA ===== -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "KamaBaba Viral Videos",
-  "url": "/",
+  "url": "https://my-video-website-1-1.onrender.com/",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "/?q={search_term_string}",
+    "target": "https://my-video-website-1-1.onrender.com/?q={search_term_string}",
     "query-input": "required name=search_term_string"
   }
 }
@@ -241,15 +245,13 @@ function render() {
     const card = document.createElement("div");
     card.className = "card";
 
-    /* ===== PER VIDEO SEO ===== */
     card.innerHTML = `
-      <video
-        class="thumb"
+      <video class="thumb"
         src="${v.url}#t=1"
         muted
         preload="metadata"
-        title="${v.title}"
-      ></video>
+        title="${v.title}">
+      </video>
       <p>${v.title}</p>
 
       <script type="application/ld+json">
