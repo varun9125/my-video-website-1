@@ -1,157 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-
-<!-- MOBILE -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- BASIC SEO (dynamic JS se update hoga) -->
-<title>Watch Video | KamaBaba</title>
-<meta name="description" content="Watch trending viral adult video on KamaBaba. 18+ only.">
-<meta name="robots" content="index, follow">
-<meta name="rating" content="adult">
-
-<!-- OPEN GRAPH -->
-<meta property="og:type" content="video.other">
-<meta property="og:site_name" content="KamaBaba">
-
-<style>
-body{margin:0;background:#000;color:#fff;font-family:system-ui}
-video{width:100%;max-height:320px;background:#000}
-.box{padding:12px}
-.actions{display:flex;gap:10px;margin:10px 0}
-.actions button{
-  padding:8px 14px;
-  border:none;border-radius:6px;
-  background:#222;color:#fff;cursor:pointer
-}
-.actions button:hover{background:#0f9d58}
-.comment-input{display:flex;gap:6px;margin-top:8px}
-.comment-input input{flex:1;padding:8px;border-radius:6px;border:none}
-.comment-input button{
-  padding:8px 14px;border:none;border-radius:6px;
-  background:#2196f3;color:#fff
-}
-.comment{background:#111;padding:8px;margin-top:6px;border-radius:6px}
-.related{margin-top:15px;display:flex;gap:10px;overflow-x:auto}
-.related .card{min-width:140px;cursor:pointer}
-.related video{width:100%;height:90px;object-fit:cover;border-radius:6px}
-.related p{font-size:12px;text-align:center;white-space:nowrap;overflow:hidden}
-</style>
-</head>
-
-<body>
-
-<video id="player" controls playsinline></video>
-
-<div class="box">
-  <h3 id="title"></h3>
-  <p id="views"></p>
-
-  <div class="actions">
-    <button onclick="like()">👍 Like</button>
-    <button onclick="dislike()">👎 Dislike</button>
-  </div>
-
-  <h4>Comments</h4>
-  <div class="comment-input">
-    <input id="cmt" placeholder="Write a comment">
-    <button onclick="comment()">Post</button>
-  </div>
-  <div id="comments"></div>
-
-  <h4 style="margin-top:15px">Related Videos</h4>
-  <div class="related" id="related"></div>
-</div>
-
 <script>
-const id = new URLSearchParams(location.search).get("id");
+const params = new URLSearchParams(location.search);
+const currentId = params.get("id");
 
+let allVideos = [];
+
+// 🔹 Fetch all videos
 fetch("/api/videos")
-.then(r=>r.json())
-.then(videos=>{
-  const v = videos.find(x=>x._id === id);
-  if(!v){
-    document.body.innerHTML="❌ Video not found";
-    return;
-  }
+  .then(res => res.json())
+  .then(videos => {
+    allVideos = videos;
 
-  /* ===== VIDEO LOAD ===== */
-  player.src = v.url;
-  title.innerText = v.title;
-  views.innerText = "👁 " + v.views;
+    // 🔹 Current video
+    const current = videos.find(v => v._id === currentId);
 
-  /* ===== SEO DYNAMIC ===== */
-  document.title = v.title + " | KamaBaba Viral Video";
-  document.querySelector('meta[name="description"]')
-    .setAttribute("content", v.title + " - Watch viral adult video on KamaBaba");
+    if (!current) return;
 
-  document.querySelector('meta[property="og:title"]') ||
-    document.head.insertAdjacentHTML("beforeend",
-      `<meta property="og:title" content="${v.title}">`);
-
-  document.querySelector('meta[property="og:description"]') ||
-    document.head.insertAdjacentHTML("beforeend",
-      `<meta property="og:description" content="Watch viral adult video on KamaBaba">`);
-
-  document.querySelector('meta[property="og:video"]') ||
-    document.head.insertAdjacentHTML("beforeend",
-      `<meta property="og:video" content="${v.url}">`);
-
-  /* ===== VIDEO SCHEMA (PER VIDEO SEO) ===== */
-  const schema = document.createElement("script");
-  schema.type = "application/ld+json";
-  schema.innerHTML = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "VideoObject",
-    "name": v.title,
-    "contentUrl": v.url,
-    "uploadDate": v.createdAt || new Date().toISOString(),
-    "publisher": {
-      "@type": "Organization",
-      "name": "KamaBaba"
+    // 🔹 Load player
+    const player = document.getElementById("player");
+    if (player) {
+      player.src = current.url;
     }
-  });
-  document.head.appendChild(schema);
 
-  /* ===== INCREASE VIEW ===== */
-  fetch("/api/view/"+id,{method:"POST"});
+    // 🔹 Related videos (exclude current)
+    const related = videos.filter(v => v._id !== currentId);
 
-  /* ===== COMMENTS ===== */
-  v.comments.forEach(c=>{
-    const d=document.createElement("div");
-    d.className="comment";
-    d.innerText=c;
-    comments.appendChild(d);
+    showRelated(related);
   });
 
-  /* ===== RELATED ===== */
-  videos.filter(x=>x._id !== id).slice(0,8).forEach(r=>{
-    const c=document.createElement("div");
-    c.className="card";
-    c.innerHTML=`<video src="${r.url}#t=1" muted></video><p>${r.title}</p>`;
-    c.onclick=()=>location.href="/watch?id="+r._id;
-    related.appendChild(c);
-  });
-});
+function showRelated(videos){
+  const box = document.getElementById("related");
+  box.innerHTML = "";
 
-/* ===== ACTIONS ===== */
-function like(){
-  fetch("/api/like/"+id,{method:"POST"}).then(()=>location.reload())
-}
-function dislike(){
-  fetch("/api/dislike/"+id,{method:"POST"}).then(()=>location.reload())
-}
-function comment(){
-  if(!cmt.value) return;
-  fetch("/api/comment/"+id,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text:cmt.value})
-  }).then(()=>location.reload());
+  videos.slice(0, 8).forEach(v => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <video class="thumb"
+        src="${v.url}#t=1"
+        muted
+        preload="metadata">
+      </video>
+      <p>${v.title}</p>
+    `;
+
+    card.onclick = () => {
+      location.href = "/watch?id=" + v._id;
+    };
+
+    box.appendChild(card);
+  });
 }
 </script>
-
-</body>
-</html>
