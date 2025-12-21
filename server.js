@@ -40,6 +40,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 const upload = multer({ storage: multer.memoryStorage() });
 
+/* ================= WATCH PAGE FIX ================= */
+app.get("/watch", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "watch.html"));
+});
+
 /* ================= UPLOAD ================= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
@@ -69,7 +74,7 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ success: false, error: "Upload failed" });
   }
 });
 
@@ -99,7 +104,9 @@ app.post("/api/dislike/:id", async (req, res) => {
 
 /* ================= COMMENT ================= */
 app.post("/api/comment/:id", async (req, res) => {
-  if (!req.body.text) return res.json({ success: false });
+  if (!req.body.text) {
+    return res.json({ success: false });
+  }
 
   await Video.findByIdAndUpdate(req.params.id, {
     $push: { comments: req.body.text }
@@ -110,5 +117,5 @@ app.post("/api/comment/:id", async (req, res) => {
 
 /* ================= START ================= */
 app.listen(PORT, () => {
-  console.log("🚀 Server running on", PORT);
+  console.log("🚀 Server running on port", PORT);
 });
