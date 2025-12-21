@@ -4,61 +4,75 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>KamaBaba Viral Videos</title>
-<meta name="description" content="Trending adult short videos. 18+ only">
+<title>KamaBaba Viral Videos 🔥</title>
 
 <style>
 body{
   margin:0;
-  background:#0d0d0d;
+  background:#0b0b0b;
   color:#fff;
-  font-family:system-ui;
+  font-family:system-ui,Arial;
 }
 
 header{
   background:#111;
-  padding:10px;
+  padding:12px;
   position:sticky;
   top:0;
   z-index:10;
 }
 
 header h1{
+  margin:0;
   text-align:center;
   font-size:18px;
-  margin:5px 0;
 }
 
+#search{
+  width:100%;
+  margin-top:10px;
+  padding:10px;
+  border-radius:6px;
+  border:none;
+  font-size:14px;
+}
+
+/* GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:14px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:12px;
   padding:12px;
 }
 
 .card{
-  background:#111;
-  border-radius:10px;
-  overflow:hidden;
   cursor:pointer;
 }
 
-.thumb{
+.thumb-wrap{
+  position:relative;
   width:100%;
   aspect-ratio:16/9;
-  object-fit:cover;
   background:#000;
+  border-radius:8px;
+  overflow:hidden;
+}
+
+.thumb-wrap video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
 
 .card p{
-  padding:8px;
-  font-size:14px;
-  text-align:center;
+  font-size:13px;
+  margin:6px 0 0;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
 
+/* PAGINATION */
 .pagination{
   text-align:center;
   padding:15px;
@@ -68,14 +82,14 @@ header h1{
   margin:4px;
   padding:6px 12px;
   border:none;
+  border-radius:6px;
   background:#222;
   color:#fff;
-  border-radius:5px;
   cursor:pointer;
 }
 
 .pagination button.active{
-  background:#ff0055;
+  background:#ff004f;
 }
 </style>
 </head>
@@ -84,21 +98,24 @@ header h1{
 
 <header>
   <h1>🔥 KamaBaba Viral Videos 🔥</h1>
+  <input id="search" placeholder="Search video...">
 </header>
 
 <main class="grid" id="grid"></main>
 <div class="pagination" id="pagination"></div>
 
+<!-- ✅ FINAL WORKING SCRIPT -->
 <script>
-let allVideos=[];
-const perPage=10;
+let allVideos = [];
+let perPage = 10;
+let keyword = "";
 
-// page number URL se lo (refresh safe)
-const params=new URLSearchParams(window.location.search);
-let currentPage=parseInt(params.get("page"))||1;
+// PAGE STATE SAVE
+let currentPage = Number(localStorage.getItem("page")) || 1;
 
+// FETCH VIDEOS
 fetch("/api/videos")
-.then(r=>r.json())
+.then(res=>res.json())
 .then(data=>{
   allVideos=data.reverse();
   render();
@@ -108,6 +125,58 @@ function render(){
   const grid=document.getElementById("grid");
   const pagination=document.getElementById("pagination");
   grid.innerHTML="";
+  pagination.innerHTML="";
+
+  const filtered=allVideos.filter(v=>
+    v.title.toLowerCase().includes(keyword)
+  );
+
+  const totalPages=Math.ceil(filtered.length/perPage);
+  if(currentPage>totalPages) currentPage=1;
+
+  const start=(currentPage-1)*perPage;
+  const pageVideos=filtered.slice(start,start+perPage);
+
+  pageVideos.forEach(v=>{
+    const card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <div class="thumb-wrap">
+        <video src="${v.url}#t=1" muted preload="metadata"></video>
+      </div>
+      <p>${v.title}</p>
+    `;
+    card.onclick=()=>{
+      location.href="/watch?id="+v._id;
+    };
+    grid.appendChild(card);
+  });
+
+  for(let i=1;i<=totalPages;i++){
+    const btn=document.createElement("button");
+    btn.innerText=i;
+    if(i===currentPage) btn.classList.add("active");
+    btn.onclick=()=>{
+      currentPage=i;
+      localStorage.setItem("page",currentPage);
+      render();
+      scrollTo(0,0);
+    };
+    pagination.appendChild(btn);
+  }
+}
+
+// SEARCH
+document.getElementById("search").oninput=e=>{
+  keyword=e.target.value.toLowerCase();
+  currentPage=1;
+  localStorage.setItem("page",1);
+  render();
+};
+</script>
+
+</body>
+</html>
   pagination.innerHTML="";
 
   const totalPages=Math.ceil(allVideos.length/perPage);
