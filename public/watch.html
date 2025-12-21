@@ -6,114 +6,27 @@
 <title>Watch Video</title>
 
 <style>
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family:system-ui, Arial;
-}
-
-/* ===== VIDEO PLAYER ===== */
-video{
-  width:100%;
-  max-height:320px;
-  background:#000;
-}
-
-/* ===== BOX ===== */
-.box{
-  padding:12px;
-}
-
-/* ===== ACTIONS ===== */
-.actions{
-  display:flex;
-  gap:10px;
-  margin:10px 0;
-}
-
+body{margin:0;background:#000;color:#fff;font-family:system-ui}
+video{width:100%;max-height:320px;background:#000}
+.box{padding:12px}
+.actions{display:flex;gap:10px;margin:10px 0}
 .actions button{
   padding:8px 14px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  background:#222;
-  color:#fff;
-  font-size:14px;
+  border:none;border-radius:6px;
+  background:#222;color:#fff;cursor:pointer
 }
-
-.actions button:hover{
-  background:#0f9d58;
-}
-
-/* ===== COMMENTS ===== */
-.comment-input{
-  display:flex;
-  gap:6px;
-  margin-top:8px;
-}
-
-.comment-input input{
-  flex:1;
-  padding:8px;
-  border-radius:6px;
-  border:none;
-}
-
+.actions button:hover{background:#0f9d58}
+.comment-input{display:flex;gap:6px;margin-top:8px}
+.comment-input input{flex:1;padding:8px;border-radius:6px;border:none}
 .comment-input button{
-  padding:8px 14px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-  background:#2196f3;
-  color:#fff;
+  padding:8px 14px;border:none;border-radius:6px;
+  background:#2196f3;color:#fff
 }
-
-.comment{
-  background:#111;
-  padding:8px;
-  margin-top:6px;
-  border-radius:6px;
-  font-size:14px;
-}
-
-/* ===== RELATED ===== */
-.related{
-  margin-top:15px;
-  display:flex;
-  gap:10px;
-  overflow-x:auto;
-  padding-bottom:5px;
-}
-
-.related::-webkit-scrollbar{
-  height:5px;
-}
-.related::-webkit-scrollbar-thumb{
-  background:#333;
-}
-
-.related .card{
-  min-width:140px;
-  cursor:pointer;
-}
-
-.related video{
-  width:100%;
-  height:90px;
-  object-fit:cover;
-  border-radius:6px;
-  background:#000;
-}
-
-.related p{
-  font-size:12px;
-  margin:4px 0 0;
-  text-align:center;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
+.comment{background:#111;padding:8px;margin-top:6px;border-radius:6px}
+.related{margin-top:15px;display:flex;gap:10px;overflow-x:auto}
+.related .card{min-width:140px;cursor:pointer}
+.related video{width:100%;height:90px;object-fit:cover;border-radius:6px}
+.related p{font-size:12px;text-align:center;white-space:nowrap;overflow:hidden}
 </style>
 </head>
 
@@ -144,55 +57,43 @@ video{
 <script>
 const id = new URLSearchParams(location.search).get("id");
 
-/* LOAD VIDEO DATA */
 fetch("/api/videos")
-.then(res => res.json())
-.then(videos => {
-  const video = videos.find(v => v.id == id);
-  if(!video){
-    document.body.innerHTML="<p style='padding:12px'>❌ Video not found</p>";
-    return;
-  }
+.then(r=>r.json())
+.then(videos=>{
+  const v = videos.find(x=>x.id==id);
+  if(!v){document.body.innerHTML="❌ Video not found";return;}
 
-  player.src = video.url;
-  title.innerText = video.title;
-  views.innerText = "👁 " + video.views;
+  player.src = v.url;
+  title.innerText = v.title;
+  views.innerText = "👁 " + v.views;
 
-  // COMMENTS
-  video.comments.forEach(c => {
-    const d = document.createElement("div");
-    d.className = "comment";
-    d.innerText = c;
+  // increase view
+  fetch("/api/view/"+id,{method:"POST"});
+
+  v.comments.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="comment";
+    d.innerText=c;
     comments.appendChild(d);
   });
 
-  // RELATED VIDEOS (HORIZONTAL)
-  videos.filter(v => v.id != video.id).forEach(v => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <video src="${v.url}#t=1" muted preload="metadata"></video>
-      <p>${v.title}</p>
-    `;
-    card.onclick = () => location.href="/watch?id="+v.id;
-    related.appendChild(card);
+  videos.filter(x=>x.id!=id).forEach(r=>{
+    const c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`<video src="${r.url}#t=1" muted></video><p>${r.title}</p>`;
+    c.onclick=()=>location.href="/watch?id="+r.id;
+    related.appendChild(c);
   });
 });
 
-/* ACTIONS */
-function like(){
-  fetch("/api/like/"+id,{method:"POST"}).then(()=>location.reload());
-}
-function dislike(){
-  fetch("/api/dislike/"+id,{method:"POST"}).then(()=>location.reload());
-}
+function like(){fetch("/api/like/"+id,{method:"POST"}).then(()=>location.reload())}
+function dislike(){fetch("/api/dislike/"+id,{method:"POST"}).then(()=>location.reload())}
 function comment(){
-  const t = cmt.value;
-  if(!t) return;
+  if(!cmt.value) return;
   fetch("/api/comment/"+id,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text:t})
+    body:JSON.stringify({text:cmt.value})
   }).then(()=>location.reload());
 }
 </script>
