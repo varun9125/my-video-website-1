@@ -12,9 +12,7 @@
  --accent:#ff0055;
  --soft:#888;
 }
-
 *{box-sizing:border-box}
-
 body{
  margin:0;
  background:var(--bg);
@@ -32,7 +30,6 @@ body{
  align-items:center;
  justify-content:center;
 }
-
 .ageBox{
  background:#141414;
  padding:25px;
@@ -41,166 +38,88 @@ body{
  text-align:center;
  box-shadow:0 0 30px #ff0055;
 }
-
 .ageBox h2{color:#ff0055;margin-bottom:10px}
 .ageBox p{font-size:14px;color:#ccc}
-
-.ageBtns{
- display:flex;
- gap:10px;
- margin-top:20px;
-}
-
+.ageBtns{display:flex;gap:10px;margin-top:20px}
 .ageBtns button{
- flex:1;
- padding:10px;
- border:none;
- border-radius:8px;
- font-weight:600;
- cursor:pointer;
+ flex:1;padding:10px;border:none;border-radius:8px;
+ font-weight:600;cursor:pointer
 }
-
 .yes{background:#0f9d58;color:#fff}
 .no{background:#333;color:#fff}
 
 /* ===== HEADER ===== */
 header{
- position:sticky;
- top:0;
- z-index:99;
+ position:sticky;top:0;z-index:99;
  background:linear-gradient(180deg,#111,#0b0b0b);
- padding:14px;
- border-bottom:1px solid #222;
+ padding:14px;border-bottom:1px solid #222;
 }
-
 header h1{
- margin:0;
- text-align:center;
- font-size:18px;
- letter-spacing:.6px;
+ margin:0;text-align:center;font-size:18px;letter-spacing:.6px
 }
-
 #search{
- width:100%;
- margin-top:10px;
- padding:12px;
- border-radius:10px;
- border:none;
- outline:none;
- background:#1a1a1a;
- color:#fff;
- font-size:14px;
+ width:100%;margin-top:10px;padding:12px;
+ border-radius:10px;border:none;outline:none;
+ background:#1a1a1a;color:#fff;font-size:14px
 }
 
 /* ===== CATEGORY ===== */
 .categories{
- display:flex;
- gap:8px;
- overflow-x:auto;
- padding:10px;
+ display:flex;gap:8px;overflow-x:auto;padding:10px
 }
-
 .categories button{
- padding:7px 14px;
- border:none;
- border-radius:20px;
- background:#222;
- color:#fff;
- cursor:pointer;
- white-space:nowrap;
- font-size:13px;
+ padding:7px 14px;border:none;border-radius:20px;
+ background:#222;color:#fff;cursor:pointer;
+ white-space:nowrap;font-size:13px
 }
-
-.categories button.active{
- background:var(--accent);
-}
+.categories button.active{background:var(--accent)}
 
 /* ===== GRID ===== */
 .grid{
  display:grid;
  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
- gap:14px;
- padding:14px;
+ gap:14px;padding:14px
 }
-
 .card{
  background:var(--card);
- border-radius:12px;
- overflow:hidden;
- cursor:pointer;
- transition:.25s;
+ border-radius:12px;overflow:hidden;
+ cursor:pointer;transition:.25s
 }
-
 .card:hover{
  transform:translateY(-4px);
- box-shadow:0 10px 30px rgba(0,0,0,.6);
+ box-shadow:0 10px 30px rgba(0,0,0,.6)
 }
-
-.thumb{
- aspect-ratio:16/9;
- background:#000;
- position:relative;
-}
-
+.thumb{aspect-ratio:16/9;background:#000;position:relative}
 .thumb video{
- width:100%;
- height:100%;
- object-fit:cover;
+ width:100%;height:100%;object-fit:cover
 }
-
 .thumb::after{
- content:"▶";
- position:absolute;
- inset:0;
- display:flex;
- align-items:center;
- justify-content:center;
- font-size:30px;
- opacity:.6;
- background:linear-gradient(transparent,rgba(0,0,0,.6));
+ content:"▶";position:absolute;inset:0;
+ display:flex;align-items:center;justify-content:center;
+ font-size:30px;opacity:.6;
+ background:linear-gradient(transparent,rgba(0,0,0,.6))
 }
-
 .info{padding:9px}
 .title{
- font-size:13px;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis;
+ font-size:13px;white-space:nowrap;
+ overflow:hidden;text-overflow:ellipsis
 }
-.views{
- font-size:11px;
- color:var(--soft);
- margin-top:4px;
-}
+.views{font-size:11px;color:var(--soft);margin-top:4px}
 
 /* ===== PAGINATION ===== */
 .pagination{
- display:flex;
- justify-content:center;
- gap:6px;
- padding:18px;
+ display:flex;justify-content:center;gap:6px;padding:18px
 }
-
 .pagination button{
- padding:7px 12px;
- border:none;
- border-radius:8px;
- background:#1f1f1f;
- color:#fff;
- cursor:pointer;
+ padding:7px 12px;border:none;border-radius:8px;
+ background:#1f1f1f;color:#fff;cursor:pointer
 }
-
-.pagination button.active{
- background:var(--accent);
-}
+.pagination button.active{background:var(--accent)}
 
 /* ===== FOOTER ===== */
 footer{
- text-align:center;
- padding:20px;
- color:#777;
- font-size:13px;
- border-top:1px solid #222;
+ text-align:center;padding:20px;
+ color:#777;font-size:13px;border-top:1px solid #222
 }
 </style>
 </head>
@@ -226,11 +145,11 @@ footer{
 
 <!-- CATEGORY -->
 <div class="categories" id="cats">
- <button class="active" onclick="setCat('all')">All</button>
- <button onclick="setCat('hot')">🔥 Hot</button>
- <button onclick="setCat('desi')">🇮🇳 Desi</button>
- <button onclick="setCat('couple')">💑 Couple</button>
- <button onclick="setCat('viral')">🚀 Viral</button>
+ <button class="active" onclick="setCat('all',this)">All</button>
+ <button onclick="setCat('hot',this)">🔥 Hot</button>
+ <button onclick="setCat('desi',this)">🇮🇳 Desi</button>
+ <button onclick="setCat('couple',this)">💑 Couple</button>
+ <button onclick="setCat('viral',this)">🚀 Viral</button>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -251,9 +170,7 @@ function allow(){
  localStorage.setItem("adult","yes");
  ageGate.style.display="none";
 }
-function deny(){
- location.href="https://www.google.com";
-}
+function deny(){ location.href="https://www.google.com"; }
 
 /* ===== DATA ===== */
 let allVideos=[];
@@ -262,10 +179,7 @@ let keyword="", category="all";
 
 fetch("/api/videos")
 .then(r=>r.json())
-.then(d=>{
- allVideos=d;
- draw();
-});
+.then(d=>{ allVideos=d; draw(); });
 
 /* ===== CATEGORY LOGIC ===== */
 function getCategory(v){
@@ -277,34 +191,29 @@ function getCategory(v){
  return "other";
 }
 
-function setCat(c){
+function setCat(c,btn){
  category=c;
  document.querySelectorAll(".categories button")
  .forEach(b=>b.classList.remove("active"));
- event.target.classList.add("active");
- page=1;
- draw();
+ btn.classList.add("active");
+ page=1; draw();
 }
 
 /* ===== DRAW ===== */
 function draw(){
  grid.innerHTML=""; pagination.innerHTML="";
-
- let list=allVideos.filter(v=>
-  v.title.toLowerCase().includes(keyword)
- );
-
+ let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
  if(category!=="all"){
   list=list.filter(v=>getCategory(v)===category);
  }
-
  const total=Math.ceil(list.length/perPage);
-
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`
-   <div class="thumb"><video src="${v.url}#t=1" muted preload="metadata"></video></div>
+   <div class="thumb">
+    <video src="${v.url}#t=1" muted preload="metadata"></video>
+   </div>
    <div class="info">
     <div class="title">${v.title}</div>
     <div class="views">👁 ${v.views||0}</div>
@@ -312,7 +221,6 @@ function draw(){
   c.onclick=()=>location.href="/watch?id="+v._id;
   grid.appendChild(c);
  });
-
  for(let i=1;i<=total;i++){
   const b=document.createElement("button");
   b.innerText=i;
