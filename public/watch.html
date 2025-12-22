@@ -12,73 +12,171 @@
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
-#player{width:100%;max-height:60vh}
+
+/* HEADER */
+.header{
+ text-align:center;
+ padding:10px;
+ border-bottom:1px solid #222;
+}
+.header img{height:36px}
+
+/* PLAYER */
+#player{width:100%;max-height:60vh;background:#000}
+
+/* INFO */
 .info{padding:12px}
+.info h3{margin:6px 0;font-size:16px}
 .meta{font-size:13px;color:#aaa}
+
+/* ACTIONS */
 .actions{display:flex;gap:10px;margin-top:10px}
-.actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
-#related{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:12px}
-.card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
-.card video{width:100%;aspect-ratio:16/9;object-fit:cover}
-.card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actions button{
+ padding:8px 14px;
+ border:none;
+ border-radius:8px;
+ background:#1c1c1c;
+ color:#fff;
+ cursor:pointer;
+}
+.actions button:hover{background:#ff0055}
+
+/* RELATED */
+#related{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+ gap:12px;
+ padding:12px;
+}
+.card{
+ background:#111;
+ border-radius:8px;
+ overflow:hidden;
+ cursor:pointer;
+}
+.card video{
+ width:100%;
+ aspect-ratio:16/9;
+ object-fit:cover;
+ background:#000;
+}
+.card p{
+ font-size:13px;
+ margin:6px;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
 </style>
 </head>
 
 <body>
 
-<div style="text-align:center;padding:8px">
- <img src="/logo.png" style="height:36px">
+<div class="header">
+ <img src="/logo.png" alt="KamaBaba Logo">
 </div>
 
 <video id="player" controls playsinline></video>
 
 <div class="info">
  <h3 id="title">Loading...</h3>
- <div class="meta">👁 <span id="views">0</span> 👍 <span id="likes">0</span></div>
+ <div class="meta">
+  👁 <span id="views">0</span>
+  &nbsp; 👍 <span id="likes">0</span>
+ </div>
+
  <div class="actions">
   <button onclick="like()">👍 Like</button>
   <button onclick="share()">🔗 Share</button>
  </div>
 </div>
 
-<!-- ADSTERRA -->
+<!-- 🔥 ADSTERRA NATIVE -->
 <div style="padding:12px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
-<h3 style="padding-left:12px">Related</h3>
+<h3 style="padding-left:12px">Related Videos</h3>
 <div id="related"></div>
 
 <script>
-const id=new URLSearchParams(location.search).get("id");
-fetch("/api/videos").then(r=>r.json()).then(vs=>{
- const v=vs.find(x=>x._id===id);
- if(!v)return;
- player.src=v.url;
- title.innerText=v.title;
- views.innerText=v.views||0;
- likes.innerText=v.likes||0;
+const id = new URLSearchParams(location.search).get("id");
+const player = document.getElementById("player");
+const titleEl = document.getElementById("title");
+const viewsEl = document.getElementById("views");
+const likesEl = document.getElementById("likes");
+const related = document.getElementById("related");
 
+/* ===== LOAD DATA ===== */
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{
+ const v = vs.find(x=>x._id===id);
+ if(!v){
+  titleEl.innerText="❌ Video not found";
+  return;
+ }
+
+ player.src = v.url;
+ titleEl.innerText = v.title;
+ viewsEl.innerText = v.views || 0;
+ likesEl.innerText = v.likes || 0;
+
+ /* VIEW COUNT (ANTI REFRESH SPAM) */
+ const viewKey="viewed_"+id;
+ if(!sessionStorage.getItem(viewKey)){
+  fetch("/api/view/"+id,{method:"POST"});
+  viewsEl.innerText = Number(viewsEl.innerText)+1;
+  sessionStorage.setItem(viewKey,"yes");
+ }
+
+ /* RELATED */
  vs.filter(x=>x._id!==id).slice(0,8).forEach(r=>{
-  related.innerHTML+=`
-  <div class="card" onclick="location.href='/watch?id=${r._id}'">
+  const d=document.createElement("div");
+  d.className="card";
+  d.innerHTML=`
    <video src="${r.url}#t=1" muted preload="metadata"></video>
    <p>${r.title}</p>
-  </div>`;
+  `;
+  const vid=d.querySelector("video");
+  d.onmouseenter=()=>vid.play();
+  d.onmouseleave=()=>{vid.pause();vid.currentTime=1};
+  d.onclick=()=>{
+   history.pushState({},'',location.href);
+   location.href="/watch?id="+r._id;
+  };
+  related.appendChild(d);
  });
 });
 
-function like(){fetch("/api/like/"+id,{method:"POST"});likes.innerText++}
-function share(){navigator.clipboard.writeText(location.href);alert("Link copied")}
+/* ===== ACTIONS ===== */
+function like(){
+ if(sessionStorage.getItem("liked_"+id)) return;
+ fetch("/api/like/"+id,{method:"POST"});
+ likesEl.innerText = Number(likesEl.innerText)+1;
+ sessionStorage.setItem("liked_"+id,"yes");
+}
 
-/* SMARTLINK */
-let o=false;
+function share(){
+ if(navigator.share){
+  navigator.share({title:document.title,url:location.href});
+ }else{
+  navigator.clipboard.writeText(location.href);
+  alert("🔗 Link copied");
+ }
+}
+
+/* ===== SMARTLINK (1 CLICK ONLY) ===== */
+let opened=false;
 document.addEventListener("click",()=>{
- if(!o){
-  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
-  o=true;
+ if(!opened){
+  window.open(
+   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
+   "_blank"
+  );
+  opened=true;
  }
 });
 </script>
