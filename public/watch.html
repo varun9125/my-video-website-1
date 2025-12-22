@@ -3,107 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Watch Video | KamaBaba</title>
 
+<title>Watch | KamaBaba Viral</title>
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/logo-192.png">
 
 <style>
-:root{
- --bg:#000;
- --card:#111;
- --accent:#ff0055;
- --soft:#999;
-}
-body{
- margin:0;background:var(--bg);color:#fff;
- font-family:system-ui,-apple-system,Segoe UI;
-}
-#player{width:100%;max-height:60vh;background:#000}
+body{margin:0;background:#000;color:#fff;font-family:system-ui}
+video{width:100%;max-height:60vh}
 .info{padding:12px}
-.meta{font-size:13px;color:var(--soft)}
-.actions{display:flex;gap:10px;margin-top:10px}
-.actions button{
- padding:8px 14px;border:none;border-radius:8px;
- background:#1c1c1c;color:#fff;cursor:pointer
-}
-#related{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
- gap:12px;padding:12px
-}
-.card{background:var(--card);border-radius:8px;overflow:hidden;cursor:pointer}
+.actions button{padding:8px 14px;border:none;border-radius:8px;background:#222;color:#fff}
+#related{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:12px}
+.card{cursor:pointer}
 .card video{width:100%;aspect-ratio:16/9;object-fit:cover}
-.card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden}
 </style>
 </head>
 
 <body>
 
-<video id="player" controls playsinline></video>
+<video id="player" controls></video>
 
 <div class="info">
- <h3 id="title">Loading...</h3>
- <div class="meta">
-  👁 <span id="viewCount">0</span> · 👍 <span id="likeCount">0</span>
- </div>
+ <h3 id="title"></h3>
+ 👁 <span id="views">0</span>
  <div class="actions">
-  <button onclick="like()">Like</button>
-  <button onclick="share()">Share</button>
+  <button onclick="like()">👍 Like</button>
+  <button onclick="history.back()">⬅ Back</button>
  </div>
-</div>
-
-<!-- AD -->
-<div style="padding:12px">
-<script async data-cfasync="false"
-src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
 <h3 style="padding-left:12px">Related</h3>
 <div id="related"></div>
 
 <script>
-const id=new URLSearchParams(location.search).get("id");
-const player=document.getElementById("player");
-const titleEl=document.getElementById("title");
-const viewCount=document.getElementById("viewCount");
-const likeCount=document.getElementById("likeCount");
-const related=document.getElementById("related");
+const p=new URLSearchParams(location.search);
+const id=p.get("id");
 
 fetch("/api/videos").then(r=>r.json()).then(videos=>{
- const v=videos.find(x=>x._id===id);
- if(!v){titleEl.innerText="Not found";return;}
- player.src=v.url;
- titleEl.innerText=v.title;
- viewCount.innerText=v.views||0;
- likeCount.innerText=v.likes||0;
+ let v=videos.find(x=>x._id===id);
+ player.src=v.url; title.innerText=v.title;
+ views.innerText=v.views||0;
 
- if(!sessionStorage.getItem("viewed_"+id)){
-  fetch("/api/view/"+id,{method:"POST"});
-  viewCount.innerText++;
-  sessionStorage.setItem("viewed_"+id,"1");
- }
+ fetch("/api/view/"+id,{method:"POST"});
 
  videos.filter(x=>x._id!==id).slice(0,8).forEach(r=>{
-  const c=document.createElement("div");
+  let c=document.createElement("div");
   c.className="card";
   c.innerHTML=`<video src="${r.url}#t=1" muted></video><p>${r.title}</p>`;
-  c.onclick=()=>location.href="/watch?id="+r._id;
+  c.onclick=()=>location.href=`/watch?id=${r._id}&page=${p.get("page")||1}`;
   related.appendChild(c);
  });
 });
 
-function like(){
- if(sessionStorage.getItem("liked_"+id))return;
- fetch("/api/like/"+id,{method:"POST"});
- likeCount.innerText++;
- sessionStorage.setItem("liked_"+id,"1");
-}
-function share(){
- navigator.clipboard.writeText(location.href);
- alert("Link copied");
-}
+function like(){fetch("/api/like/"+id,{method:"POST"});}
 </script>
 </body>
 </html>
