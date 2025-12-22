@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>KamaBaba Viral Videos 🔥</title>
 
+<!-- ✅ SEO -->
+<meta name="description" content="KamaBaba Viral Videos – Watch trending, hot & desi viral videos online.">
+<meta name="keywords" content="viral videos, desi mms, hot videos, kamababa">
+<meta name="robots" content="index, follow">
+
+<!-- ✅ LOGO / FAVICON -->
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/logo-192.png">
-
-<meta name="description" content="Watch trending viral adult videos, hot desi clips & exclusive content on KamaBaba Viral.">
 
 <style>
 :root{
@@ -19,25 +24,21 @@
 }
 *{box-sizing:border-box}
 body{
- margin:0;
- background:var(--bg);
- color:#fff;
+ margin:0;background:var(--bg);color:#fff;
  font-family:system-ui,-apple-system,Segoe UI;
 }
 
-/* ===== AGE GATE ===== */
+/* AGE GATE */
 #ageGate{
- position:fixed; inset:0;
- background:rgba(0,0,0,.95);
- z-index:9999;
- display:flex; align-items:center; justify-content:center;
+ position:fixed;inset:0;background:rgba(0,0,0,.95);
+ z-index:9999;display:flex;align-items:center;justify-content:center;
 }
 .ageBox{
- background:#141414; padding:25px;
- border-radius:12px; max-width:320px;
- text-align:center;
+ background:#141414;padding:25px;border-radius:12px;
+ max-width:320px;text-align:center;
  box-shadow:0 0 30px #ff0055;
 }
+.ageBox h2{color:#ff0055}
 .ageBtns{display:flex;gap:10px;margin-top:20px}
 .ageBtns button{
  flex:1;padding:10px;border:none;border-radius:8px;
@@ -46,68 +47,58 @@ body{
 .yes{background:#0f9d58;color:#fff}
 .no{background:#333;color:#fff}
 
-/* ===== HEADER ===== */
+/* HEADER */
 header{
  position:sticky;top:0;z-index:99;
- background:linear-gradient(180deg,#111,#0b0b0b);
- padding:14px;border-bottom:1px solid #222;
+ background:#111;padding:14px;border-bottom:1px solid #222
 }
-header .logoBox{
- display:flex;align-items:center;justify-content:center;gap:10px
-}
-header img{height:36px}
-header h1{margin:0;font-size:18px}
-
+header h1{text-align:center;margin:0;font-size:18px}
 #search{
  width:100%;margin-top:10px;padding:12px;
- border-radius:10px;border:none;
- background:#1a1a1a;color:#fff;
+ border-radius:10px;border:none;background:#1a1a1a;color:#fff
 }
 
-/* ===== CATEGORY ===== */
-.categories{
- display:flex;gap:8px;overflow-x:auto;padding:10px
-}
+/* CATEGORY */
+.categories{display:flex;gap:8px;overflow-x:auto;padding:10px}
 .categories button{
  padding:7px 14px;border:none;border-radius:20px;
  background:#222;color:#fff;cursor:pointer
 }
-.categories button.active{background:var(--accent)}
+.categories .active{background:var(--accent)}
 
-/* ===== GRID ===== */
+/* GRID */
 .grid{
  display:grid;
  grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
  gap:14px;padding:14px
 }
 .card{
- background:var(--card);
- border-radius:12px;overflow:hidden;
+ background:var(--card);border-radius:12px;overflow:hidden;
  cursor:pointer;transition:.25s
 }
 .card:hover{transform:translateY(-4px)}
-.thumb{aspect-ratio:16/9;background:#000}
+.thumb{aspect-ratio:16/9;background:#000;position:relative}
 .thumb video{width:100%;height:100%;object-fit:cover}
-.info{padding:9px}
-.title{
- font-size:13px;white-space:nowrap;
- overflow:hidden;text-overflow:ellipsis
+.thumb::after{
+ content:"▶";position:absolute;inset:0;
+ display:flex;align-items:center;justify-content:center;
+ opacity:.6;background:linear-gradient(transparent,rgba(0,0,0,.6))
 }
+.info{padding:9px}
+.title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .views{font-size:11px;color:var(--soft)}
 
-/* ===== PAGINATION ===== */
-.pagination{
- display:flex;justify-content:center;gap:6px;padding:18px
-}
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;gap:6px;padding:18px}
 .pagination button{
  padding:7px 12px;border:none;border-radius:8px;
- background:#1f1f1f;color:#fff;cursor:pointer
+ background:#1f1f1f;color:#fff
 }
-.pagination button.active{background:var(--accent)}
+.pagination .active{background:var(--accent)}
 
 footer{
- text-align:center;padding:20px;
- color:#777;font-size:13px;border-top:1px solid #222
+ text-align:center;padding:20px;color:#777;font-size:13px;
+ border-top:1px solid #222
 }
 </style>
 </head>
@@ -117,8 +108,8 @@ footer{
 <!-- AGE GATE -->
 <div id="ageGate">
  <div class="ageBox">
-  <h3>🔞 Adult Content</h3>
-  <p>18+ only</p>
+  <h2>🔞 Adult Content</h2>
+  <p>You must be 18+ to enter.</p>
   <div class="ageBtns">
    <button class="yes" onclick="allow()">I am 18+</button>
    <button class="no" onclick="deny()">No</button>
@@ -127,102 +118,88 @@ footer{
 </div>
 
 <header>
- <div class="logoBox">
-  <img src="/logo.png" alt="KamaBaba">
-  <h1>KamaBaba Viral</h1>
- </div>
- <input id="search" placeholder="Search videos...">
+ <h1>🔥 KamaBaba Viral Videos 🔥</h1>
+ <input id="search" placeholder="Search hot videos...">
 </header>
 
 <div class="categories">
  <button class="active" onclick="setCat('all',this)">All</button>
- <button onclick="setCat('hot',this)">Hot</button>
- <button onclick="setCat('desi',this)">Desi</button>
- <button onclick="setCat('couple',this)">Couple</button>
- <button onclick="setCat('viral',this)">Viral</button>
+ <button onclick="setCat('hot',this)">🔥 Hot</button>
+ <button onclick="setCat('desi',this)">🇮🇳 Desi</button>
+ <button onclick="setCat('couple',this)">💑 Couple</button>
+ <button onclick="setCat('viral',this)">🚀 Viral</button>
 </div>
 
 <div class="grid" id="grid"></div>
 
-<!-- ADSTERRA -->
+<!-- ✅ ADSTERRA NATIVE -->
 <div style="padding:14px">
-<script async data-cfasync="false"
-src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+ <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
 <div class="pagination" id="pagination"></div>
 
-<footer>© <span id="year"></span> KamaBaba Viral</footer>
+<footer>© <span id="year"></span> KamaBaba Viral — All Rights Reserved</footer>
 
 <script>
-document.getElementById("year").innerText=new Date().getFullYear();
+year.innerText=new Date().getFullYear();
 
-/* AGE GATE */
-if(localStorage.getItem("adult")==="yes") ageGate.style.display="none";
-function allow(){localStorage.setItem("adult","yes");ageGate.style.display="none";}
-function deny(){location.href="https://google.com";}
+/* AGE */
+if(localStorage.adult==="yes") ageGate.style.display="none";
+function allow(){localStorage.adult="yes";ageGate.style.display="none"}
+function deny(){location.href="https://google.com"}
 
-/* STATE */
-let allVideos=[],page=Number(new URLSearchParams(location.search).get("page"))||1;
-let perPage=12,keyword="",category="all";
+let allVideos=[],page=1,perPage=12,keyword="",category="all";
 
-/* HISTORY FIX */
-function updateURL(){
- history.pushState({page}, "", "?page="+page);
-}
-window.onpopstate=e=>{
- if(e.state && e.state.page){
-  page=e.state.page;
-  draw();
- }
-};
-
-/* DATA */
-fetch("/api/videos").then(r=>r.json()).then(d=>{allVideos=d;draw();});
+fetch("/api/videos").then(r=>r.json()).then(d=>{allVideos=d;draw()});
 
 function getCategory(v){
  const t=v.title.toLowerCase();
- if(t.includes("desi")) return "desi";
- if(t.includes("couple")) return "couple";
- if(t.includes("viral")) return "viral";
- if(t.includes("hot")||t.includes("sexy")) return "hot";
- return "other";
+ if(t.includes("desi"))return"desi";
+ if(t.includes("couple"))return"couple";
+ if(t.includes("viral"))return"viral";
+ if(t.includes("hot"))return"hot";
+ return"other";
 }
-
 function setCat(c,btn){
  category=c;
  document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
- btn.classList.add("active");
- page=1;updateURL();draw();
+ btn.classList.add("active");page=1;draw();
 }
 
 function draw(){
  grid.innerHTML="";pagination.innerHTML="";
  let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
- if(category!=="all") list=list.filter(v=>getCategory(v)===category);
-
+ if(category!=="all")list=list.filter(v=>getCategory(v)===category);
  const total=Math.ceil(list.length/perPage);
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`
-   <div class="thumb"><video src="${v.url}#t=1" muted preload="metadata"></video></div>
-   <div class="info"><div class="title">${v.title}</div><div class="views">👁 ${v.views||0}</div></div>`;
+   <div class="thumb"><video src="${v.url}#t=1" muted></video></div>
+   <div class="info"><div class="title">${v.title}</div>
+   <div class="views">👁 ${v.views||0}</div></div>`;
   c.onclick=()=>location.href="/watch?id="+v._id;
   grid.appendChild(c);
  });
-
  for(let i=1;i<=total;i++){
   const b=document.createElement("button");
   b.innerText=i;
-  if(i===page) b.classList.add("active");
-  b.onclick=()=>{page=i;updateURL();draw();};
+  if(i===page)b.classList.add("active");
+  b.onclick=()=>{page=i;history.pushState({page},'',`?page=${i}`);draw()};
   pagination.appendChild(b);
  }
 }
+search.oninput=e=>{keyword=e.target.value.toLowerCase();page=1;draw()};
 
-search.oninput=e=>{keyword=e.target.value.toLowerCase();page=1;updateURL();draw();};
+/* ADSTERRA LOAD */
+document.addEventListener("DOMContentLoaded",()=>{
+ const s=document.createElement("script");
+ s.async=true;s.setAttribute("data-cfasync","false");
+ s.src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js";
+ document.body.appendChild(s);
+});
 </script>
+
 </body>
 </html>
