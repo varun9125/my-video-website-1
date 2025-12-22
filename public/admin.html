@@ -3,140 +3,137 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel | KamaBaba Viral</title>
 
-<title>Admin Upload | KamaBaba</title>
-
-<!-- BASIC SECURITY -->
-<meta name="robots" content="noindex, nofollow">
-
-<!-- LOGO / FAVICON -->
+<!-- SEO / ICONS -->
 <link rel="icon" href="/favicon.ico">
+<meta name="robots" content="noindex,nofollow">
 
 <style>
 :root{
- --bg:#000;
- --card:#111;
+ --bg:#0b0b0b;
+ --card:#141414;
  --accent:#ff0055;
  --soft:#999;
  --ok:#0f9d58;
- --err:#e53935;
+ --err:#ff4444;
 }
 
 *{box-sizing:border-box}
 
 body{
  margin:0;
- min-height:100vh;
- background:linear-gradient(180deg,#000,#080808);
+ background:linear-gradient(180deg,#000,#0b0b0b);
  color:#fff;
  font-family:system-ui,-apple-system,Segoe UI;
+}
+
+/* ===== CENTER BOX ===== */
+.wrapper{
+ min-height:100vh;
  display:flex;
  align-items:center;
  justify-content:center;
+ padding:20px;
 }
 
-/* ===== CONTAINER ===== */
 .panel{
  width:100%;
  max-width:420px;
  background:var(--card);
- padding:26px;
  border-radius:14px;
- box-shadow:0 20px 50px rgba(0,0,0,.7);
- animation:fadeIn .4s ease;
-}
-
-@keyframes fadeIn{
- from{opacity:0;transform:translateY(10px)}
- to{opacity:1;transform:none}
+ padding:22px;
+ box-shadow:0 0 40px rgba(255,0,85,.25);
 }
 
 /* ===== HEADER ===== */
-.panel h2{
- margin:0 0 18px;
+.panel h1{
+ margin:0 0 5px;
  text-align:center;
- font-size:20px;
+ color:var(--accent);
  letter-spacing:.5px;
 }
 
 .panel p{
+ margin:0 0 20px;
  text-align:center;
- font-size:13px;
  color:var(--soft);
- margin-bottom:20px;
+ font-size:14px;
 }
 
 /* ===== INPUTS ===== */
 label{
- font-size:12px;
+ font-size:13px;
  color:#bbb;
  display:block;
  margin-top:14px;
 }
 
-input{
+input[type="password"],
+input[type="text"],
+input[type="file"]{
  width:100%;
  margin-top:6px;
  padding:12px;
  border-radius:10px;
- border:none;
- outline:none;
- background:#1b1b1b;
+ border:1px solid #222;
+ background:#0f0f0f;
  color:#fff;
  font-size:14px;
 }
 
-input::placeholder{color:#666}
-
-/* FILE */
-input[type=file]{
- padding:10px;
+input::file-selector-button{
+ background:#222;
+ color:#fff;
+ border:none;
+ padding:8px 12px;
+ border-radius:6px;
  cursor:pointer;
+}
+
+/* ===== PROGRESS ===== */
+.progress{
+ width:100%;
+ height:8px;
+ background:#222;
+ border-radius:10px;
+ margin-top:16px;
+ overflow:hidden;
+ display:none;
+}
+
+.progress div{
+ height:100%;
+ width:0%;
+ background:linear-gradient(90deg,#ff0055,#ff3380);
+ transition:width .3s;
 }
 
 /* ===== BUTTON ===== */
 button{
  width:100%;
  margin-top:18px;
- padding:13px;
+ padding:14px;
  border:none;
  border-radius:12px;
- background:var(--accent);
- color:#fff;
- font-weight:600;
  font-size:15px;
+ font-weight:600;
  cursor:pointer;
- transition:.2s;
+ background:linear-gradient(135deg,#ff0055,#ff3377);
+ color:#fff;
 }
 
-button:hover{opacity:.9}
 button:disabled{
- opacity:.5;
+ opacity:.6;
  cursor:not-allowed;
 }
 
-/* ===== PROGRESS ===== */
-.progress{
- margin-top:14px;
- height:6px;
- background:#222;
- border-radius:6px;
- overflow:hidden;
- display:none;
-}
-.progress div{
- height:100%;
- width:0%;
- background:linear-gradient(90deg,var(--accent),#ff4081);
- transition:width .3s;
-}
-
-/* ===== MESSAGE ===== */
-#msg{
- margin-top:14px;
+/* ===== STATUS ===== */
+#status{
+ margin-top:16px;
  min-height:22px;
- font-size:14px;
  text-align:center;
+ font-size:14px;
 }
 
 .ok{color:var(--ok)}
@@ -144,9 +141,9 @@ button:disabled{
 
 /* ===== FOOTER ===== */
 .footer{
- margin-top:22px;
  text-align:center;
- font-size:11px;
+ margin-top:18px;
+ font-size:12px;
  color:#666;
 }
 </style>
@@ -154,107 +151,102 @@ button:disabled{
 
 <body>
 
-<div class="panel">
-  <h2>🔐 Admin Video Upload</h2>
-  <p>Secure upload panel — KamaBaba</p>
+<div class="wrapper">
+ <div class="panel">
+
+  <h1>🔐 Admin Upload</h1>
+  <p>KamaBaba Viral • Secure Control Panel</p>
 
   <label>Admin Password</label>
-  <input id="password" type="password" placeholder="••••••••">
+  <input type="password" id="password" placeholder="••••••••">
 
-  <label>Video Title</label>
-  <input id="title" type="text" placeholder="Enter video title">
+  <label>Video Title (SEO friendly)</label>
+  <input type="text" id="title" placeholder="Hot desi viral clip">
 
-  <label>Select Video File</label>
-  <input id="video" type="file" accept="video/*">
-
-  <button id="btn" onclick="upload()">🚀 Upload Video</button>
+  <label>Select Video (MP4 / MOV)</label>
+  <input type="file" id="video" accept="video/*">
 
   <div class="progress" id="progress">
     <div id="bar"></div>
   </div>
 
-  <div id="msg"></div>
+  <button id="btn" onclick="upload()">🚀 Upload Video</button>
+
+  <div id="status"></div>
 
   <div class="footer">
-    Admin Panel • Unauthorized access prohibited
+   © KamaBaba Viral — Admin Access
   </div>
+
+ </div>
 </div>
 
 <script>
 async function upload(){
-  const btn = document.getElementById("btn");
-  const msg = document.getElementById("msg");
-  const progress = document.getElementById("progress");
-  const bar = document.getElementById("bar");
+ const btn = document.getElementById("btn");
+ const status = document.getElementById("status");
+ const bar = document.getElementById("bar");
+ const progress = document.getElementById("progress");
 
-  const password = document.getElementById("password").value.trim();
-  const title = document.getElementById("title").value.trim();
-  const file = document.getElementById("video").files[0];
+ const password = document.getElementById("password").value.trim();
+ const title = document.getElementById("title").value.trim();
+ const file = document.getElementById("video").files[0];
 
-  msg.className="";
-  msg.innerText="";
+ if(!password){
+  status.innerHTML = "<span class='err'>❌ Admin password required</span>";
+  return;
+ }
+ if(!file){
+  status.innerHTML = "<span class='err'>❌ Please select a video</span>";
+  return;
+ }
 
-  /* ===== VALIDATION ===== */
-  if(!password){
-    msg.className="err";
-    msg.innerText="❌ Admin password required";
-    return;
-  }
-  if(!file){
-    msg.className="err";
-    msg.innerText="❌ Please select a video file";
-    return;
-  }
+ btn.disabled = true;
+ status.innerHTML = "⏳ Uploading… please wait";
+ progress.style.display="block";
+ bar.style.width="5%";
 
-  /* SIZE LIMIT (OPTIONAL SAFETY) */
-  if(file.size > 500 * 1024 * 1024){
-    msg.className="err";
-    msg.innerText="❌ File too large (max 500MB)";
-    return;
-  }
+ const fd = new FormData();
+ fd.append("password", password);
+ fd.append("title", title || "Untitled");
+ fd.append("video", file);
 
-  btn.disabled = true;
-  progress.style.display="block";
-  bar.style.width="10%";
-  msg.innerText="⏳ Uploading… please wait";
+ try{
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST","/api/upload");
 
-  const fd = new FormData();
-  fd.append("video", file);
-  fd.append("title", title || "Untitled");
+  xhr.upload.onprogress = e=>{
+   if(e.lengthComputable){
+    const p = Math.round((e.loaded / e.total) * 90);
+    bar.style.width = p + "%";
+   }
+  };
 
-  try{
-    const res = await fetch("/api/upload",{
-      method:"POST",
-      headers:{
-        "x-admin-password": password
-      },
-      body: fd
-    });
+  xhr.onload = ()=>{
+   bar.style.width="100%";
+   const res = JSON.parse(xhr.responseText || "{}");
 
-    bar.style.width="70%";
+   if(res.success){
+    status.innerHTML="<span class='ok'>✅ Upload successful</span>";
+    document.getElementById("video").value="";
+    document.getElementById("title").value="";
+   }else{
+    status.innerHTML="<span class='err'>❌ "+(res.error||"Upload failed")+"</span>";
+   }
+   btn.disabled=false;
+  };
 
-    const data = await res.json();
+  xhr.onerror = ()=>{
+   status.innerHTML="<span class='err'>❌ Network error</span>";
+   btn.disabled=false;
+  };
 
-    if(data.success){
-      bar.style.width="100%";
-      msg.className="ok";
-      msg.innerText="✅ Upload successful";
+  xhr.send(fd);
 
-      document.getElementById("video").value="";
-      document.getElementById("title").value="";
-    }else{
-      msg.className="err";
-      msg.innerText="❌ " + (data.error || "Upload failed");
-      bar.style.width="0%";
-    }
-
-  }catch(err){
-    msg.className="err";
-    msg.innerText="❌ Server / network error";
-    bar.style.width="0%";
-  }
-
-  btn.disabled = false;
+ }catch(err){
+  status.innerHTML="<span class='err'>❌ Server error</span>";
+  btn.disabled=false;
+ }
 }
 </script>
 
