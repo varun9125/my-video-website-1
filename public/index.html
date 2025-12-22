@@ -61,7 +61,7 @@ header h1{margin:0;text-align:center;font-size:18px}
 
 <div class="grid" id="grid"></div>
 
-<!-- ✅ ADSTERRA -->
+<!-- 🔥 ADSTERRA NATIVE BANNER -->
 <div style="padding:12px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
@@ -71,7 +71,10 @@ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/in
 <div class="pagination" id="pagination"></div>
 
 <script>
-let allVideos=[], perPage=10, page=Number(localStorage.getItem("page"))||1, key="";
+/* ===== VIDEO LOGIC ===== */
+let allVideos=[], perPage=10;
+let page=Number(localStorage.getItem("page"))||1;
+let key="";
 
 fetch("/api/videos")
 .then(r=>r.json())
@@ -107,8 +110,18 @@ search.oninput=e=>{
  page=1; localStorage.setItem("page",1);
  draw();
 };
+
+/* ===== ADSTERRA DIRECT LINK ===== */
+const adLink="https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a";
+let adOpened=false;
+
+document.addEventListener("click",()=>{
+ if(!adOpened){
+  window.open(adLink,"_blank");
+  adOpened=true;
+ }
+});
 </script>
 
 </body>
 </html>
-
