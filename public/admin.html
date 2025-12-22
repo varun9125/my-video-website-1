@@ -3,203 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KamaBaba Admin Upload</title>
+
+<title>KamaBaba Viral Videos 🔥</title>
+<meta name="description" content="KamaBaba Viral – Trending Desi, Hot & Viral Videos">
+<meta name="theme-color" content="#ff0055">
+
+<!-- ✅ LOGO / FAVICON -->
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/logo-192.png">
 
 <style>
 :root{
- --bg:#000;
- --card:#141414;
- --accent:#ff0055;
- --soft:#888;
+ --bg:#0b0b0b; --card:#141414; --accent:#ff0055; --soft:#888;
 }
-
 *{box-sizing:border-box}
-
 body{
- margin:0;
- background:var(--bg);
- color:#fff;
+ margin:0;background:var(--bg);color:#fff;
  font-family:system-ui,-apple-system,Segoe UI;
 }
 
-.box{
- max-width:420px;
- margin:40px auto;
- background:var(--card);
- padding:22px;
- border-radius:14px;
- box-shadow:0 0 30px rgba(255,0,85,.25);
-}
+/* AGE GATE */
+#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;
+ display:flex;align-items:center;justify-content:center}
+.ageBox{background:#141414;padding:25px;border-radius:12px;max-width:320px;
+ text-align:center;box-shadow:0 0 30px #ff0055}
+.ageBtns{display:flex;gap:10px;margin-top:20px}
+.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600}
+.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
 
-h2{
- text-align:center;
- margin:0 0 20px;
- color:var(--accent);
- letter-spacing:.5px;
-}
+/* HEADER */
+header{position:sticky;top:0;background:#111;padding:14px;border-bottom:1px solid #222}
+header h1{text-align:center;margin:0;font-size:18px}
+#search{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;
+ background:#1a1a1a;color:#fff}
 
-input,button{
- width:100%;
- padding:12px;
- margin-top:12px;
- border-radius:10px;
- border:none;
- font-size:15px;
-}
+/* CATEGORY */
+.categories{display:flex;gap:8px;overflow-x:auto;padding:10px}
+.categories button{padding:7px 14px;border-radius:20px;border:none;
+ background:#222;color:#fff;cursor:pointer}
+.categories .active{background:var(--accent)}
 
-input{
- background:#1c1c1c;
- color:#fff;
- outline:none;
-}
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+ gap:14px;padding:14px}
+.card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
+.thumb{aspect-ratio:16/9;background:#000}
+.thumb video{width:100%;height:100%;object-fit:cover}
+.info{padding:9px}
+.title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.views{font-size:11px;color:var(--soft)}
 
-button{
- background:var(--accent);
- color:#fff;
- font-weight:700;
- cursor:pointer;
-}
+/* PAGINATION */
+.pagination{display:flex;justify-content:center;gap:6px;padding:18px}
+.pagination button{padding:7px 12px;border:none;border-radius:8px;background:#1f1f1f;color:#fff}
+.pagination .active{background:var(--accent)}
 
-button:disabled{
- opacity:.6;
- cursor:not-allowed;
-}
-
-#msg{
- margin-top:14px;
- min-height:22px;
- font-size:14px;
- text-align:center;
- color:#ccc;
-}
-
-.preview{
- margin-top:15px;
- font-size:13px;
- background:#0e0e0e;
- padding:10px;
- border-radius:10px;
- color:#aaa;
-}
-.preview b{color:#fff}
+footer{text-align:center;padding:20px;color:#777;border-top:1px solid #222}
 </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>🔐 Admin Upload</h2>
-
-  <input type="password" id="password" placeholder="Admin Password">
-  <input type="text" id="title" placeholder="Video title">
-  <input type="file" id="video" accept="video/*">
-
-  <button id="btn" onclick="upload()">🚀 Upload Video</button>
-
-  <div class="preview" id="preview" style="display:none"></div>
-
-  <div id="msg"></div>
+<!-- AGE GATE -->
+<div id="ageGate">
+ <div class="ageBox">
+  <h3>🔞 Adult Content</h3>
+  <p>18+ only</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="location.href='https://google.com'">No</button>
+  </div>
+ </div>
 </div>
 
+<header>
+ <h1>🔥 KamaBaba Viral Videos 🔥</h1>
+ <input id="search" placeholder="Search videos...">
+</header>
+
+<div class="categories">
+ <button class="active" onclick="setCat('all',this)">All</button>
+ <button onclick="setCat('hot',this)">🔥 Hot</button>
+ <button onclick="setCat('desi',this)">🇮🇳 Desi</button>
+ <button onclick="setCat('viral',this)">🚀 Viral</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<!-- ADSTERRA -->
+<div style="padding:14px">
+<script async src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
+<div class="pagination" id="pagination"></div>
+
+<footer>© 2025 KamaBaba Viral</footer>
+
 <script>
-/* =========================
-   AUTO CATEGORY / TAG / SEO
-========================= */
+/* AGE GATE */
+if(localStorage.adult==="yes") ageGate.remove();
+function allow(){localStorage.adult="yes";ageGate.remove();}
 
-function autoCategory(title){
- title=title.toLowerCase();
- if(title.includes("desi")||title.includes("indian")) return "desi";
- if(title.includes("couple")||title.includes("bf")||title.includes("gf")) return "couple";
- if(title.includes("viral")||title.includes("trending")) return "viral";
- if(title.includes("hot")||title.includes("sexy")||title.includes("xxx")) return "hot";
- return "other";
-}
+/* STATE */
+let allVideos=[],perPage=12;
+let page=Number(new URLSearchParams(location.search).get("page"))||1;
+let keyword="",category="all";
 
-function autoTags(title){
- const words=title.toLowerCase()
-  .replace(/[^a-z0-9 ]/g,"")
-  .split(" ")
-  .filter(w=>w.length>3);
+fetch("/api/videos").then(r=>r.json()).then(d=>{allVideos=d;draw()});
 
- const base=[
-  "adult video","18+ video","viral sexvideo",
-  "hot sexvideo","desi sex video"
- ];
+function draw(){
+ grid.innerHTML="";pagination.innerHTML="";
+ let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
+ if(category!=="all") list=list.filter(v=>v.title.toLowerCase().includes(category));
 
- return [...new Set([...words,...base])].slice(0,12).join(", ");
-}
+ let total=Math.ceil(list.length/perPage);
+ list.slice((page-1)*perPage,page*perPage).forEach(v=>{
+  let c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`<div class="thumb"><video src="${v.url}#t=1" muted></video></div>
+               <div class="info"><div class="title">${v.title}</div>
+               <div class="views">👁 ${v.views||0}</div></div>`;
+  c.onclick=()=>location.href=`/watch?id=${v._id}&page=${page}`;
+  grid.appendChild(c);
+ });
 
-function autoSEO(title){
- return{
-  seoTitle: title+" | KamaBaba Viral Videos",
-  seoDesc: "Watch "+title+" full HD. Desi hot viral adult videos only on KamaBaba.",
-  seoKeywords: autoTags(title)
- };
-}
-
-/* =========================
-        UPLOAD
-========================= */
-
-async function upload(){
- const msg=document.getElementById("msg");
- const btn=document.getElementById("btn");
- const preview=document.getElementById("preview");
-
- const password=document.getElementById("password").value.trim();
- const title=document.getElementById("title").value.trim();
- const file=document.getElementById("video").files[0];
-
- if(!password){msg.innerText="❌ Admin password required";return;}
- if(!file){msg.innerText="❌ Please select a video file";return;}
-
- // AUTO DATA
- const category=autoCategory(title);
- const tags=autoTags(title);
- const seo=autoSEO(title);
-
- preview.style.display="block";
- preview.innerHTML=`
-  <b>Auto Category:</b> ${category}<br>
-  <b>Auto Tags:</b> ${tags}<br>
-  <b>SEO Title:</b> ${seo.seoTitle}
- `;
-
- btn.disabled=true;
- msg.innerText="⏳ Uploading… please wait";
-
- const fd=new FormData();
- fd.append("video",file);
- fd.append("title",title||"Untitled");
- fd.append("category",category);
- fd.append("tags",tags);
- fd.append("seoTitle",seo.seoTitle);
- fd.append("seoDesc",seo.seoDesc);
- fd.append("seoKeywords",seo.seoKeywords);
-
- try{
-  const res=await fetch("/api/upload",{
-   method:"POST",
-   headers:{ "x-admin-password": password },
-   body:fd
-  });
-
-  const data=await res.json();
-
-  if(data.success){
-   msg.innerText="✅ Upload successful";
-   document.getElementById("video").value="";
-   document.getElementById("title").value="";
-  }else{
-   msg.innerText="❌ "+(data.error||"Upload failed");
-  }
- }catch(e){
-  msg.innerText="❌ Network / server error";
+ for(let i=1;i<=total;i++){
+  let b=document.createElement("button");
+  b.innerText=i;b.className=i===page?"active":"";
+  b.onclick=()=>location.href=`/?page=${i}`;
+  pagination.appendChild(b);
  }
-
- btn.disabled=false;
 }
-</script>
 
+function setCat(c,btn){
+ category=c;
+ document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
+ btn.classList.add("active"); page=1; draw();
+}
+
+search.oninput=e=>{keyword=e.target.value.toLowerCase();page=1;draw();}
+</script>
 </body>
 </html>
