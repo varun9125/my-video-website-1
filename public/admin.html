@@ -1,50 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin Upload • KamaBaba</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KamaBaba Admin Upload</title>
 
 <style>
 :root{
  --bg:#000;
- --card:#121212;
+ --card:#141414;
  --accent:#ff0055;
- --soft:#aaa;
+ --soft:#888;
 }
 
 *{box-sizing:border-box}
 
 body{
  margin:0;
- background:radial-gradient(circle at top,#111,#000);
+ background:var(--bg);
  color:#fff;
  font-family:system-ui,-apple-system,Segoe UI;
 }
 
-.panel{
- max-width:460px;
+.box{
+ max-width:420px;
  margin:40px auto;
+ background:var(--card);
  padding:22px;
- background:rgba(20,20,20,.9);
- border-radius:16px;
- box-shadow:0 0 40px rgba(255,0,85,.25);
+ border-radius:14px;
+ box-shadow:0 0 30px rgba(255,0,85,.25);
 }
 
 h2{
- margin:0 0 15px;
  text-align:center;
+ margin:0 0 20px;
+ color:var(--accent);
  letter-spacing:.5px;
-}
-
-label{
- font-size:13px;
- color:var(--soft);
 }
 
 input,button{
  width:100%;
- margin-top:8px;
  padding:12px;
+ margin-top:12px;
  border-radius:10px;
  border:none;
  font-size:15px;
@@ -56,163 +53,141 @@ input{
  outline:none;
 }
 
-input:focus{
- box-shadow:0 0 0 2px var(--accent);
-}
-
 button{
- margin-top:16px;
- background:linear-gradient(135deg,#ff0055,#ff2d7a);
+ background:var(--accent);
  color:#fff;
  font-weight:700;
  cursor:pointer;
- transition:.25s;
 }
 
-button:hover{transform:translateY(-1px)}
-button:disabled{opacity:.6;cursor:not-allowed}
-
-/* ===== PREVIEW ===== */
-.preview{
- margin-top:14px;
- display:none;
-}
-.preview video{
- width:100%;
- border-radius:10px;
- background:#000;
-}
-.fileInfo{
- font-size:12px;
- color:#bbb;
- margin-top:6px;
- text-align:center;
+button:disabled{
+ opacity:.6;
+ cursor:not-allowed;
 }
 
-/* ===== PROGRESS ===== */
-.progress{
- height:8px;
- background:#222;
- border-radius:20px;
- overflow:hidden;
- margin-top:14px;
- display:none;
-}
-.bar{
- height:100%;
- width:0%;
- background:linear-gradient(90deg,#ff0055,#ff7aa5);
- transition:width .3s;
-}
-
-/* ===== MESSAGE ===== */
 #msg{
  margin-top:14px;
  min-height:22px;
- text-align:center;
  font-size:14px;
+ text-align:center;
+ color:#ccc;
 }
 
-/* ===== FOOTER ===== */
-.footer{
- margin-top:20px;
- text-align:center;
- font-size:11px;
- color:#666;
+.preview{
+ margin-top:15px;
+ font-size:13px;
+ background:#0e0e0e;
+ padding:10px;
+ border-radius:10px;
+ color:#aaa;
 }
+.preview b{color:#fff}
 </style>
 </head>
 
 <body>
 
-<div class="panel">
-  <h2>🔐 Admin Upload Panel</h2>
+<div class="box">
+  <h2>🔐 Admin Upload</h2>
 
-  <label>Admin Password</label>
-  <input type="password" id="password" placeholder="••••••••">
-
-  <label style="margin-top:10px">Video Title</label>
-  <input type="text" id="title" placeholder="Enter viral title">
-
-  <label style="margin-top:10px">Select Video</label>
-  <input type="file" id="video" accept="video/*" onchange="previewVideo()">
-
-  <!-- PREVIEW -->
-  <div class="preview" id="previewBox">
-    <video id="preview" controls muted></video>
-    <div class="fileInfo" id="fileInfo"></div>
-  </div>
-
-  <!-- PROGRESS -->
-  <div class="progress" id="progress">
-    <div class="bar" id="bar"></div>
-  </div>
+  <input type="password" id="password" placeholder="Admin Password">
+  <input type="text" id="title" placeholder="Video title">
+  <input type="file" id="video" accept="video/*">
 
   <button id="btn" onclick="upload()">🚀 Upload Video</button>
 
-  <div id="msg"></div>
+  <div class="preview" id="preview" style="display:none"></div>
 
-  <div class="footer">
-    Secure Cloud Upload • KamaBaba Admin
-  </div>
+  <div id="msg"></div>
 </div>
 
 <script>
-function previewVideo(){
- const file=document.getElementById("video").files[0];
- if(!file) return;
+/* =========================
+   AUTO CATEGORY / TAG / SEO
+========================= */
 
- preview.src=URL.createObjectURL(file);
- previewBox.style.display="block";
- fileInfo.innerText=
-  "📁 "+file.name+" • "+(file.size/1024/1024).toFixed(2)+" MB";
+function autoCategory(title){
+ title=title.toLowerCase();
+ if(title.includes("desi")||title.includes("indian")) return "desi";
+ if(title.includes("couple")||title.includes("bf")||title.includes("gf")) return "couple";
+ if(title.includes("viral")||title.includes("trending")) return "viral";
+ if(title.includes("hot")||title.includes("sexy")||title.includes("xxx")) return "hot";
+ return "other";
 }
 
-/* ===== UPLOAD ===== */
+function autoTags(title){
+ const words=title.toLowerCase()
+  .replace(/[^a-z0-9 ]/g,"")
+  .split(" ")
+  .filter(w=>w.length>3);
+
+ const base=[
+  "adult video","18+ video","viral sexvideo",
+  "hot sexvideo","desi sex video"
+ ];
+
+ return [...new Set([...words,...base])].slice(0,12).join(", ");
+}
+
+function autoSEO(title){
+ return{
+  seoTitle: title+" | KamaBaba Viral Videos",
+  seoDesc: "Watch "+title+" full HD. Desi hot viral adult videos only on KamaBaba.",
+  seoKeywords: autoTags(title)
+ };
+}
+
+/* =========================
+        UPLOAD
+========================= */
+
 async function upload(){
  const msg=document.getElementById("msg");
  const btn=document.getElementById("btn");
- const bar=document.getElementById("bar");
- const progress=document.getElementById("progress");
+ const preview=document.getElementById("preview");
 
- const password=passwordEl.value.trim();
- const title=titleEl.value.trim();
+ const password=document.getElementById("password").value.trim();
+ const title=document.getElementById("title").value.trim();
  const file=document.getElementById("video").files[0];
 
- if(!password){
-  msg.innerText="❌ Admin password required";
-  return;
- }
- if(!file){
-  msg.innerText="❌ Please select a video";
-  return;
- }
+ if(!password){msg.innerText="❌ Admin password required";return;}
+ if(!file){msg.innerText="❌ Please select a video file";return;}
+
+ // AUTO DATA
+ const category=autoCategory(title);
+ const tags=autoTags(title);
+ const seo=autoSEO(title);
+
+ preview.style.display="block";
+ preview.innerHTML=`
+  <b>Auto Category:</b> ${category}<br>
+  <b>Auto Tags:</b> ${tags}<br>
+  <b>SEO Title:</b> ${seo.seoTitle}
+ `;
 
  btn.disabled=true;
- msg.innerText="⏳ Uploading video...";
- progress.style.display="block";
- bar.style.width="5%";
+ msg.innerText="⏳ Uploading… please wait";
 
  const fd=new FormData();
- fd.append("password",password);
- fd.append("title",title||"Untitled");
  fd.append("video",file);
-
- // fake progress for smooth UX
- let p=5;
- const fake=setInterval(()=>{
-  if(p<90){ p+=5; bar.style.width=p+"%"; }
- },400);
+ fd.append("title",title||"Untitled");
+ fd.append("category",category);
+ fd.append("tags",tags);
+ fd.append("seoTitle",seo.seoTitle);
+ fd.append("seoDesc",seo.seoDesc);
+ fd.append("seoKeywords",seo.seoKeywords);
 
  try{
-  const res=await fetch("/api/upload",{method:"POST",body:fd});
+  const res=await fetch("/api/upload",{
+   method:"POST",
+   headers:{ "x-admin-password": password },
+   body:fd
+  });
+
   const data=await res.json();
-  clearInterval(fake);
-  bar.style.width="100%";
 
   if(data.success){
    msg.innerText="✅ Upload successful";
-   previewBox.style.display="none";
    document.getElementById("video").value="";
    document.getElementById("title").value="";
   }else{
@@ -222,16 +197,8 @@ async function upload(){
   msg.innerText="❌ Network / server error";
  }
 
- setTimeout(()=>{
-  progress.style.display="none";
-  bar.style.width="0%";
-  btn.disabled=false;
- },1200);
+ btn.disabled=false;
 }
-
-/* shortcuts */
-const passwordEl=document.getElementById("password");
-const titleEl=document.getElementById("title");
 </script>
 
 </body>
