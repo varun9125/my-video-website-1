@@ -10,9 +10,14 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ================= BASIC CONFIG ================= */
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const BASE_URL = process.env.BASE_URL || "https://your-site.onrender.com";
+/* ================= CONFIG ================= */
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const BASE_URL = process.env.BASE_URL || "https://my-video-website-1-1.onrender.com";
+
+/* ================= MIDDLEWARE ================= */
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
@@ -21,162 +26,113 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-/* ================= MONGODB ================= */
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 10000
-});
+/* ================= DATABASE ================= */
+let dbReady = false;
 
-mongoose.connection.once("open", () => {
-  console.log("✅ MongoDB connected");
-});
-
-mongoose.connection.on("error", err => {
-  console.error("❌ MongoDB error:", err.message);
-});
+mongoose
+  .connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 10000
+  })
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    dbReady = true;
+  })
+  .catch(err => {
+    console.error("❌ MongoDB failed", err.message);
+    dbReady = false;
+  });
 
 /* ================= MODEL ================= */
-const VideoSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  url: { type: String, required: true },
+const videoSchema = new mongoose.Schema({
+  title: String,
+  url: String,
   views: { type: Number, default: 0 },
   likes: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
-const Video = mongoose.model("Video", VideoSchema);
+const Video = mongoose.model("Video", videoSchema);
 
-/* ================= MIDDLEWARE ================= */
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-
+/* ================= UPLOAD ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 120 * 1024 * 1024 }
+  limits: { fileSize: 100 * 1024 * 1024 }
 });
 
 /* ================= ROUTES ================= */
+
+// HOME
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// WATCH
 app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-/* ================= UPLOAD API ================= */
+// GET VIDEOS
+app.get("/api/videos", async (req, res) => {
+  if (!dbReady) return res.json([]);
+  const videos = await Video.find().sort({ createdAt: -1 });
+  res.json(videos);
+});
+
+// UPLOAD VIDEO
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
+    if (!dbReady) {
+      return res.status(503).json({ success: false, error: "DB not ready" });
+    }
+
     if (req.body.password !== ADMIN_PASSWORD) {
-      return res.status(401).json({ success: false, error: "Unauthorized" });
+      return res.status(401).json({ success: false, error: "Wrong password" });
     }
 
     if (!req.file) {
       return res.status(400).json({ success: false, error: "No file" });
     }
 
-    const result = await new Promise((resolve, reject) => {
+    const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         { resource_type: "video", folder: "kamababa" },
-        (err, data) => err ? reject(err) : resolve(data)
-      ).end(req.file.buffer);
-    });
-
-    const video = await Video.create({
-      title: req.body.title || "Untitled",
-      url: result.secure_url
-    });
-
-    res.json({ success: true, id: video._id });
-
-  } catch (err) {
-    console.error("UPLOAD ERROR:", err);
-    res.status(500).json({ success: false, error: "Upload failed" });
-  }
-});
-
-/* ================= DATA APIs ================= */
-app.get("/api/videos", async (req, res) => {
-  const videos = await Video.find()
-    .sort({ createdAt: -1 })
-    .lean();
-  res.json(videos);
-});
-
-app.post("/api/view/:id", async (req, res) => {
-  await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
-  res.json({ success: true });
-});
-
-app.post("/api/like/:id", async (req, res) => {
-  await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
-  res.json({ success: true });
-});
-
-/* ================= SITEMAP ================= */
-app.get("/sitemap.xml", async (req, res) => {
-  res.set("Content-Type", "application/xml");
-
-  const videos = await Video.find({}, "_id").lean();
-
-  const urls = videos.map(v => `
-<url>
- <loc>${BASE_URL}/watch?id=${v._id}</loc>
-</url>`).join("");
-
-  res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>${BASE_URL}/</loc></url>
-${urls}
-</urlset>`);
-});
-
-/* ================= START ================= */
-app.listen(PORT, () => {
-  console.log("🚀 Server running on port", PORT);
-});
-          ]
-        },
         (err, result) => (err ? reject(err) : resolve(result))
       ).end(req.file.buffer);
     });
 
     const video = await Video.create({
       title: req.body.title || "Untitled",
-      url: cloudResult.secure_url
+      url: uploadResult.secure_url
     });
 
     res.json({ success: true, id: video._id });
   } catch (e) {
-    console.error("UPLOAD ERROR:", e.message);
-    res.status(500).json({ success: false, error: "Upload failed" });
+    console.error(e);
+    res.status(500).json({ success: false });
   }
 });
 
-/* ================= GET VIDEOS (FAST) ================= */
-app.get("/api/videos", async (_, res) => {
-  if (!dbReady) return res.json([]);
-
-  const videos = await Video.find({})
-    .select("_id title url createdAt")
-    .sort({ createdAt: -1 })
-    .limit(200)          // 🚀 VERY IMPORTANT
-    .lean();             // 🚀 30% faster
-
-  res.set("Cache-Control", "public, max-age=60");
-  res.json(videos);
+// VIEW
+app.post("/api/view/:id", async (req, res) => {
+  if (dbReady) await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+  res.json({ success: true });
 });
 
-/* ================= SITEMAP ================= */
-app.get("/sitemap.xml", async (_, res) => {
+// LIKE
+app.post("/api/like/:id", async (req, res) => {
+  if (dbReady) await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
+  res.json({ success: true });
+});
+
+// SITEMAP
+app.get("/sitemap.xml", async (req, res) => {
   res.setHeader("Content-Type", "application/xml");
 
-  let urls = `
-<url><loc>${BASE_URL}/</loc></url>`;
+  let urls = `<url><loc>${BASE_URL}/</loc></url>`;
 
   if (dbReady) {
-    const vids = await Video.find({}, "_id").lean();
-    vids.forEach(v => {
+    const videos = await Video.find({}, "_id");
+    videos.forEach(v => {
       urls += `<url><loc>${BASE_URL}/watch?id=${v._id}</loc></url>`;
     });
   }
@@ -187,75 +143,8 @@ ${urls}
 </urlset>`);
 });
 
-/* ================= HEALTH CHECK ================= */
-app.get("/health", (_, res) => {
-  res.json({
-    status: "ok",
-    db: dbReady,
-    uptime: process.uptime()
-  });
-});
-
 /* ================= START ================= */
 app.listen(PORT, () => {
   console.log("🚀 Server running on", PORT);
 });
-    res.json({
-      success: true,
-      id: video._id
-    });
 
-  } catch (err) {
-    console.error("UPLOAD ERROR:", err.message);
-    res.status(500).json({
-      success: false,
-      error: "Upload failed"
-    });
-  }
-});
-
-/* ================= GET VIDEOS ================= */
-app.get("/api/videos", async (req, res) => {
-  try {
-    if (!dbReady) return res.json([]);
-    const videos = await Video.find().sort({ createdAt: -1 }).lean();
-    res.json(videos);
-  } catch (err) {
-    res.json([]);
-  }
-});
-
-/* ================= SITEMAP ================= */
-app.get("/sitemap.xml", async (req, res) => {
-  res.setHeader("Content-Type", "application/xml");
-
-  let urls = `
-<url>
-  <loc>${BASE_URL}/</loc>
-</url>`;
-
-  if (dbReady) {
-    const videos = await Video.find({}, "_id").lean();
-    videos.forEach(v => {
-      urls += `
-<url>
-  <loc>${BASE_URL}/watch?id=${v._id}</loc>
-</url>`;
-    });
-  }
-
-  res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls}
-</urlset>`);
-});
-
-/* ================= 404 SAFE ================= */
-app.use((req, res) => {
-  res.status(404).send("404 - Page not found");
-});
-
-/* ================= START ================= */
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
