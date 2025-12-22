@@ -3,38 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Watch Video</title>
+<title>Watch Video | KamaBaba</title>
 
 <style>
 body{
   margin:0;
   background:#000;
   color:#fff;
-  font-family:system-ui;
+  font-family:system-ui, Arial;
 }
 
-video{
+/* VIDEO PLAYER */
+#player{
   width:100%;
   max-height:60vh;
   background:#000;
 }
 
-.info{ padding:10px; }
+/* INFO */
+.info{
+  padding:12px;
+}
 
+.info h3{
+  margin:6px 0;
+  font-size:16px;
+}
+
+/* ACTIONS */
+.actions{
+  margin-top:8px;
+}
 .actions button{
-  margin-right:10px;
-  padding:6px 10px;
+  margin-right:8px;
+  padding:6px 12px;
   border:none;
   border-radius:6px;
   background:#222;
   color:#fff;
+  cursor:pointer;
 }
 
+/* RELATED */
 #related{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
   gap:10px;
   padding:10px;
+}
+
+.card{
+  cursor:pointer;
 }
 
 .card video{
@@ -43,15 +62,26 @@ video{
   object-fit:cover;
   border-radius:6px;
 }
+
+.card p{
+  font-size:13px;
+  margin:4px 0 0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 </style>
 </head>
 
 <body>
 
+<!-- VIDEO -->
 <video id="player" controls playsinline></video>
 
+<!-- INFO -->
 <div class="info">
-  <h3 id="title"></h3>
+  <h3 id="title">Loading...</h3>
+
   👍 <span id="likeCount">0</span>
   👎 <span id="dislikeCount">0</span>
   👁️ <span id="viewCount">0</span>
@@ -63,8 +93,8 @@ video{
   </div>
 </div>
 
-<!-- 🔥 ADSTERRA HIGH EARNING SPOT -->
-<div style="padding:10px">
+<!-- 🔥 ADSTERRA NATIVE BANNER -->
+<div style="padding:12px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
@@ -74,135 +104,93 @@ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/in
 <div id="related"></div>
 
 <script>
-const id=new URLSearchParams(location.search).get("id");
-let allVideos=[], currentVideo;
+/* =========================
+   WATCH PAGE LOGIC
+========================= */
 
+const id = new URLSearchParams(location.search).get("id");
+
+const player = document.getElementById("player");
+const titleEl = document.getElementById("title");
+const likeCount = document.getElementById("likeCount");
+const dislikeCount = document.getElementById("dislikeCount");
+const viewCount = document.getElementById("viewCount");
+const relatedBox = document.getElementById("related");
+
+let allVideos = [];
+let currentVideo = null;
+
+/* FETCH VIDEOS */
 fetch("/api/videos")
-.then(r=>r.json())
-.then(videos=>{
-  allVideos=videos;
-  currentVideo=videos.find(v=>v._id===id);
-  if(!currentVideo) return;
+.then(res => res.json())
+.then(videos => {
+  allVideos = videos;
+  currentVideo = videos.find(v => v._id === id);
 
-  player.src=currentVideo.url;
-  title.innerText=currentVideo.title;
-  likeCount.innerText=currentVideo.likes;
-  dislikeCount.innerText=currentVideo.dislikes;
-  viewCount.innerText=currentVideo.views;
-
-  fetch("/api/view/"+id,{method:"POST"});
-  renderRelated();
-});
-
-function renderRelated(){
-  const box=document.getElementById("related");
-  box.innerHTML="";
-  allVideos.filter(v=>v._id!==id).slice(0,8).forEach(v=>{
-    const d=document.createElement("div");
-    d.className="card";
-    d.innerHTML=`<video src="${v.url}#t=1" muted></video><p>${v.title}</p>`;
-    d.onclick=()=>location.href="/watch?id="+v._id;
-    box.appendChild(d);
-  });
-}
-
-function like(){
-  fetch("/api/like/"+id,{method:"POST"})
-  likeCount.innerText=Number(likeCount.innerText)+1;
-}
-function dislike(){
-  fetch("/api/dislike/"+id,{method:"POST"})
-  dislikeCount.innerText=Number(dislikeCount.innerText)+1;
-}
-function share(){
-  navigator.clipboard.writeText(location.href);
-  alert("Link copied");
-}
-</script>
-
-</body>
-</html>
-  const current = videos.find(v=>v._id===id);
-  if(!current){
-    titleEl.innerText="Video not found";
+  if(!currentVideo){
+    titleEl.innerText = "Video not found";
     return;
   }
 
-  player.src = current.url;
-  titleEl.innerText = current.title;
+  /* MAIN VIDEO */
+  player.src = currentVideo.url;
+  titleEl.innerText = currentVideo.title;
 
-  // RELATED VIDEOS (simple)
-  videos
-    .filter(v=>v._id!==id)
-    .slice(0,6)
-    .forEach(v=>{
-      const div=document.createElement("div");
-      div.className="card";
-      div.innerHTML=`
-        <video src="${v.url}#t=1" muted></video>
-        <p>${v.title}</p>
-      `;
-      div.onclick=()=>location.href="/watch?id="+v._id;
-      relatedBox.appendChild(div);
-    });
-});
-</script>
+  likeCount.innerText = currentVideo.likes || 0;
+  dislikeCount.innerText = currentVideo.dislikes || 0;
+  viewCount.innerText = currentVideo.views || 0;
 
-</body>
-</html>
-  .then(videos=>{
-    const v = videos.find(v=>v._id===id);
-    if(!v) return;
-    likeCount.innerText = v.likes;
-    dislikeCount.innerText = v.dislikes;
-    viewCount.innerText = v.views;
-  });
-}
-</script>
-
-</body>
-</html>
-
-  document.getElementById("player").src = currentVideo.url;
-  document.getElementById("title").innerText = currentVideo.title;
-
-  fetch("/api/view/"+id,{method:"POST"});
+  /* VIEW COUNT */
+  fetch("/api/view/" + id, { method:"POST" });
 
   renderRelated();
 });
 
+/* RELATED VIDEOS */
 function renderRelated(){
-  const box = document.getElementById("related");
-  box.innerHTML="";
+  relatedBox.innerHTML = "";
 
   allVideos
-  .filter(v=>v._id!==id)
+  .filter(v => v._id !== id)
   .slice(0,8)
-  .forEach(v=>{
-    const d=document.createElement("div");
-    d.className="card";
-    d.innerHTML=`
-      <video class="thumb" src="${v.url}#t=1" muted preload="metadata"></video>
+  .forEach(v => {
+    const d = document.createElement("div");
+    d.className = "card";
+    d.innerHTML = `
+      <video src="${v.url}#t=1" muted preload="metadata"></video>
       <p>${v.title}</p>
     `;
-    d.onclick=()=>location.href="/watch?id="+v._id;
-    box.appendChild(d);
+    d.onclick = () => location.href = "/watch?id=" + v._id;
+    relatedBox.appendChild(d);
   });
 }
 
 /* ACTIONS */
 function like(){
-  fetch("/api/like/"+id,{method:"POST"});
-  alert("👍 Liked");
+  fetch("/api/like/" + id, { method:"POST" });
+  likeCount.innerText = Number(likeCount.innerText) + 1;
 }
+
 function dislike(){
-  fetch("/api/dislike/"+id,{method:"POST"});
-  alert("👎 Disliked");
+  fetch("/api/dislike/" + id, { method:"POST" });
+  dislikeCount.innerText = Number(dislikeCount.innerText) + 1;
 }
+
 function share(){
   navigator.clipboard.writeText(location.href);
   alert("🔗 Link copied");
 }
+
+/* 🔥 ADSTERRA DIRECT LINK (SAFE – 1 TIME) */
+const adLink = "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a";
+let adOpened = false;
+
+document.addEventListener("click", () => {
+  if(!adOpened){
+    window.open(adLink, "_blank");
+    adOpened = true;
+  }
+});
 </script>
 
 </body>
