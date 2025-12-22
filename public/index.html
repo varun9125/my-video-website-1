@@ -6,12 +6,10 @@
 
 <title>KamaBaba Viral Videos 🔥 | Adult Desi Viral Clips</title>
 
-<!-- ✅ SEO -->
 <meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral. Hot, couple, viral clips updated daily.">
 <meta name="keywords" content="desi viral videos, adult videos, hot clips, couple videos">
 <meta name="robots" content="index, follow">
 
-<!-- ✅ LOGO / ICON -->
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/logo-192.png">
 <meta name="theme-color" content="#000000">
@@ -30,7 +28,8 @@ body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
 
 /* HEADER */
 header{position:sticky;top:0;z-index:99;background:#111;padding:14px;border-bottom:1px solid #222;text-align:center}
-header img{height:48px;margin-bottom:6px}
+header img{height:46px;display:block;margin:0 auto}
+header h1{margin:6px 0 0;font-size:16px;font-weight:600}
 #search{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:#1a1a1a;color:#fff}
 
 /* CATEGORY */
@@ -41,6 +40,7 @@ header img{height:48px;margin-bottom:6px}
 /* GRID */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:14px}
 .card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
+.card.full{grid-column:1/-1}
 .thumb{aspect-ratio:16/9;background:#000}
 .thumb video{width:100%;height:100%;object-fit:cover}
 .info{padding:9px}
@@ -71,6 +71,7 @@ footer{text-align:center;padding:20px;color:#777;font-size:13px;border-top:1px s
 
 <header>
  <img src="/logo.png" alt="KamaBaba Logo">
+ <h1>KamaBaba Viral Videos</h1>
  <input id="search" placeholder="Search hot videos...">
 </header>
 
@@ -84,7 +85,7 @@ footer{text-align:center;padding:20px;color:#777;font-size:13px;border-top:1px s
 
 <div class="grid" id="grid"></div>
 
-<!-- ✅ ADSTERRA NATIVE -->
+<!-- ADSTERRA NATIVE -->
 <div style="padding:14px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
@@ -97,11 +98,13 @@ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/in
 
 <script>
 year.innerText=new Date().getFullYear();
+
+/* AGE GATE */
 if(localStorage.adult==="yes")ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
 
-let allVideos=[],page=1,perPage=12,keyword="",category="all";
+let allVideos=[],page=Number(history.state?.page)||1,perPage=11,keyword="",category="all";
 
 fetch("/api/videos").then(r=>r.json()).then(d=>{allVideos=d;draw()});
 
@@ -114,26 +117,76 @@ function cat(v){
  return"other";
 }
 
-function setCat(c,b){category=c;document.querySelectorAll(".categories button").forEach(x=>x.classList.remove("active"));b.classList.add("active");page=1;draw()}
+function setCat(c,b){
+ category=c;
+ document.querySelectorAll(".categories button").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");
+ page=1;
+ history.pushState({page},'',`?page=${page}`);
+ draw();
+}
 
 function draw(){
- grid.innerHTML="";pagination.innerHTML="";
+ grid.innerHTML="";
+ pagination.innerHTML="";
+ window.scrollTo({top:0,behavior:"smooth"});
+
  let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
  if(category!=="all")list=list.filter(v=>cat(v)===category);
- let total=Math.ceil(list.length/perPage);
- list.slice((page-1)*perPage,page*perPage).forEach(v=>{
-  grid.innerHTML+=`
-  <div class="card" onclick="location.href='/watch?id=${v._id}'">
-   <div class="thumb"><video src="${v.url}#t=1" muted preload="metadata"></video></div>
-   <div class="info"><div class="title">${v.title}</div><div class="views">👁 ${v.views||0}</div></div>
-  </div>`;
+
+ const frag=document.createDocumentFragment();
+
+ list.slice((page-1)*perPage,page*perPage).forEach((v,i)=>{
+  if(i===0){
+   frag.appendChild(makeCard(v,true));
+   return;
+  }
+  frag.appendChild(makeCard(v,false));
+  if(i>0 && i%3===0){
+   const ad=document.createElement("div");
+   ad.innerHTML=`<script async src="https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a"></script>`;
+   frag.appendChild(ad);
+  }
  });
+
+ grid.appendChild(frag);
+
+ const total=Math.ceil(list.length/perPage);
  for(let i=1;i<=total;i++){
-  pagination.innerHTML+=`<button class="${i===page?'active':''}" onclick="page=${i};draw()">${i}</button>`;
+  const b=document.createElement("button");
+  b.textContent=i;
+  if(i===page)b.classList.add("active");
+  b.onclick=()=>{
+   page=i;
+   history.pushState({page},'',`?page=${page}`);
+   draw();
+  };
+  pagination.appendChild(b);
  }
 }
 
-search.oninput=e=>{keyword=e.target.value.toLowerCase();page=1;draw()};
+function makeCard(v,full){
+ const d=document.createElement("div");
+ d.className="card"+(full?" full":"");
+ d.onclick=()=>location.href="/watch?id="+v._id;
+ d.innerHTML=`
+ <div class="thumb"><video src="${v.url}#t=1" muted preload="metadata"></video></div>
+ <div class="info"><div class="title">${v.title}</div><div class="views">👁 ${v.views||0}</div></div>`;
+ return d;
+}
+
+search.oninput=e=>{
+ keyword=e.target.value.toLowerCase();
+ page=1;
+ draw();
+};
+
+window.onpopstate=e=>{
+ if(e.state?.page){
+  page=e.state.page;
+  draw();
+ }
+};
 
 /* SMARTLINK */
 let opened=false;
@@ -147,3 +200,4 @@ document.addEventListener("click",()=>{
 
 </body>
 </html>
+
