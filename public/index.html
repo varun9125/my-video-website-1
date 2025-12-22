@@ -153,6 +153,14 @@ footer{
 </div>
 
 <div class="grid" id="grid"></div>
+
+<!-- 🔥 ADSTERRA NATIVE BANNER -->
+<div style="padding:14px">
+<script async data-cfasync="false"
+src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
 <div class="pagination" id="pagination"></div>
 
 <footer>
@@ -181,7 +189,6 @@ fetch("/api/videos")
 .then(r=>r.json())
 .then(d=>{ allVideos=d; draw(); });
 
-/* ===== CATEGORY LOGIC ===== */
 function getCategory(v){
  const t=v.title.toLowerCase();
  if(t.includes("desi")) return "desi";
@@ -199,7 +206,6 @@ function setCat(c,btn){
  page=1; draw();
 }
 
-/* ===== DRAW ===== */
 function draw(){
  grid.innerHTML=""; pagination.innerHTML="";
  let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
@@ -235,6 +241,16 @@ search.oninput=e=>{
  keyword=e.target.value.toLowerCase();
  page=1; draw();
 };
+
+/* ===== ADSTERRA SMARTLINK (1 CLICK ONLY) ===== */
+const adLink="https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a";
+let opened=false;
+document.addEventListener("click",()=>{
+ if(!opened){
+  window.open(adLink,"_blank");
+  opened=true;
+ }
+});
 </script>
 
 </body>
