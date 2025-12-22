@@ -6,10 +6,12 @@
 
 <title>KamaBaba Viral Videos 🔥 | Adult Desi Viral Clips</title>
 
+<!-- SEO -->
 <meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral. Hot, couple, viral clips updated daily.">
 <meta name="keywords" content="desi viral videos, adult videos, hot clips, couple videos">
 <meta name="robots" content="index, follow">
 
+<!-- LOGO / ICON -->
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/logo-192.png">
 <meta name="theme-color" content="#000000">
@@ -28,8 +30,7 @@ body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
 
 /* HEADER */
 header{position:sticky;top:0;z-index:99;background:#111;padding:14px;border-bottom:1px solid #222;text-align:center}
-header img{height:46px;display:block;margin:0 auto}
-header h1{margin:6px 0 0;font-size:16px;font-weight:600}
+header img{height:48px;margin-bottom:6px}
 #search{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:#1a1a1a;color:#fff}
 
 /* CATEGORY */
@@ -40,7 +41,6 @@ header h1{margin:6px 0 0;font-size:16px;font-weight:600}
 /* GRID */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:14px}
 .card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
-.card.full{grid-column:1/-1}
 .thumb{aspect-ratio:16/9;background:#000}
 .thumb video{width:100%;height:100%;object-fit:cover}
 .info{padding:9px}
@@ -71,7 +71,6 @@ footer{text-align:center;padding:20px;color:#777;font-size:13px;border-top:1px s
 
 <header>
  <img src="/logo.png" alt="KamaBaba Logo">
- <h1>KamaBaba Viral Videos</h1>
  <input id="search" placeholder="Search hot videos...">
 </header>
 
@@ -104,9 +103,86 @@ if(localStorage.adult==="yes")ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
 
-let allVideos=[],page=Number(history.state?.page)||1,perPage=11,keyword="",category="all";
+/* STATE (BACK FIX) */
+let page=Number(localStorage.getItem("page"))||1;
 
-fetch("/api/videos").then(r=>r.json()).then(d=>{allVideos=d;draw()});
+/* DATA */
+let allVideos=[],perPage=12,keyword="",category="all";
+
+fetch("/api/videos")
+.then(r=>r.json())
+.then(d=>{allVideos=d;draw()});
+
+function cat(v){
+ const t=v.title.toLowerCase();
+ if(t.includes("desi"))return"desi";
+ if(t.includes("couple"))return"couple";
+ if(t.includes("viral"))return"viral";
+ if(t.includes("hot")||t.includes("sexy"))return"hot";
+ return"other";
+}
+
+function setCat(c,b){
+ category=c;
+ document.querySelectorAll(".categories button").forEach(x=>x.classList.remove("active"));
+ b.classList.add("active");
+ page=1;
+ save();
+ draw();
+}
+
+function draw(){
+ grid.innerHTML="";pagination.innerHTML="";
+ let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
+ if(category!=="all")list=list.filter(v=>cat(v)===category);
+
+ let total=Math.ceil(list.length/perPage);
+
+ list.slice((page-1)*perPage,page*perPage).forEach(v=>{
+  grid.innerHTML+=`
+  <div class="card" onclick="location.href='/watch?id=${v._id}'">
+   <div class="thumb">
+    <video src="${v.url}#t=1" muted preload="metadata"></video>
+   </div>
+   <div class="info">
+    <div class="title">${v.title}</div>
+    <div class="views">👁 ${v.views||0}</div>
+   </div>
+  </div>`;
+ });
+
+ for(let i=1;i<=total;i++){
+  pagination.innerHTML+=
+   `<button class="${i===page?'active':''}" onclick="page=${i};save();draw()">${i}</button>`;
+ }
+
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function save(){
+ localStorage.setItem("page",page);
+}
+
+/* SEARCH */
+search.oninput=e=>{
+ keyword=e.target.value.toLowerCase();
+ page=1;
+ save();
+ draw();
+};
+
+/* SMARTLINK (1 CLICK) */
+let opened=false;
+document.addEventListener("click",()=>{
+ if(!opened){
+  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
+  opened=true;
+ }
+});
+</script>
+
+</body>
+</html>
 
 function cat(v){
  const t=v.title.toLowerCase();
