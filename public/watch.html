@@ -6,92 +6,179 @@
 
 <title>Watch Video | KamaBaba Viral</title>
 
+<!-- ✅ LOGO / ICON -->
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/logo-192.png">
 <meta name="theme-color" content="#000000">
 
 <style>
-body{margin:0;background:#000;color:#fff;font-family:system-ui}
-
-/* HEADER */
-.header{
- text-align:center;
- padding:10px;
- border-bottom:1px solid #222;
+body{
+  margin:0;
+  background:#000;
+  color:#fff;
+  font-family:system-ui, -apple-system, Segoe UI;
 }
-.header img{height:36px}
 
-/* PLAYER */
-#player{width:100%;max-height:60vh;background:#000}
+/* ===== AGE GATE ===== */
+#ageGate{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.95);
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.ageBox{
+  background:#141414;
+  padding:25px;
+  border-radius:12px;
+  max-width:320px;
+  text-align:center;
+  box-shadow:0 0 30px #ff0055;
+}
+.ageBtns{
+  display:flex;
+  gap:10px;
+  margin-top:20px;
+}
+.ageBtns button{
+  flex:1;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+}
+.yes{background:#0f9d58;color:#fff}
+.no{background:#333;color:#fff}
 
-/* INFO */
-.info{padding:12px}
-.info h3{margin:6px 0;font-size:16px}
-.meta{font-size:13px;color:#aaa}
+/* ===== PLAYER ===== */
+#player{
+  width:100%;
+  max-height:60vh;
+  background:#000;
+}
 
-/* ACTIONS */
-.actions{display:flex;gap:10px;margin-top:10px}
+/* ===== INFO ===== */
+.info{
+  padding:12px;
+}
+.info h3{
+  margin:6px 0;
+  font-size:16px;
+  line-height:1.3;
+}
+
+/* ===== META ===== */
+.meta{
+  font-size:13px;
+  color:#aaa;
+  margin-top:4px;
+}
+
+/* ===== ACTIONS ===== */
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
 .actions button{
- padding:8px 14px;
- border:none;
- border-radius:8px;
- background:#1c1c1c;
- color:#fff;
- cursor:pointer;
+  padding:8px 14px;
+  border:none;
+  border-radius:8px;
+  background:#1c1c1c;
+  color:#fff;
+  cursor:pointer;
+  font-size:14px;
 }
-.actions button:hover{background:#ff0055}
+.actions button:hover{
+  background:#ff0055;
+}
 
-/* RELATED */
+/* ===== RELATED ===== */
 #related{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
- gap:12px;
- padding:12px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:12px;
+  padding:12px;
 }
 .card{
- background:#111;
- border-radius:8px;
- overflow:hidden;
- cursor:pointer;
+  cursor:pointer;
+  background:#111;
+  border-radius:8px;
+  overflow:hidden;
+  transition:.2s;
+}
+.card:hover{
+  transform:translateY(-3px);
 }
 .card video{
- width:100%;
- aspect-ratio:16/9;
- object-fit:cover;
- background:#000;
+  width:100%;
+  aspect-ratio:16/9;
+  object-fit:cover;
+  background:#000;
 }
 .card p{
- font-size:13px;
- margin:6px;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis;
+  font-size:13px;
+  margin:6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* ===== LOADER ===== */
+#loader{
+  padding:20px;
+  text-align:center;
+  color:#aaa;
+}
+
+@media(max-width:480px){
+  .actions button{flex:1}
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">
- <img src="/logo.png" alt="KamaBaba Logo">
+<!-- 🔞 AGE GATE -->
+<div id="ageGate">
+ <div class="ageBox">
+  <h2>🔞 Adult Content</h2>
+  <p>You must be 18+ to continue.</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="deny()">No</button>
+  </div>
+ </div>
 </div>
 
+<!-- LOGO AT TOP -->
+<div style="text-align:center;padding:8px">
+  <img src="/logo.png" alt="KamaBaba" style="height:36px">
+</div>
+
+<!-- VIDEO PLAYER -->
 <video id="player" controls playsinline></video>
 
 <div class="info">
- <h3 id="title">Loading...</h3>
- <div class="meta">
-  👁 <span id="views">0</span>
-  &nbsp; 👍 <span id="likes">0</span>
- </div>
+  <h3 id="title">Loading...</h3>
+  <div class="meta">
+    👁 <span id="viewCount">0</span>
+    &nbsp; 👍 <span id="likeCount">0</span>
+    &nbsp; 👎 <span id="dislikeCount">0</span>
+  </div>
 
- <div class="actions">
-  <button onclick="like()">👍 Like</button>
-  <button onclick="share()">🔗 Share</button>
- </div>
+  <div class="actions">
+    <button onclick="like()">👍 Like</button>
+    <button onclick="dislike()">👎 Dislike</button>
+    <button onclick="share()">🔗 Share</button>
+  </div>
 </div>
 
-<!-- 🔥 ADSTERRA NATIVE -->
+<!-- ✅ ADSTERRA NATIVE BANNER -->
 <div style="padding:12px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
@@ -99,87 +186,125 @@ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/in
 </div>
 
 <h3 style="padding-left:12px">Related Videos</h3>
+<div id="loader">Loading related videos...</div>
 <div id="related"></div>
 
 <script>
+/* ===== AGE GATE ===== */
+if(localStorage.getItem("adult")==="yes"){
+  ageGate.style.display="none";
+}
+function allow(){
+  localStorage.setItem("adult","yes");
+  ageGate.style.display="none";
+}
+function deny(){
+  location.href="https://www.google.com";
+}
+
+/* ===== ELEMENTS ===== */
 const id = new URLSearchParams(location.search).get("id");
 const player = document.getElementById("player");
 const titleEl = document.getElementById("title");
-const viewsEl = document.getElementById("views");
-const likesEl = document.getElementById("likes");
-const related = document.getElementById("related");
+const likeCount = document.getElementById("likeCount");
+const dislikeCount = document.getElementById("dislikeCount");
+const viewCount = document.getElementById("viewCount");
+const relatedBox = document.getElementById("related");
+const loader = document.getElementById("loader");
 
-/* ===== LOAD DATA ===== */
+let allVideos = [];
+let currentVideo = null;
+
+/* ===== LOAD VIDEOS ===== */
 fetch("/api/videos")
 .then(r=>r.json())
-.then(vs=>{
- const v = vs.find(x=>x._id===id);
- if(!v){
-  titleEl.innerText="❌ Video not found";
-  return;
- }
+.then(videos=>{
+  allVideos = videos || [];
+  currentVideo = allVideos.find(v => v._id === id);
 
- player.src = v.url;
- titleEl.innerText = v.title;
- viewsEl.innerText = v.views || 0;
- likesEl.innerText = v.likes || 0;
+  if(!currentVideo){
+    titleEl.innerText = "❌ Video not found";
+    return;
+  }
 
- /* VIEW COUNT (ANTI REFRESH SPAM) */
- const viewKey="viewed_"+id;
- if(!sessionStorage.getItem(viewKey)){
-  fetch("/api/view/"+id,{method:"POST"});
-  viewsEl.innerText = Number(viewsEl.innerText)+1;
-  sessionStorage.setItem(viewKey,"yes");
- }
+  player.src = currentVideo.url;
+  titleEl.innerText = currentVideo.title;
+  likeCount.innerText = currentVideo.likes || 0;
+  dislikeCount.innerText = currentVideo.dislikes || 0;
+  viewCount.innerText = currentVideo.views || 0;
 
- /* RELATED */
- vs.filter(x=>x._id!==id).slice(0,8).forEach(r=>{
-  const d=document.createElement("div");
-  d.className="card";
-  d.innerHTML=`
-   <video src="${r.url}#t=1" muted preload="metadata"></video>
-   <p>${r.title}</p>
-  `;
-  const vid=d.querySelector("video");
-  d.onmouseenter=()=>vid.play();
-  d.onmouseleave=()=>{vid.pause();vid.currentTime=1};
-  d.onclick=()=>{
-   history.pushState({},'',location.href);
-   location.href="/watch?id="+r._id;
-  };
-  related.appendChild(d);
- });
+  /* ===== VIEW COUNT WITHOUT SPAM ===== */
+  const viewKey = "viewed_" + id;
+  if(!sessionStorage.getItem(viewKey)){
+    fetch("/api/view/" + id, { method: "POST" });
+    viewCount.innerText = Number(viewCount.innerText) + 1;
+    sessionStorage.setItem(viewKey, "yes");
+  }
+
+  renderRelated();
 });
 
-/* ===== ACTIONS ===== */
+/* ===== RECOMMENDATION / RELATED ===== */
+function renderRelated(){
+  loader.style.display="none";
+  relatedBox.innerHTML="";
+
+  // Simple score: views + 2*likes
+  const ranked = allVideos
+    .filter(v => v._id !== id)
+    .map(v => ({ ...v, score: (v.views || 0) + (v.likes || 0) * 2 }))
+    .sort((a,b) => b.score - a.score)
+    .slice(0,8);
+
+  ranked.forEach(v=>{
+    const c = document.createElement("div");
+    c.className = "card";
+    c.innerHTML = `
+      <video src="${v.url}#t=1" muted preload="metadata"></video>
+      <p>${v.title}</p>`;
+    const vid = c.querySelector("video");
+    c.onmouseenter = () => vid.play();
+    c.onmouseleave = () => { vid.pause(); vid.currentTime = 1; };
+    c.onclick = () => location.href = "/watch?id=" + v._id;
+    relatedBox.appendChild(c);
+  });
+}
+
+/* ===== LIKE / DISLIKE / SHARE ===== */
 function like(){
- if(sessionStorage.getItem("liked_"+id)) return;
- fetch("/api/like/"+id,{method:"POST"});
- likesEl.innerText = Number(likesEl.innerText)+1;
- sessionStorage.setItem("liked_"+id,"yes");
+  if(sessionStorage.getItem("liked_"+id)) return;
+  fetch("/api/like/"+id,{method:"POST"});
+  likeCount.innerText = Number(likeCount.innerText) + 1;
+  sessionStorage.setItem("liked_"+id,"yes");
 }
-
+function dislike(){
+  if(sessionStorage.getItem("disliked_"+id)) return;
+  fetch("/api/dislike/"+id,{method:"POST"});
+  dislikeCount.innerText = Number(dislikeCount.innerText) + 1;
+  sessionStorage.setItem("disliked_"+id,"yes");
+}
 function share(){
- if(navigator.share){
-  navigator.share({title:document.title,url:location.href});
- }else{
-  navigator.clipboard.writeText(location.href);
-  alert("🔗 Link copied");
- }
+  if(navigator.share){
+    navigator.share({title:document.title,url:location.href});
+  }else{
+    navigator.clipboard.writeText(location.href);
+    alert("🔗 Link copied");
+  }
 }
 
-/* ===== SMARTLINK (1 CLICK ONLY) ===== */
+/* ===== SMARTLINK (1 time only) ===== */
 let opened=false;
 document.addEventListener("click",()=>{
- if(!opened){
-  window.open(
-   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
-   "_blank"
-  );
-  opened=true;
- }
+  if(!opened){
+    window.open(
+      "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
+      "_blank"
+    );
+    opened=true;
+  }
 });
 </script>
 
 </body>
 </html>
+
