@@ -12,7 +12,6 @@
  --accent:#ff0055;
  --soft:#999;
 }
-
 body{
  margin:0;
  background:var(--bg);
@@ -20,97 +19,74 @@ body{
  font-family:system-ui,-apple-system,Segoe UI;
 }
 
-/* ===== PLAYER ===== */
-#player{
- width:100%;
- max-height:60vh;
- background:#000;
+/* ===== AGE GATE ===== */
+#ageGate{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.95);
+ z-index:9999;
+ display:flex;
+ align-items:center;
+ justify-content:center;
 }
+.ageBox{
+ background:#141414;
+ padding:25px;
+ border-radius:12px;
+ max-width:320px;
+ text-align:center;
+ box-shadow:0 0 30px #ff0055;
+}
+.ageBox h2{color:#ff0055;margin-bottom:10px}
+.ageBox p{font-size:14px;color:#ccc}
+.ageBtns{display:flex;gap:10px;margin-top:20px}
+.ageBtns button{
+ flex:1;padding:10px;border:none;border-radius:8px;
+ font-weight:600;cursor:pointer
+}
+.yes{background:#0f9d58;color:#fff}
+.no{background:#333;color:#fff}
+
+/* ===== PLAYER ===== */
+#player{width:100%;max-height:60vh;background:#000}
 
 /* ===== INFO ===== */
-.info{
- padding:12px;
-}
-
-.info h3{
- margin:6px 0;
- font-size:16px;
- line-height:1.3;
-}
+.info{padding:12px}
+.info h3{margin:6px 0;font-size:16px;line-height:1.3}
 
 /* ===== META ===== */
-.meta{
- font-size:13px;
- color:var(--soft);
- margin-top:4px;
-}
+.meta{font-size:13px;color:var(--soft);margin-top:4px}
 
 /* ===== ACTIONS ===== */
-.actions{
- display:flex;
- gap:10px;
- margin-top:10px;
- flex-wrap:wrap;
-}
-
+.actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
 .actions button{
- padding:8px 14px;
- border:none;
- border-radius:8px;
- background:#1c1c1c;
- color:#fff;
- cursor:pointer;
- font-size:14px;
- transition:.2s;
+ padding:8px 14px;border:none;border-radius:8px;
+ background:#1c1c1c;color:#fff;cursor:pointer;font-size:14px
 }
-
-.actions button:hover{
- background:var(--accent);
-}
+.actions button:hover{background:var(--accent)}
 
 /* ===== RELATED ===== */
 #related{
  display:grid;
  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
- gap:12px;
- padding:12px;
+ gap:12px;padding:12px
 }
-
 .card{
- cursor:pointer;
- background:var(--card);
- border-radius:8px;
- overflow:hidden;
- transition:.2s;
+ cursor:pointer;background:var(--card);
+ border-radius:8px;overflow:hidden;transition:.2s
 }
-
-.card:hover{
- transform:translateY(-3px);
-}
-
+.card:hover{transform:translateY(-3px)}
 .card video{
- width:100%;
- aspect-ratio:16/9;
- object-fit:cover;
- background:#000;
+ width:100%;aspect-ratio:16/9;object-fit:cover;background:#000
 }
-
 .card p{
- font-size:13px;
- margin:6px;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis;
+ font-size:13px;margin:6px;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis
 }
 
 /* ===== LOADER ===== */
-#loader{
- padding:20px;
- text-align:center;
- color:#aaa;
-}
+#loader{padding:20px;text-align:center;color:#aaa}
 
-/* ===== MOBILE ===== */
 @media(max-width:480px){
  .actions button{flex:1}
 }
@@ -119,10 +95,21 @@ body{
 
 <body>
 
+<!-- 🔞 AGE GATE -->
+<div id="ageGate">
+ <div class="ageBox">
+  <h2>🔞 Adult Content</h2>
+  <p>You must be 18+ to continue.</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="deny()">No</button>
+  </div>
+ </div>
+</div>
+
 <!-- VIDEO -->
 <video id="player" controls playsinline></video>
 
-<!-- INFO -->
 <div class="info">
   <h3 id="title">Loading...</h3>
   <div class="meta">
@@ -143,8 +130,18 @@ body{
 <div id="related"></div>
 
 <script>
-const id = new URLSearchParams(location.search).get("id");
+/* ===== AGE GATE ===== */
+if(localStorage.getItem("adult")==="yes"){
+ ageGate.style.display="none";
+}
+function allow(){
+ localStorage.setItem("adult","yes");
+ ageGate.style.display="none";
+}
+function deny(){ location.href="https://www.google.com"; }
 
+/* ===== DATA ===== */
+const id = new URLSearchParams(location.search).get("id");
 const player = document.getElementById("player");
 const titleEl = document.getElementById("title");
 const likeCount = document.getElementById("likeCount");
@@ -153,88 +150,77 @@ const viewCount = document.getElementById("viewCount");
 const relatedBox = document.getElementById("related");
 const loader = document.getElementById("loader");
 
-let allVideos = [];
-let currentVideo = null;
+let allVideos=[], currentVideo=null;
 
 /* ===== LOAD VIDEOS ===== */
 fetch("/api/videos")
 .then(r=>r.json())
 .then(videos=>{
-  allVideos = videos;
-  currentVideo = videos.find(v => v._id === id);
+ allVideos = videos;
+ currentVideo = videos.find(v => v._id === id);
+ if(!currentVideo){ titleEl.innerText="❌ Video not found"; return; }
 
-  if(!currentVideo){
-    titleEl.innerText = "❌ Video not found";
-    return;
-  }
+ player.src = currentVideo.url;
+ titleEl.innerText = currentVideo.title;
+ likeCount.innerText = currentVideo.likes||0;
+ dislikeCount.innerText = currentVideo.dislikes||0;
+ viewCount.innerText = currentVideo.views||0;
 
-  player.src = currentVideo.url;
-  titleEl.innerText = currentVideo.title;
+ const viewKey="viewed_"+id;
+ if(!sessionStorage.getItem(viewKey)){
+   fetch("/api/view/"+id,{method:"POST"});
+   viewCount.innerText=Number(viewCount.innerText)+1;
+   sessionStorage.setItem(viewKey,"yes");
+ }
 
-  likeCount.innerText = currentVideo.likes || 0;
-  dislikeCount.innerText = currentVideo.dislikes || 0;
-  viewCount.innerText = currentVideo.views || 0;
-
-  /* VIEW COUNT (ANTI-SPAM) */
-  const viewedKey = "viewed_" + id;
-  if(!sessionStorage.getItem(viewedKey)){
-    fetch("/api/view/"+id,{method:"POST"});
-    viewCount.innerText = Number(viewCount.innerText) + 1;
-    sessionStorage.setItem(viewedKey,"yes");
-  }
-
-  renderRelated();
+ renderRelated();
 });
 
 /* ===== SMART RECOMMENDATION ===== */
 function renderRelated(){
-  loader.style.display="none";
-  relatedBox.innerHTML="";
+ loader.style.display="none";
+ relatedBox.innerHTML="";
 
-  const ranked = allVideos
-    .filter(v=>v._id!==id)
-    .map(v=>({
-      ...v,
-      score:(v.views||0)+(v.likes||0)*2
-    }))
-    .sort((a,b)=>b.score-a.score)
-    .slice(0,8);
+ const ranked = allVideos
+ .filter(v=>v._id!==id)
+ .map(v=>({...v,score:(v.views||0)+(v.likes||0)*2}))
+ .sort((a,b)=>b.score-a.score)
+ .slice(0,8);
 
-  ranked.forEach(v=>{
-    const c=document.createElement("div");
-    c.className="card";
-    c.innerHTML=`
-      <video src="${v.url}#t=1" muted preload="metadata"></video>
-      <p>${v.title}</p>
-    `;
-
-    const vid=c.querySelector("video");
-    c.onmouseenter=()=>vid.play();
-    c.onmouseleave=()=>{vid.pause();vid.currentTime=1};
-
-    c.onclick=()=>location.href="/watch?id="+v._id;
-    relatedBox.appendChild(c);
-  });
+ ranked.forEach(v=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`
+    <video src="${v.url}#t=1" muted preload="metadata"></video>
+    <p>${v.title}</p>`;
+  const vid=c.querySelector("video");
+  c.onmouseenter=()=>vid.play();
+  c.onmouseleave=()=>{vid.pause();vid.currentTime=1};
+  c.onclick=()=>location.href="/watch?id="+v._id;
+  relatedBox.appendChild(c);
+ });
 }
 
-/* ===== ACTIONS ===== */
+/* ===== ACTIONS (ANTI-SPAM) ===== */
 function like(){
-  fetch("/api/like/"+id,{method:"POST"});
-  likeCount.innerText = Number(likeCount.innerText)+1;
+ if(sessionStorage.getItem("liked_"+id)) return;
+ fetch("/api/like/"+id,{method:"POST"});
+ likeCount.innerText=Number(likeCount.innerText)+1;
+ sessionStorage.setItem("liked_"+id,"yes");
 }
-
 function dislike(){
-  fetch("/api/dislike/"+id,{method:"POST"});
-  dislikeCount.innerText = Number(dislikeCount.innerText)+1;
+ if(sessionStorage.getItem("disliked_"+id)) return;
+ fetch("/api/dislike/"+id,{method:"POST"});
+ dislikeCount.innerText=Number(dislikeCount.innerText)+1;
+ sessionStorage.setItem("disliked_"+id,"yes");
 }
-
 function share(){
-  if(navigator.share){
-    navigator.share({title:document.title,url:location.href});
-  }else{
-    navigator.clipboard.writeText(location.href);
-    alert("🔗 Link copied");
-  }
+ if(navigator.share){
+  navigator.share({title:document.title,url:location.href});
+ }else{
+  navigator.clipboard.writeText(location.href);
+  alert("🔗 Link copied");
+ }
 }
 </script>
 
