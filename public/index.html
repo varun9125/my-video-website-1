@@ -22,13 +22,54 @@ body{
  font-family:system-ui,-apple-system,Segoe UI;
 }
 
+/* ===== AGE GATE ===== */
+#ageGate{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.95);
+ z-index:9999;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+
+.ageBox{
+ background:#141414;
+ padding:25px;
+ border-radius:12px;
+ max-width:320px;
+ text-align:center;
+ box-shadow:0 0 30px #ff0055;
+}
+
+.ageBox h2{color:#ff0055;margin-bottom:10px}
+.ageBox p{font-size:14px;color:#ccc}
+
+.ageBtns{
+ display:flex;
+ gap:10px;
+ margin-top:20px;
+}
+
+.ageBtns button{
+ flex:1;
+ padding:10px;
+ border:none;
+ border-radius:8px;
+ font-weight:600;
+ cursor:pointer;
+}
+
+.yes{background:#0f9d58;color:#fff}
+.no{background:#333;color:#fff}
+
 /* ===== HEADER ===== */
 header{
  position:sticky;
  top:0;
  z-index:99;
  background:linear-gradient(180deg,#111,#0b0b0b);
- padding:12px;
+ padding:14px;
  border-bottom:1px solid #222;
 }
 
@@ -36,19 +77,42 @@ header h1{
  margin:0;
  text-align:center;
  font-size:18px;
- letter-spacing:.5px;
+ letter-spacing:.6px;
 }
 
 #search{
  width:100%;
  margin-top:10px;
  padding:12px;
- border-radius:8px;
+ border-radius:10px;
  border:none;
  outline:none;
  background:#1a1a1a;
  color:#fff;
  font-size:14px;
+}
+
+/* ===== CATEGORY ===== */
+.categories{
+ display:flex;
+ gap:8px;
+ overflow-x:auto;
+ padding:10px;
+}
+
+.categories button{
+ padding:7px 14px;
+ border:none;
+ border-radius:20px;
+ background:#222;
+ color:#fff;
+ cursor:pointer;
+ white-space:nowrap;
+ font-size:13px;
+}
+
+.categories button.active{
+ background:var(--accent);
 }
 
 /* ===== GRID ===== */
@@ -61,23 +125,21 @@ header h1{
 
 .card{
  background:var(--card);
- border-radius:10px;
+ border-radius:12px;
  overflow:hidden;
  cursor:pointer;
- transition:.2s;
+ transition:.25s;
 }
 
 .card:hover{
- transform:translateY(-3px);
- box-shadow:0 8px 25px rgba(0,0,0,.6);
+ transform:translateY(-4px);
+ box-shadow:0 10px 30px rgba(0,0,0,.6);
 }
 
-/* ===== THUMB ===== */
 .thumb{
  aspect-ratio:16/9;
  background:#000;
  position:relative;
- overflow:hidden;
 }
 
 .thumb video{
@@ -86,7 +148,6 @@ header h1{
  object-fit:cover;
 }
 
-/* Play icon */
 .thumb::after{
  content:"▶";
  position:absolute;
@@ -94,93 +155,110 @@ header h1{
  display:flex;
  align-items:center;
  justify-content:center;
- font-size:28px;
- color:#fff;
+ font-size:30px;
  opacity:.6;
  background:linear-gradient(transparent,rgba(0,0,0,.6));
 }
 
-/* ===== INFO ===== */
-.info{
- padding:8px;
-}
-
+.info{padding:9px}
 .title{
  font-size:13px;
  white-space:nowrap;
  overflow:hidden;
  text-overflow:ellipsis;
 }
-
 .views{
  font-size:11px;
  color:var(--soft);
- margin-top:3px;
+ margin-top:4px;
 }
 
 /* ===== PAGINATION ===== */
 .pagination{
  display:flex;
- flex-wrap:wrap;
- gap:6px;
  justify-content:center;
+ gap:6px;
  padding:18px;
 }
 
 .pagination button{
  padding:7px 12px;
  border:none;
- border-radius:7px;
+ border-radius:8px;
  background:#1f1f1f;
  color:#fff;
  cursor:pointer;
- font-size:13px;
 }
 
 .pagination button.active{
  background:var(--accent);
 }
 
-.pagination button:hover{
- background:#333;
-}
-
-/* ===== AD BLOCK ===== */
-.adbox{
- padding:14px;
-}
-
-/* ===== RESPONSIVE ===== */
-@media(max-width:480px){
- header h1{font-size:16px}
- .grid{gap:10px}
+/* ===== FOOTER ===== */
+footer{
+ text-align:center;
+ padding:20px;
+ color:#777;
+ font-size:13px;
+ border-top:1px solid #222;
 }
 </style>
 </head>
 
 <body>
 
-<header>
- <h1>🔥 KamaBaba Viral Videos 🔥</h1>
- <input id="search" placeholder="Search hot videos..." autocomplete="off">
-</header>
-
-<div class="grid" id="grid"></div>
-
-<!-- 🔥 AD ZONE (SAFE) -->
-<div class="adbox">
- <script async data-cfasync="false"
- src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
- <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+<!-- 🔞 AGE GATE -->
+<div id="ageGate">
+ <div class="ageBox">
+  <h2>🔞 Adult Content</h2>
+  <p>You must be 18+ to enter this website.</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="deny()">No</button>
+  </div>
+ </div>
 </div>
 
+<header>
+ <h1>🔥 KamaBaba Viral Videos 🔥</h1>
+ <input id="search" placeholder="Search hot videos...">
+</header>
+
+<!-- CATEGORY -->
+<div class="categories" id="cats">
+ <button class="active" onclick="setCat('all')">All</button>
+ <button onclick="setCat('hot')">🔥 Hot</button>
+ <button onclick="setCat('desi')">🇮🇳 Desi</button>
+ <button onclick="setCat('couple')">💑 Couple</button>
+ <button onclick="setCat('viral')">🚀 Viral</button>
+</div>
+
+<div class="grid" id="grid"></div>
 <div class="pagination" id="pagination"></div>
 
+<footer>
+ © <span id="year"></span> KamaBaba Viral — All Rights Reserved
+</footer>
+
 <script>
+document.getElementById("year").innerText=new Date().getFullYear();
+
+/* ===== AGE GATE ===== */
+if(localStorage.getItem("adult")==="yes"){
+ ageGate.style.display="none";
+}
+function allow(){
+ localStorage.setItem("adult","yes");
+ ageGate.style.display="none";
+}
+function deny(){
+ location.href="https://www.google.com";
+}
+
+/* ===== DATA ===== */
 let allVideos=[];
-let page=Number(localStorage.getItem("page"))||1;
-const perPage=12;
-let keyword="";
+let page=1, perPage=12;
+let keyword="", category="all";
 
 fetch("/api/videos")
 .then(r=>r.json())
@@ -189,84 +267,66 @@ fetch("/api/videos")
  draw();
 });
 
+/* ===== CATEGORY LOGIC ===== */
+function getCategory(v){
+ const t=v.title.toLowerCase();
+ if(t.includes("desi")) return "desi";
+ if(t.includes("couple")) return "couple";
+ if(t.includes("viral")) return "viral";
+ if(t.includes("hot")||t.includes("sexy")) return "hot";
+ return "other";
+}
+
+function setCat(c){
+ category=c;
+ document.querySelectorAll(".categories button")
+ .forEach(b=>b.classList.remove("active"));
+ event.target.classList.add("active");
+ page=1;
+ draw();
+}
+
 /* ===== DRAW ===== */
 function draw(){
- grid.innerHTML="";
- pagination.innerHTML="";
+ grid.innerHTML=""; pagination.innerHTML="";
 
- const list=allVideos.filter(v =>
+ let list=allVideos.filter(v=>
   v.title.toLowerCase().includes(keyword)
  );
 
- const totalPages=Math.ceil(list.length/perPage);
- if(page>totalPages) page=1;
+ if(category!=="all"){
+  list=list.filter(v=>getCategory(v)===category);
+ }
+
+ const total=Math.ceil(list.length/perPage);
 
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`
-   <div class="thumb">
-    <video src="${v.url}#t=1" muted preload="metadata"></video>
-   </div>
+   <div class="thumb"><video src="${v.url}#t=1" muted preload="metadata"></video></div>
    <div class="info">
     <div class="title">${v.title}</div>
     <div class="views">👁 ${v.views||0}</div>
-   </div>
-  `;
-
-  // hover autoplay
-  const vid=c.querySelector("video");
-  c.onmouseenter=()=>vid.play();
-  c.onmouseleave=()=>{vid.pause();vid.currentTime=1};
-
+   </div>`;
   c.onclick=()=>location.href="/watch?id="+v._id;
   grid.appendChild(c);
  });
 
- // pagination
- if(page>1){
-  const prev=document.createElement("button");
-  prev.innerText="‹ Prev";
-  prev.onclick=()=>{page--;save();draw()};
-  pagination.appendChild(prev);
- }
-
- for(let i=Math.max(1,page-2);i<=Math.min(totalPages,page+2);i++){
+ for(let i=1;i<=total;i++){
   const b=document.createElement("button");
   b.innerText=i;
   if(i===page) b.classList.add("active");
-  b.onclick=()=>{page=i;save();draw()};
+  b.onclick=()=>{page=i;draw()};
   pagination.appendChild(b);
  }
-
- if(page<totalPages){
-  const next=document.createElement("button");
-  next.innerText="Next ›";
-  next.onclick=()=>{page++;save();draw()};
-  pagination.appendChild(next);
- }
-}
-
-function save(){
- localStorage.setItem("page",page);
- scrollTo({top:0,behavior:"smooth"});
 }
 
 /* ===== SEARCH ===== */
 search.oninput=e=>{
  keyword=e.target.value.toLowerCase();
- page=1; save(); draw();
+ page=1; draw();
 };
-
-/* ===== AD DIRECT LINK (1 CLICK ONLY) ===== */
-const adLink="https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a";
-let opened=false;
-document.addEventListener("click",()=>{
- if(!opened){
-  window.open(adLink,"_blank");
-  opened=true;
- }
-});
 </script>
 
 </body>
