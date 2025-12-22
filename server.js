@@ -6,19 +6,30 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const path = require("path");
 const cors = require("cors");
+const compression = require("compression");
+const morgan = require("morgan");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ================= BASIC CONFIG ================= */
+/* ================= CONFIG ================= */
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-const BASE_URL = process.env.BASE_URL || "https://my-video-website-1-1.onrender.com";
+const BASE_URL = "https://my-video-website-1-1.onrender.com";
 
-/* ================= SECURITY CHECK ================= */
-if (!ADMIN_PASSWORD) {
-  console.error("❌ ADMIN_PASSWORD missing in .env");
-  process.exit(1);
-}
+/* ================= BASIC OPTIMIZATION ================= */
+app.use(compression());              // gzip compression
+app.use(cors());
+app.use(express.json({ limit: "1mb" }));
+app.use(morgan("tiny"));
+app.disable("x-powered-by");
+
+/* ================= STATIC FILES (FAST) ================= */
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: "7d",
+    immutable: true
+  })
+);
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
@@ -30,117 +41,137 @@ cloudinary.config({
 /* ================= MONGODB ================= */
 let dbReady = false;
 
+mongoose.set("strictQuery", true);
+
 mongoose.connect(process.env.MONGO_URI, {
-  autoIndex: true,
-  serverSelectionTimeoutMS: 15000
+  serverSelectionTimeoutMS: 10000,
+  maxPoolSize: 10
 });
 
-mongoose.connection.on("connected", () => {
+mongoose.connection.once("open", () => {
   console.log("✅ MongoDB connected");
   dbReady = true;
 });
 
 mongoose.connection.on("error", err => {
-  console.error("❌ MongoDB error:", err.message);
-  dbReady = false;
-});
-
-mongoose.connection.on("disconnected", () => {
-  console.error("⚠️ MongoDB disconnected");
+  console.error("❌ MongoDB error", err.message);
   dbReady = false;
 });
 
 /* ================= MODEL ================= */
-const videoSchema = new mongoose.Schema({
-  title: { type: String, trim: true },
-  url: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-videoSchema.index({ createdAt: -1 });
+const videoSchema = new mongoose.Schema(
+  {
+    title: { type: String, index: true },
+    url: String,
+    createdAt: { type: Date, default: Date.now, index: true }
+  },
+  { versionKey: false }
+);
 
 const Video = mongoose.model("Video", videoSchema);
 
-/* ================= MIDDLEWARE ================= */
-app.use(cors());
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
-
-/* ================= FILE UPLOAD ================= */
+/* ================= MULTER ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith("video/")) {
-      return cb(new Error("Only video files allowed"));
-    }
-    cb(null, true);
-  }
+  limits: { fileSize: 120 * 1024 * 1024 } // 120MB
 });
 
 /* ================= ROUTES ================= */
 
-/* HOME */
-app.get("/", (req, res) => {
+/* Home */
+app.get("/", (_, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/* WATCH PAGE */
-app.get("/watch", (req, res) => {
+/* Watch */
+app.get("/watch", (_, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
 /* ================= ADMIN UPLOAD ================= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
-    if (!dbReady) {
-      return res.status(503).json({
-        success: false,
-        error: "Database warming up. Try again in few seconds."
-      });
-    }
+    if (!dbReady)
+      return res.status(503).json({ success: false, error: "DB not ready" });
 
-    const password =
-      req.headers["x-admin-password"] || req.body.password;
+    if (req.body.password !== ADMIN_PASSWORD)
+      return res.status(401).json({ success: false, error: "Wrong password" });
 
-    if (password !== ADMIN_PASSWORD) {
-      return res.status(401).json({
-        success: false,
-        error: "Unauthorized admin"
-      });
-    }
+    if (!req.file)
+      return res.status(400).json({ success: false, error: "No file" });
 
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        error: "No video file uploaded"
-      });
-    }
-
-    const title = (req.body.title || "Untitled").trim();
-
-    /* UPLOAD TO CLOUDINARY */
-    const uploadResult = await new Promise((resolve, reject) => {
+    const cloudResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
           resource_type: "video",
           folder: "kamababa",
-          chunk_size: 6 * 1024 * 1024
+          eager: [
+            { width: 320, height: 180, crop: "fill", format: "jpg" }
+          ]
         },
-        (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        }
+        (err, result) => (err ? reject(err) : resolve(result))
       ).end(req.file.buffer);
     });
 
-    /* SAVE TO DB */
     const video = await Video.create({
-      title,
-      url: uploadResult.secure_url
+      title: req.body.title || "Untitled",
+      url: cloudResult.secure_url
     });
 
+    res.json({ success: true, id: video._id });
+  } catch (e) {
+    console.error("UPLOAD ERROR:", e.message);
+    res.status(500).json({ success: false, error: "Upload failed" });
+  }
+});
+
+/* ================= GET VIDEOS (FAST) ================= */
+app.get("/api/videos", async (_, res) => {
+  if (!dbReady) return res.json([]);
+
+  const videos = await Video.find({})
+    .select("_id title url createdAt")
+    .sort({ createdAt: -1 })
+    .limit(200)          // 🚀 VERY IMPORTANT
+    .lean();             // 🚀 30% faster
+
+  res.set("Cache-Control", "public, max-age=60");
+  res.json(videos);
+});
+
+/* ================= SITEMAP ================= */
+app.get("/sitemap.xml", async (_, res) => {
+  res.setHeader("Content-Type", "application/xml");
+
+  let urls = `
+<url><loc>${BASE_URL}/</loc></url>`;
+
+  if (dbReady) {
+    const vids = await Video.find({}, "_id").lean();
+    vids.forEach(v => {
+      urls += `<url><loc>${BASE_URL}/watch?id=${v._id}</loc></url>`;
+    });
+  }
+
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`);
+});
+
+/* ================= HEALTH CHECK ================= */
+app.get("/health", (_, res) => {
+  res.json({
+    status: "ok",
+    db: dbReady,
+    uptime: process.uptime()
+  });
+});
+
+/* ================= START ================= */
+app.listen(PORT, () => {
+  console.log("🚀 Server running on", PORT);
+});
     res.json({
       success: true,
       id: video._id
