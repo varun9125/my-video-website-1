@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>KamaBaba Viral Videos 🔥</title>
 
 <style>
@@ -45,9 +44,7 @@ header h1{
   padding:12px;
 }
 
-.card{
-  cursor:pointer;
-}
+.card{ cursor:pointer; }
 
 .thumb-wrap{
   width:100%;
@@ -101,12 +98,84 @@ header h1{
 </header>
 
 <main class="grid" id="grid"></main>
+
+<!-- 🔥 ADSTERRA NATIVE BANNER (SAFE PLACE) -->
+<div style="padding:12px">
+<script async data-cfasync="false"
+src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
 <div class="pagination" id="pagination"></div>
 
 <script>
-let allVideos = [];
-let perPage = 10;
-let keyword = "";
+let allVideos=[];
+let perPage=10;
+let keyword="";
+let currentPage=Number(localStorage.getItem("page"))||1;
+
+fetch("/api/videos")
+.then(r=>r.json())
+.then(d=>{
+  allVideos=d.reverse();
+  render();
+});
+
+function render(){
+  const grid=document.getElementById("grid");
+  const pagination=document.getElementById("pagination");
+  grid.innerHTML="";
+  pagination.innerHTML="";
+
+  const filtered=allVideos.filter(v =>
+    v.title.toLowerCase().includes(keyword)
+  );
+
+  const totalPages=Math.ceil(filtered.length/perPage);
+  if(currentPage>totalPages) currentPage=1;
+
+  const start=(currentPage-1)*perPage;
+  const pageVideos=filtered.slice(start,start+perPage);
+
+  pageVideos.forEach(v=>{
+    const card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <div class="thumb-wrap">
+        <video src="${v.url}#t=1" muted preload="metadata"></video>
+      </div>
+      <p>${v.title}</p>
+    `;
+    card.onclick=()=>{
+      location.href="/watch?id="+v._id;
+    };
+    grid.appendChild(card);
+  });
+
+  for(let i=1;i<=totalPages;i++){
+    const btn=document.createElement("button");
+    btn.innerText=i;
+    if(i===currentPage) btn.classList.add("active");
+    btn.onclick=()=>{
+      currentPage=i;
+      localStorage.setItem("page",i);
+      render();
+      scrollTo(0,0);
+    };
+    pagination.appendChild(btn);
+  }
+}
+
+document.getElementById("search").oninput=e=>{
+  keyword=e.target.value.toLowerCase();
+  currentPage=1;
+  localStorage.setItem("page",1);
+  render();
+};
+</script>
+
+</body>
+</html>
 let currentPage = Number(localStorage.getItem("page")) || 1;
 
 /* FETCH VIDEOS */
