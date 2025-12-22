@@ -4,145 +4,259 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>KamaBaba Viral Videos 🔥</title>
-<meta name="description" content="KamaBaba Viral – Trending Desi, Hot & Viral Videos">
-<meta name="theme-color" content="#ff0055">
+<title>Admin Upload | KamaBaba</title>
 
-<!-- ✅ LOGO / FAVICON -->
+<!-- BASIC SECURITY -->
+<meta name="robots" content="noindex, nofollow">
+
+<!-- LOGO / FAVICON -->
 <link rel="icon" href="/favicon.ico">
-<link rel="apple-touch-icon" href="/logo-192.png">
 
 <style>
 :root{
- --bg:#0b0b0b; --card:#141414; --accent:#ff0055; --soft:#888;
+ --bg:#000;
+ --card:#111;
+ --accent:#ff0055;
+ --soft:#999;
+ --ok:#0f9d58;
+ --err:#e53935;
 }
+
 *{box-sizing:border-box}
+
 body{
- margin:0;background:var(--bg);color:#fff;
+ margin:0;
+ min-height:100vh;
+ background:linear-gradient(180deg,#000,#080808);
+ color:#fff;
  font-family:system-ui,-apple-system,Segoe UI;
+ display:flex;
+ align-items:center;
+ justify-content:center;
 }
 
-/* AGE GATE */
-#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;
- display:flex;align-items:center;justify-content:center}
-.ageBox{background:#141414;padding:25px;border-radius:12px;max-width:320px;
- text-align:center;box-shadow:0 0 30px #ff0055}
-.ageBtns{display:flex;gap:10px;margin-top:20px}
-.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600}
-.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
+/* ===== CONTAINER ===== */
+.panel{
+ width:100%;
+ max-width:420px;
+ background:var(--card);
+ padding:26px;
+ border-radius:14px;
+ box-shadow:0 20px 50px rgba(0,0,0,.7);
+ animation:fadeIn .4s ease;
+}
 
-/* HEADER */
-header{position:sticky;top:0;background:#111;padding:14px;border-bottom:1px solid #222}
-header h1{text-align:center;margin:0;font-size:18px}
-#search{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;
- background:#1a1a1a;color:#fff}
+@keyframes fadeIn{
+ from{opacity:0;transform:translateY(10px)}
+ to{opacity:1;transform:none}
+}
 
-/* CATEGORY */
-.categories{display:flex;gap:8px;overflow-x:auto;padding:10px}
-.categories button{padding:7px 14px;border-radius:20px;border:none;
- background:#222;color:#fff;cursor:pointer}
-.categories .active{background:var(--accent)}
+/* ===== HEADER ===== */
+.panel h2{
+ margin:0 0 18px;
+ text-align:center;
+ font-size:20px;
+ letter-spacing:.5px;
+}
 
-/* GRID */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
- gap:14px;padding:14px}
-.card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
-.thumb{aspect-ratio:16/9;background:#000}
-.thumb video{width:100%;height:100%;object-fit:cover}
-.info{padding:9px}
-.title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.views{font-size:11px;color:var(--soft)}
+.panel p{
+ text-align:center;
+ font-size:13px;
+ color:var(--soft);
+ margin-bottom:20px;
+}
 
-/* PAGINATION */
-.pagination{display:flex;justify-content:center;gap:6px;padding:18px}
-.pagination button{padding:7px 12px;border:none;border-radius:8px;background:#1f1f1f;color:#fff}
-.pagination .active{background:var(--accent)}
+/* ===== INPUTS ===== */
+label{
+ font-size:12px;
+ color:#bbb;
+ display:block;
+ margin-top:14px;
+}
 
-footer{text-align:center;padding:20px;color:#777;border-top:1px solid #222}
+input{
+ width:100%;
+ margin-top:6px;
+ padding:12px;
+ border-radius:10px;
+ border:none;
+ outline:none;
+ background:#1b1b1b;
+ color:#fff;
+ font-size:14px;
+}
+
+input::placeholder{color:#666}
+
+/* FILE */
+input[type=file]{
+ padding:10px;
+ cursor:pointer;
+}
+
+/* ===== BUTTON ===== */
+button{
+ width:100%;
+ margin-top:18px;
+ padding:13px;
+ border:none;
+ border-radius:12px;
+ background:var(--accent);
+ color:#fff;
+ font-weight:600;
+ font-size:15px;
+ cursor:pointer;
+ transition:.2s;
+}
+
+button:hover{opacity:.9}
+button:disabled{
+ opacity:.5;
+ cursor:not-allowed;
+}
+
+/* ===== PROGRESS ===== */
+.progress{
+ margin-top:14px;
+ height:6px;
+ background:#222;
+ border-radius:6px;
+ overflow:hidden;
+ display:none;
+}
+.progress div{
+ height:100%;
+ width:0%;
+ background:linear-gradient(90deg,var(--accent),#ff4081);
+ transition:width .3s;
+}
+
+/* ===== MESSAGE ===== */
+#msg{
+ margin-top:14px;
+ min-height:22px;
+ font-size:14px;
+ text-align:center;
+}
+
+.ok{color:var(--ok)}
+.err{color:var(--err)}
+
+/* ===== FOOTER ===== */
+.footer{
+ margin-top:22px;
+ text-align:center;
+ font-size:11px;
+ color:#666;
+}
 </style>
 </head>
 
 <body>
 
-<!-- AGE GATE -->
-<div id="ageGate">
- <div class="ageBox">
-  <h3>🔞 Adult Content</h3>
-  <p>18+ only</p>
-  <div class="ageBtns">
-   <button class="yes" onclick="allow()">I am 18+</button>
-   <button class="no" onclick="location.href='https://google.com'">No</button>
+<div class="panel">
+  <h2>🔐 Admin Video Upload</h2>
+  <p>Secure upload panel — KamaBaba</p>
+
+  <label>Admin Password</label>
+  <input id="password" type="password" placeholder="••••••••">
+
+  <label>Video Title</label>
+  <input id="title" type="text" placeholder="Enter video title">
+
+  <label>Select Video File</label>
+  <input id="video" type="file" accept="video/*">
+
+  <button id="btn" onclick="upload()">🚀 Upload Video</button>
+
+  <div class="progress" id="progress">
+    <div id="bar"></div>
   </div>
- </div>
+
+  <div id="msg"></div>
+
+  <div class="footer">
+    Admin Panel • Unauthorized access prohibited
+  </div>
 </div>
-
-<header>
- <h1>🔥 KamaBaba Viral Videos 🔥</h1>
- <input id="search" placeholder="Search videos...">
-</header>
-
-<div class="categories">
- <button class="active" onclick="setCat('all',this)">All</button>
- <button onclick="setCat('hot',this)">🔥 Hot</button>
- <button onclick="setCat('desi',this)">🇮🇳 Desi</button>
- <button onclick="setCat('viral',this)">🚀 Viral</button>
-</div>
-
-<div class="grid" id="grid"></div>
-
-<!-- ADSTERRA -->
-<div style="padding:14px">
-<script async src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
-
-<div class="pagination" id="pagination"></div>
-
-<footer>© 2025 KamaBaba Viral</footer>
 
 <script>
-/* AGE GATE */
-if(localStorage.adult==="yes") ageGate.remove();
-function allow(){localStorage.adult="yes";ageGate.remove();}
+async function upload(){
+  const btn = document.getElementById("btn");
+  const msg = document.getElementById("msg");
+  const progress = document.getElementById("progress");
+  const bar = document.getElementById("bar");
 
-/* STATE */
-let allVideos=[],perPage=12;
-let page=Number(new URLSearchParams(location.search).get("page"))||1;
-let keyword="",category="all";
+  const password = document.getElementById("password").value.trim();
+  const title = document.getElementById("title").value.trim();
+  const file = document.getElementById("video").files[0];
 
-fetch("/api/videos").then(r=>r.json()).then(d=>{allVideos=d;draw()});
+  msg.className="";
+  msg.innerText="";
 
-function draw(){
- grid.innerHTML="";pagination.innerHTML="";
- let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
- if(category!=="all") list=list.filter(v=>v.title.toLowerCase().includes(category));
+  /* ===== VALIDATION ===== */
+  if(!password){
+    msg.className="err";
+    msg.innerText="❌ Admin password required";
+    return;
+  }
+  if(!file){
+    msg.className="err";
+    msg.innerText="❌ Please select a video file";
+    return;
+  }
 
- let total=Math.ceil(list.length/perPage);
- list.slice((page-1)*perPage,page*perPage).forEach(v=>{
-  let c=document.createElement("div");
-  c.className="card";
-  c.innerHTML=`<div class="thumb"><video src="${v.url}#t=1" muted></video></div>
-               <div class="info"><div class="title">${v.title}</div>
-               <div class="views">👁 ${v.views||0}</div></div>`;
-  c.onclick=()=>location.href=`/watch?id=${v._id}&page=${page}`;
-  grid.appendChild(c);
- });
+  /* SIZE LIMIT (OPTIONAL SAFETY) */
+  if(file.size > 500 * 1024 * 1024){
+    msg.className="err";
+    msg.innerText="❌ File too large (max 500MB)";
+    return;
+  }
 
- for(let i=1;i<=total;i++){
-  let b=document.createElement("button");
-  b.innerText=i;b.className=i===page?"active":"";
-  b.onclick=()=>location.href=`/?page=${i}`;
-  pagination.appendChild(b);
- }
+  btn.disabled = true;
+  progress.style.display="block";
+  bar.style.width="10%";
+  msg.innerText="⏳ Uploading… please wait";
+
+  const fd = new FormData();
+  fd.append("video", file);
+  fd.append("title", title || "Untitled");
+
+  try{
+    const res = await fetch("/api/upload",{
+      method:"POST",
+      headers:{
+        "x-admin-password": password
+      },
+      body: fd
+    });
+
+    bar.style.width="70%";
+
+    const data = await res.json();
+
+    if(data.success){
+      bar.style.width="100%";
+      msg.className="ok";
+      msg.innerText="✅ Upload successful";
+
+      document.getElementById("video").value="";
+      document.getElementById("title").value="";
+    }else{
+      msg.className="err";
+      msg.innerText="❌ " + (data.error || "Upload failed");
+      bar.style.width="0%";
+    }
+
+  }catch(err){
+    msg.className="err";
+    msg.innerText="❌ Server / network error";
+    bar.style.width="0%";
+  }
+
+  btn.disabled = false;
 }
-
-function setCat(c,btn){
- category=c;
- document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
- btn.classList.add("active"); page=1; draw();
-}
-
-search.oninput=e=>{keyword=e.target.value.toLowerCase();page=1;draw();}
 </script>
+
 </body>
 </html>
