@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Watch Video | KamaBaba</title>
+
+<title>Watch Video | KamaBaba Viral</title>
 
 <link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/logo-192.png">
+<meta name="theme-color" content="#000000">
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
@@ -13,100 +16,70 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .info{padding:12px}
 .meta{font-size:13px;color:#aaa}
 .actions{display:flex;gap:10px;margin-top:10px}
-.actions button{
- padding:8px 14px;border:none;border-radius:8px;
- background:#1c1c1c;color:#fff
-}
-#related{
- display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
- gap:12px;padding:12px
-}
+.actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
+#related{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:12px}
 .card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
 .card video{width:100%;aspect-ratio:16/9;object-fit:cover}
-.card p{font-size:13px;margin:6px}
+.card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 
 <body>
 
+<div style="text-align:center;padding:8px">
+ <img src="/logo.png" style="height:36px">
+</div>
+
 <video id="player" controls playsinline></video>
 
 <div class="info">
- <h3 id="title"></h3>
- <div class="meta">
- 👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span> 👎 <span id="dislikeCount">0</span>
- </div>
+ <h3 id="title">Loading...</h3>
+ <div class="meta">👁 <span id="views">0</span> 👍 <span id="likes">0</span></div>
  <div class="actions">
   <button onclick="like()">👍 Like</button>
-  <button onclick="dislike()">👎 Dislike</button>
   <button onclick="share()">🔗 Share</button>
  </div>
 </div>
 
-<!-- ✅ ADSTERRA NATIVE -->
+<!-- ADSTERRA -->
 <div style="padding:12px">
- <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+<script async data-cfasync="false"
+src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
-<h3 style="padding-left:12px">Related Videos</h3>
+<h3 style="padding-left:12px">Related</h3>
 <div id="related"></div>
 
 <script>
 const id=new URLSearchParams(location.search).get("id");
-let allVideos=[];
+fetch("/api/videos").then(r=>r.json()).then(vs=>{
+ const v=vs.find(x=>x._id===id);
+ if(!v)return;
+ player.src=v.url;
+ title.innerText=v.title;
+ views.innerText=v.views||0;
+ likes.innerText=v.likes||0;
 
-fetch("/api/videos").then(r=>r.json()).then(v=>{
- allVideos=v;
- const vid=v.find(x=>x._id===id);
- if(!vid)return;
- player.src=vid.url;
- title.innerText=vid.title;
- likeCount.innerText=vid.likes||0;
- dislikeCount.innerText=vid.dislikes||0;
- viewCount.innerText=vid.views||0;
-
- if(!sessionStorage["v_"+id]){
-  fetch("/api/view/"+id,{method:"POST"});
-  sessionStorage["v_"+id]=1;
- }
-
- v.filter(x=>x._id!==id).slice(0,8).forEach(r=>{
-  const c=document.createElement("div");
-  c.className="card";
-  c.innerHTML=`<video src="${r.url}#t=1" muted></video><p>${r.title}</p>`;
-  c.onclick=()=>location.href="/watch?id="+r._id;
-  related.appendChild(c);
+ vs.filter(x=>x._id!==id).slice(0,8).forEach(r=>{
+  related.innerHTML+=`
+  <div class="card" onclick="location.href='/watch?id=${r._id}'">
+   <video src="${r.url}#t=1" muted preload="metadata"></video>
+   <p>${r.title}</p>
+  </div>`;
  });
 });
 
-function like(){
- if(sessionStorage["l_"+id])return;
- fetch("/api/like/"+id,{method:"POST"});
- likeCount.innerText++;sessionStorage["l_"+id]=1;
-}
-function dislike(){
- if(sessionStorage["d_"+id])return;
- fetch("/api/dislike/"+id,{method:"POST"});
- dislikeCount.innerText++;sessionStorage["d_"+id]=1;
-}
-function share(){
- navigator.clipboard.writeText(location.href);
- alert("Link copied");
-}
-
-/* ADSTERRA LOAD */
-document.addEventListener("DOMContentLoaded",()=>{
- const s=document.createElement("script");
- s.async=true;s.setAttribute("data-cfasync","false");
- s.src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js";
- document.body.appendChild(s);
-});
+function like(){fetch("/api/like/"+id,{method:"POST"});likes.innerText++}
+function share(){navigator.clipboard.writeText(location.href);alert("Link copied")}
 
 /* SMARTLINK */
-const smart="https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a";
-let once=false;
+let o=false;
 document.addEventListener("click",()=>{
- if(!once){window.open(smart,"_blank");once=true;}
+ if(!o){
+  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
+  o=true;
+ }
 });
 </script>
 
