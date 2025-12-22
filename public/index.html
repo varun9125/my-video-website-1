@@ -6,22 +6,77 @@
 <title>KamaBaba Viral Videos 🔥</title>
 
 <style>
-body{margin:0;background:#0b0b0b;color:#fff;font-family:system-ui}
-header{background:#111;padding:12px;position:sticky;top:0}
-header h1{margin:0;text-align:center;font-size:18px}
-#search{width:100%;margin-top:10px;padding:10px;border-radius:6px;border:none}
-
-.grid{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
- gap:12px;
- padding:12px;
+:root{
+ --bg:#0b0b0b;
+ --card:#141414;
+ --accent:#ff0055;
+ --soft:#888;
 }
 
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ background:var(--bg);
+ color:#fff;
+ font-family:system-ui,-apple-system,Segoe UI;
+}
+
+/* ===== HEADER ===== */
+header{
+ position:sticky;
+ top:0;
+ z-index:99;
+ background:linear-gradient(180deg,#111,#0b0b0b);
+ padding:12px;
+ border-bottom:1px solid #222;
+}
+
+header h1{
+ margin:0;
+ text-align:center;
+ font-size:18px;
+ letter-spacing:.5px;
+}
+
+#search{
+ width:100%;
+ margin-top:10px;
+ padding:12px;
+ border-radius:8px;
+ border:none;
+ outline:none;
+ background:#1a1a1a;
+ color:#fff;
+ font-size:14px;
+}
+
+/* ===== GRID ===== */
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+ gap:14px;
+ padding:14px;
+}
+
+.card{
+ background:var(--card);
+ border-radius:10px;
+ overflow:hidden;
+ cursor:pointer;
+ transition:.2s;
+}
+
+.card:hover{
+ transform:translateY(-3px);
+ box-shadow:0 8px 25px rgba(0,0,0,.6);
+}
+
+/* ===== THUMB ===== */
 .thumb{
  aspect-ratio:16/9;
  background:#000;
- border-radius:8px;
+ position:relative;
  overflow:hidden;
 }
 
@@ -31,94 +86,185 @@ header h1{margin:0;text-align:center;font-size:18px}
  object-fit:cover;
 }
 
-.card p{
+/* Play icon */
+.thumb::after{
+ content:"▶";
+ position:absolute;
+ inset:0;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:28px;
+ color:#fff;
+ opacity:.6;
+ background:linear-gradient(transparent,rgba(0,0,0,.6));
+}
+
+/* ===== INFO ===== */
+.info{
+ padding:8px;
+}
+
+.title{
  font-size:13px;
  white-space:nowrap;
  overflow:hidden;
  text-overflow:ellipsis;
- margin:6px 0 0;
 }
 
-.pagination{text-align:center;padding:15px}
-.pagination button{
- margin:4px;
- padding:6px 12px;
- border:none;
- border-radius:6px;
- background:#222;
- color:#fff;
+.views{
+ font-size:11px;
+ color:var(--soft);
+ margin-top:3px;
 }
-.pagination .active{background:#ff004f}
+
+/* ===== PAGINATION ===== */
+.pagination{
+ display:flex;
+ flex-wrap:wrap;
+ gap:6px;
+ justify-content:center;
+ padding:18px;
+}
+
+.pagination button{
+ padding:7px 12px;
+ border:none;
+ border-radius:7px;
+ background:#1f1f1f;
+ color:#fff;
+ cursor:pointer;
+ font-size:13px;
+}
+
+.pagination button.active{
+ background:var(--accent);
+}
+
+.pagination button:hover{
+ background:#333;
+}
+
+/* ===== AD BLOCK ===== */
+.adbox{
+ padding:14px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:480px){
+ header h1{font-size:16px}
+ .grid{gap:10px}
+}
 </style>
 </head>
 
 <body>
 
 <header>
-<h1>🔥 KamaBaba Viral Videos 🔥</h1>
-<input id="search" placeholder="Search video...">
+ <h1>🔥 KamaBaba Viral Videos 🔥</h1>
+ <input id="search" placeholder="Search hot videos..." autocomplete="off">
 </header>
 
 <div class="grid" id="grid"></div>
 
-<!-- 🔥 ADSTERRA NATIVE BANNER -->
-<div style="padding:12px">
-<script async data-cfasync="false"
-src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+<!-- 🔥 AD ZONE (SAFE) -->
+<div class="adbox">
+ <script async data-cfasync="false"
+ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+ <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
 <div class="pagination" id="pagination"></div>
 
 <script>
-/* ===== VIDEO LOGIC ===== */
-let allVideos=[], perPage=10;
+let allVideos=[];
 let page=Number(localStorage.getItem("page"))||1;
-let key="";
+const perPage=12;
+let keyword="";
 
 fetch("/api/videos")
 .then(r=>r.json())
-.then(d=>{ allVideos=d.reverse(); draw(); });
+.then(d=>{
+ allVideos=d;
+ draw();
+});
 
+/* ===== DRAW ===== */
 function draw(){
- grid.innerHTML=""; pagination.innerHTML="";
- const list=allVideos.filter(v=>v.title.toLowerCase().includes(key));
- const total=Math.ceil(list.length/perPage);
- if(page>total) page=1;
+ grid.innerHTML="";
+ pagination.innerHTML="";
+
+ const list=allVideos.filter(v =>
+  v.title.toLowerCase().includes(keyword)
+ );
+
+ const totalPages=Math.ceil(list.length/perPage);
+ if(page>totalPages) page=1;
 
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`
-   <div class="thumb"><video src="${v.url}#t=1" muted preload="metadata"></video></div>
-   <p>${v.title}</p>`;
+   <div class="thumb">
+    <video src="${v.url}#t=1" muted preload="metadata"></video>
+   </div>
+   <div class="info">
+    <div class="title">${v.title}</div>
+    <div class="views">👁 ${v.views||0}</div>
+   </div>
+  `;
+
+  // hover autoplay
+  const vid=c.querySelector("video");
+  c.onmouseenter=()=>vid.play();
+  c.onmouseleave=()=>{vid.pause();vid.currentTime=1};
+
   c.onclick=()=>location.href="/watch?id="+v._id;
   grid.appendChild(c);
  });
 
- for(let i=1;i<=total;i++){
+ // pagination
+ if(page>1){
+  const prev=document.createElement("button");
+  prev.innerText="‹ Prev";
+  prev.onclick=()=>{page--;save();draw()};
+  pagination.appendChild(prev);
+ }
+
+ for(let i=Math.max(1,page-2);i<=Math.min(totalPages,page+2);i++){
   const b=document.createElement("button");
   b.innerText=i;
   if(i===page) b.classList.add("active");
-  b.onclick=()=>{ page=i; localStorage.setItem("page",i); draw(); scrollTo(0,0); };
+  b.onclick=()=>{page=i;save();draw()};
   pagination.appendChild(b);
+ }
+
+ if(page<totalPages){
+  const next=document.createElement("button");
+  next.innerText="Next ›";
+  next.onclick=()=>{page++;save();draw()};
+  pagination.appendChild(next);
  }
 }
 
+function save(){
+ localStorage.setItem("page",page);
+ scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ===== SEARCH ===== */
 search.oninput=e=>{
- key=e.target.value.toLowerCase();
- page=1; localStorage.setItem("page",1);
- draw();
+ keyword=e.target.value.toLowerCase();
+ page=1; save(); draw();
 };
 
-/* ===== ADSTERRA DIRECT LINK ===== */
+/* ===== AD DIRECT LINK (1 CLICK ONLY) ===== */
 const adLink="https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a";
-let adOpened=false;
-
+let opened=false;
 document.addEventListener("click",()=>{
- if(!adOpened){
+ if(!opened){
   window.open(adLink,"_blank");
-  adOpened=true;
+  opened=true;
  }
 });
 </script>
