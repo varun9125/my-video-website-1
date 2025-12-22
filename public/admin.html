@@ -2,105 +2,236 @@
 <html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin Upload</title>
+<title>Admin Upload • KamaBaba</title>
 
 <style>
+:root{
+ --bg:#000;
+ --card:#121212;
+ --accent:#ff0055;
+ --soft:#aaa;
+}
+
+*{box-sizing:border-box}
+
 body{
-  background:#000;
-  color:#fff;
-  font-family:system-ui;
+ margin:0;
+ background:radial-gradient(circle at top,#111,#000);
+ color:#fff;
+ font-family:system-ui,-apple-system,Segoe UI;
 }
-.box{
-  max-width:420px;
-  margin:40px auto;
-  padding:20px;
+
+.panel{
+ max-width:460px;
+ margin:40px auto;
+ padding:22px;
+ background:rgba(20,20,20,.9);
+ border-radius:16px;
+ box-shadow:0 0 40px rgba(255,0,85,.25);
 }
+
+h2{
+ margin:0 0 15px;
+ text-align:center;
+ letter-spacing:.5px;
+}
+
+label{
+ font-size:13px;
+ color:var(--soft);
+}
+
 input,button{
-  width:100%;
-  margin:10px 0;
-  padding:12px;
-  border-radius:8px;
-  border:none;
-  font-size:15px;
+ width:100%;
+ margin-top:8px;
+ padding:12px;
+ border-radius:10px;
+ border:none;
+ font-size:15px;
 }
+
+input{
+ background:#1c1c1c;
+ color:#fff;
+ outline:none;
+}
+
+input:focus{
+ box-shadow:0 0 0 2px var(--accent);
+}
+
 button{
-  background:#ff0055;
-  color:#fff;
-  font-weight:600;
+ margin-top:16px;
+ background:linear-gradient(135deg,#ff0055,#ff2d7a);
+ color:#fff;
+ font-weight:700;
+ cursor:pointer;
+ transition:.25s;
 }
-button:disabled{
-  opacity:.6;
+
+button:hover{transform:translateY(-1px)}
+button:disabled{opacity:.6;cursor:not-allowed}
+
+/* ===== PREVIEW ===== */
+.preview{
+ margin-top:14px;
+ display:none;
 }
+.preview video{
+ width:100%;
+ border-radius:10px;
+ background:#000;
+}
+.fileInfo{
+ font-size:12px;
+ color:#bbb;
+ margin-top:6px;
+ text-align:center;
+}
+
+/* ===== PROGRESS ===== */
+.progress{
+ height:8px;
+ background:#222;
+ border-radius:20px;
+ overflow:hidden;
+ margin-top:14px;
+ display:none;
+}
+.bar{
+ height:100%;
+ width:0%;
+ background:linear-gradient(90deg,#ff0055,#ff7aa5);
+ transition:width .3s;
+}
+
+/* ===== MESSAGE ===== */
 #msg{
-  margin-top:10px;
-  min-height:22px;
+ margin-top:14px;
+ min-height:22px;
+ text-align:center;
+ font-size:14px;
+}
+
+/* ===== FOOTER ===== */
+.footer{
+ margin-top:20px;
+ text-align:center;
+ font-size:11px;
+ color:#666;
 }
 </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>🔐 Admin Upload</h2>
+<div class="panel">
+  <h2>🔐 Admin Upload Panel</h2>
 
-  <input type="password" id="password" placeholder="Admin Password">
-  <input type="text" id="title" placeholder="Video title">
-  <input type="file" id="video" accept="video/*">
+  <label>Admin Password</label>
+  <input type="password" id="password" placeholder="••••••••">
 
-  <button id="btn" onclick="upload()">Upload Video</button>
+  <label style="margin-top:10px">Video Title</label>
+  <input type="text" id="title" placeholder="Enter viral title">
 
-  <p id="msg"></p>
+  <label style="margin-top:10px">Select Video</label>
+  <input type="file" id="video" accept="video/*" onchange="previewVideo()">
+
+  <!-- PREVIEW -->
+  <div class="preview" id="previewBox">
+    <video id="preview" controls muted></video>
+    <div class="fileInfo" id="fileInfo"></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress" id="progress">
+    <div class="bar" id="bar"></div>
+  </div>
+
+  <button id="btn" onclick="upload()">🚀 Upload Video</button>
+
+  <div id="msg"></div>
+
+  <div class="footer">
+    Secure Cloud Upload • KamaBaba Admin
+  </div>
 </div>
 
 <script>
-async function upload(){
-  const msg = document.getElementById("msg");
-  const btn = document.getElementById("btn");
+function previewVideo(){
+ const file=document.getElementById("video").files[0];
+ if(!file) return;
 
-  const password = document.getElementById("password").value.trim();
-  const title = document.getElementById("title").value.trim();
-  const file = document.getElementById("video").files[0];
-
-  // ✅ VALIDATIONS
-  if(!password){
-    msg.innerText = "❌ Admin password required";
-    return;
-  }
-  if(!file){
-    msg.innerText = "❌ Please select a video file";
-    return;
-  }
-
-  btn.disabled = true;
-  msg.innerText = "⏳ Uploading… please wait";
-
-  const fd = new FormData();
-  fd.append("password", password);
-  fd.append("title", title || "Untitled");
-  fd.append("video", file);
-
-  try{
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: fd
-    });
-
-    const data = await res.json();
-
-    if(data.success){
-      msg.innerText = "✅ Upload successful";
-      document.getElementById("video").value = "";
-      document.getElementById("title").value = "";
-    }else{
-      msg.innerText = "❌ " + (data.error || "Upload failed");
-    }
-
-  }catch(err){
-    msg.innerText = "❌ Network / server error";
-  }
-
-  btn.disabled = false;
+ preview.src=URL.createObjectURL(file);
+ previewBox.style.display="block";
+ fileInfo.innerText=
+  "📁 "+file.name+" • "+(file.size/1024/1024).toFixed(2)+" MB";
 }
+
+/* ===== UPLOAD ===== */
+async function upload(){
+ const msg=document.getElementById("msg");
+ const btn=document.getElementById("btn");
+ const bar=document.getElementById("bar");
+ const progress=document.getElementById("progress");
+
+ const password=passwordEl.value.trim();
+ const title=titleEl.value.trim();
+ const file=document.getElementById("video").files[0];
+
+ if(!password){
+  msg.innerText="❌ Admin password required";
+  return;
+ }
+ if(!file){
+  msg.innerText="❌ Please select a video";
+  return;
+ }
+
+ btn.disabled=true;
+ msg.innerText="⏳ Uploading video...";
+ progress.style.display="block";
+ bar.style.width="5%";
+
+ const fd=new FormData();
+ fd.append("password",password);
+ fd.append("title",title||"Untitled");
+ fd.append("video",file);
+
+ // fake progress for smooth UX
+ let p=5;
+ const fake=setInterval(()=>{
+  if(p<90){ p+=5; bar.style.width=p+"%"; }
+ },400);
+
+ try{
+  const res=await fetch("/api/upload",{method:"POST",body:fd});
+  const data=await res.json();
+  clearInterval(fake);
+  bar.style.width="100%";
+
+  if(data.success){
+   msg.innerText="✅ Upload successful";
+   previewBox.style.display="none";
+   document.getElementById("video").value="";
+   document.getElementById("title").value="";
+  }else{
+   msg.innerText="❌ "+(data.error||"Upload failed");
+  }
+ }catch(e){
+  msg.innerText="❌ Network / server error";
+ }
+
+ setTimeout(()=>{
+  progress.style.display="none";
+  bar.style.width="0%";
+  btn.disabled=false;
+ },1200);
+}
+
+/* shortcuts */
+const passwordEl=document.getElementById("password");
+const titleEl=document.getElementById("title");
 </script>
 
 </body>
