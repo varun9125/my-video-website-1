@@ -3,74 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Watch Video | KamaBaba</title>
+<title>Watch Video</title>
 
 <style>
 body{
   margin:0;
-  background:#0b0b0b;
+  background:#000;
   color:#fff;
-  font-family:system-ui,Arial;
+  font-family:system-ui;
 }
 
-header{
-  background:#111;
-  padding:12px;
-  text-align:center;
-  font-size:18px;
-  font-weight:600;
-}
-
-.container{
-  max-width:900px;
-  margin:auto;
-  padding:12px;
-}
-
-/* VIDEO */
 video{
   width:100%;
   max-height:60vh;
   background:#000;
-  border-radius:8px;
 }
 
-/* TITLE */
-h2{
-  font-size:16px;
-  margin:10px 0;
-}
-
-/* LIKE DISLIKE */
-.actions{
-  display:flex;
-  gap:15px;
-  margin-bottom:15px;
-}
+.info{ padding:10px; }
 
 .actions button{
-  background:#222;
+  margin-right:10px;
+  padding:6px 10px;
   border:none;
-  color:#fff;
-  padding:8px 14px;
   border-radius:6px;
-  cursor:pointer;
+  background:#222;
+  color:#fff;
 }
 
-/* RELATED */
-.related h3{
-  margin:15px 0 10px;
-  font-size:15px;
-}
-
-.related-grid{
+#related{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
   gap:10px;
-}
-
-.card{
-  cursor:pointer;
+  padding:10px;
 }
 
 .card video{
@@ -79,68 +43,85 @@ h2{
   object-fit:cover;
   border-radius:6px;
 }
-
-.card p{
-  font-size:12px;
-  margin:5px 0 0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
 </style>
 </head>
 
 <body>
 
-<header>🔥 KamaBaba Viral Videos 🔥</header>
+<video id="player" controls playsinline></video>
 
-<div class="container">
-
-  <video id="player" controls autoplay></video>
-
-  <h2 id="title">Loading...</h2>
+<div class="info">
+  <h3 id="title"></h3>
+  👍 <span id="likeCount">0</span>
+  👎 <span id="dislikeCount">0</span>
+  👁️ <span id="viewCount">0</span>
 
   <div class="actions">
-    <button onclick="like()">👍 Like <span id="likeCount">0</span></button>
-    <button onclick="dislike()">👎 Dislike <span id="dislikeCount">0</span></button>
+    <button onclick="like()">👍 Like</button>
+    <button onclick="dislike()">👎 Dislike</button>
+    <button onclick="share()">🔗 Share</button>
   </div>
-
-  <div class="related">
-    <h3>Related Videos</h3>
-    <div class="related-grid" id="related"></div>
-  </div>
-
 </div>
 
+<!-- 🔥 ADSTERRA HIGH EARNING SPOT -->
+<div style="padding:10px">
+<script async data-cfasync="false"
+src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
+<h3 style="padding-left:10px">Related Videos</h3>
+<div id="related"></div>
+
 <script>
-const id = new URLSearchParams(location.search).get("id");
-const player = document.getElementById("player");
-const titleEl = document.getElementById("title");
-const relatedBox = document.getElementById("related");
+const id=new URLSearchParams(location.search).get("id");
+let allVideos=[], currentVideo;
 
-// LIKE / DISLIKE (PERSISTENT)
-let likes = Number(localStorage.getItem("like_"+id)) || 0;
-let dislikes = Number(localStorage.getItem("dislike_"+id)) || 0;
+fetch("/api/videos")
+.then(r=>r.json())
+.then(videos=>{
+  allVideos=videos;
+  currentVideo=videos.find(v=>v._id===id);
+  if(!currentVideo) return;
 
-document.getElementById("likeCount").innerText = likes;
-document.getElementById("dislikeCount").innerText = dislikes;
+  player.src=currentVideo.url;
+  title.innerText=currentVideo.title;
+  likeCount.innerText=currentVideo.likes;
+  dislikeCount.innerText=currentVideo.dislikes;
+  viewCount.innerText=currentVideo.views;
+
+  fetch("/api/view/"+id,{method:"POST"});
+  renderRelated();
+});
+
+function renderRelated(){
+  const box=document.getElementById("related");
+  box.innerHTML="";
+  allVideos.filter(v=>v._id!==id).slice(0,8).forEach(v=>{
+    const d=document.createElement("div");
+    d.className="card";
+    d.innerHTML=`<video src="${v.url}#t=1" muted></video><p>${v.title}</p>`;
+    d.onclick=()=>location.href="/watch?id="+v._id;
+    box.appendChild(d);
+  });
+}
 
 function like(){
-  likes++;
-  localStorage.setItem("like_"+id,likes);
-  document.getElementById("likeCount").innerText = likes;
+  fetch("/api/like/"+id,{method:"POST"})
+  likeCount.innerText=Number(likeCount.innerText)+1;
 }
-
 function dislike(){
-  dislikes++;
-  localStorage.setItem("dislike_"+id,dislikes);
-  document.getElementById("dislikeCount").innerText = dislikes;
+  fetch("/api/dislike/"+id,{method:"POST"})
+  dislikeCount.innerText=Number(dislikeCount.innerText)+1;
 }
+function share(){
+  navigator.clipboard.writeText(location.href);
+  alert("Link copied");
+}
+</script>
 
-// FETCH VIDEOS
-fetch("/api/videos")
-.then(res=>res.json())
-.then(videos=>{
+</body>
+</html>
   const current = videos.find(v=>v._id===id);
   if(!current){
     titleEl.innerText="Video not found";
