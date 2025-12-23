@@ -17,7 +17,7 @@ const BASE_URL =
 
 /* ================= MIDDLEWARE ================= */
 app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
-app.use(express.json({ limit: "3mb" })); // ⬅ thumbnail base64 safe
+app.use(express.json({ limit: "3mb" })); // ✅ base64 thumbnail safe
 app.use(express.urlencoded({ extended: true }));
 app.use(
   express.static(path.join(__dirname, "public"), {
@@ -54,17 +54,12 @@ mongoose
     dbReady = false;
   });
 
-mongoose.connection.on("disconnected", () => {
-  console.error("❌ MongoDB disconnected");
-  dbReady = false;
-});
-
-/* ================= MODEL (THUMBNAIL ADDED) ================= */
+/* ================= MODEL ================= */
 const videoSchema = new mongoose.Schema(
   {
     title: { type: String, trim: true },
     url: { type: String, required: true },
-    thumbnail: { type: String, default: "" }, // ✅ NEW
+    thumbnail: { type: String, default: "" }, // ✅ IMPORTANT
     views: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
@@ -77,125 +72,106 @@ const Video = mongoose.model("Video", videoSchema);
 /* ================= UPLOAD SETUP ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
 });
 
 /* ================= ROUTES ================= */
 
-// HOME
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// WATCH
 app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-// API: GET VIDEOS (FAST + LEAN)
+/* ========= GET VIDEOS ========= */
 app.get("/api/videos", async (req, res) => {
   try {
     if (!dbReady) return res.json([]);
-    const videos = await Video.find()
-      .sort({ createdAt: -1 })
-      .lean();
+    const videos = await Video.find().sort({ createdAt: -1 }).lean();
     res.json(videos);
-  } catch (e) {
-    console.error("GET VIDEOS ERROR:", e.message);
+  } catch {
     res.json([]);
   }
 });
 
-// API: UPLOAD VIDEO + THUMBNAIL
+/* ========= UPLOAD VIDEO + THUMB ========= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
-    if (!dbReady) {
+    if (!dbReady)
       return res.status(503).json({ success: false, error: "DB not ready" });
-    }
 
-    if (req.body.password !== ADMIN_PASSWORD) {
+    if (req.body.password !== ADMIN_PASSWORD)
       return res.status(401).json({ success: false, error: "Wrong password" });
-    }
 
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: "No file" });
-    }
+    if (!req.file)
+      return res.status(400).json({ success: false, error: "No video file" });
 
-    /* ⬆ VIDEO UPLOAD */
-    const uploadResult = await new Promise((resolve, reject) => {
+    /* 🎥 VIDEO UPLOAD */
+    const videoUpload = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
           resource_type: "video",
           folder: "kamababa/videos",
           chunk_size: 6 * 1024 * 1024,
         },
-        (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        }
+        (err, result) => (err ? reject(err) : resolve(result))
       ).end(req.file.buffer);
     });
 
-    /* 🖼️ THUMBNAIL UPLOAD (OPTIONAL) */
+    /* 🖼️ THUMBNAIL UPLOAD (BASE64 FROM ADMIN) */
     let thumbnailUrl = "";
 
-    if (req.body.thumbnail) {
+    if (req.body.thumbnail && req.body.thumbnail.startsWith("data:image")) {
       try {
-        const thumb = await cloudinary.uploader.upload(req.body.thumbnail, {
-          folder: "kamababa/thumbs",
-          resource_type: "image",
-          quality: "auto",
-          fetch_format: "auto",
-        });
-        thumbnailUrl = thumb.secure_url;
+        const thumbUpload = await cloudinary.uploader.upload(
+          req.body.thumbnail,
+          {
+            folder: "kamababa/thumbs",
+            resource_type: "image",
+            quality: "auto",
+            fetch_format: "auto",
+          }
+        );
+        thumbnailUrl = thumbUpload.secure_url;
       } catch (e) {
-        console.warn("⚠️ Thumbnail upload skipped");
+        console.warn("⚠️ Thumbnail upload failed, skipped");
       }
     }
 
     const video = await Video.create({
       title: req.body.title || "Untitled",
-      url: uploadResult.secure_url,
+      url: videoUpload.secure_url,
       thumbnail: thumbnailUrl,
     });
 
     res.json({ success: true, id: video._id });
   } catch (e) {
-    console.error("UPLOAD ERROR:", e);
+    console.error("UPLOAD ERROR:", e.message);
     res.status(500).json({ success: false, error: "Upload failed" });
   }
 });
 
-// API: VIEW
+/* ========= VIEW ========= */
 app.post("/api/view/:id", async (req, res) => {
-  try {
-    if (dbReady) {
-      await Video.findByIdAndUpdate(req.params.id, {
-        $inc: { views: 1 },
-      }).exec();
-    }
-  } catch {}
+  if (dbReady)
+    await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } }).exec();
   res.json({ success: true });
 });
 
-// API: LIKE
+/* ========= LIKE ========= */
 app.post("/api/like/:id", async (req, res) => {
-  try {
-    if (dbReady) {
-      await Video.findByIdAndUpdate(req.params.id, {
-        $inc: { likes: 1 },
-      }).exec();
-    }
-  } catch {}
+  if (dbReady)
+    await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } }).exec();
   res.json({ success: true });
 });
 
-// SITEMAP (SEO)
+/* ========= SITEMAP ========= */
 app.get("/sitemap.xml", async (req, res) => {
   res.setHeader("Content-Type", "application/xml");
 
   let urls = `<url><loc>${BASE_URL}/</loc></url>`;
-
   if (dbReady) {
     const videos = await Video.find({}, "_id").lean();
     videos.forEach(v => {
@@ -211,7 +187,7 @@ app.get("/sitemap.xml", async (req, res) => {
   );
 });
 
-/* ================= SAFE START ================= */
+/* ================= START ================= */
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
