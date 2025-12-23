@@ -78,7 +78,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- ADSTERRA (UNCHANGED) -->
+<!-- ADSTERRA -->
 <div style="padding:12px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
@@ -90,6 +90,7 @@ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/in
 <div id="related"></div>
 
 <script>
+/* AGE GATE */
 if(localStorage.adult==="yes") ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
@@ -104,10 +105,18 @@ const loader=document.getElementById("loader");
 let allVideos=[];
 let player=videojs("player");
 
-fetch("/api/videos").then(r=>r.json()).then(vs=>{
- allVideos=vs||[];
- const v=allVideos.find(x=>x._id===id);
- if(!v){titleEl.innerText="Video not found";return}
+/* LOAD DATA */
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{
+ allVideos = Array.isArray(vs) ? vs : [];
+ const v = allVideos.find(x=>x._id===id);
+
+ if(!v){
+  titleEl.innerText="Video not found";
+  loader.style.display="none";
+  return;
+ }
 
  titleEl.innerText=v.title;
  viewCount.innerText=v.views||0;
@@ -115,17 +124,20 @@ fetch("/api/videos").then(r=>r.json()).then(vs=>{
 
  player.src({src:v.url,type:"video/mp4"});
 
- /* ✅ EXOCLICK INSTREAM */
- player.ima({
-  adTagUrl:"https://s.magsrv.com/v1/vast.php?idzone=5809070",
-  timeout:8000
- });
+ /* 🔥 EXOCLICK (SAFE) */
+ try{
+  player.ima({
+   adTagUrl:"https://s.magsrv.com/v1/vast.php?idzone=5809070",
+   timeout:8000
+  });
 
- /* 🔑 IMPORTANT FIX (ads need user interaction) */
- player.one("play",()=>{
-  player.ima.initializeAdDisplayContainer();
-  player.ima.requestAds();
- });
+  player.one("play",()=>{
+   try{
+    player.ima.initializeAdDisplayContainer();
+    player.ima.requestAds();
+   }catch(e){}
+  });
+ }catch(e){}
 
  if(!sessionStorage["v_"+id]){
   fetch("/api/view/"+id,{method:"POST"});
@@ -134,17 +146,29 @@ fetch("/api/videos").then(r=>r.json()).then(vs=>{
  }
 
  renderRelated();
+})
+.catch(()=>{
+ loader.style.display="none";
 });
 
+/* ✅ RELATED FIXED */
 function renderRelated(){
  loader.style.display="none";
  related.innerHTML="";
- allVideos.filter(v=>v._id!==id).slice(0,8).forEach(v=>{
-  related.innerHTML+=`
-   <div class="card" onclick="location.href='/watch?id=${v._id}'">
-    <video src="${v.url}#t=1" muted preload="metadata"></video>
-    <p>${v.title}</p>
-   </div>`;
+
+ if(!allVideos.length) return;
+
+ allVideos
+ .filter(v=>v._id!==id)
+ .slice(0,8)
+ .forEach(v=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`
+   <video src="${v.url}#t=1" muted preload="metadata"></video>
+   <p>${v.title}</p>`;
+  c.onclick=()=>location.href="/watch?id="+v._id;
+  related.appendChild(c);
  });
 }
 
