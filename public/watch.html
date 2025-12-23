@@ -6,229 +6,94 @@
 
 <title>Watch Video | KamaBaba Viral</title>
 
-<!-- SEO -->
-<meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral. Hot & viral clips.">
+<meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral.">
 <meta name="robots" content="index, follow">
 
-<!-- ICONS -->
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/logo-192.png">
 <meta name="theme-color" content="#000000">
 
+<!-- ✅ EXOCLICK CLIENT HINT META TAG -->
+<meta http-equiv="Delegate-CH"
+content="Sec-CH-UA https://s.magsrv.com; Sec-CH-UA-Mobile https://s.magsrv.com; Sec-CH-UA-Platform https://s.magsrv.com;">
+
+<!-- ✅ VIDEO.JS -->
+<link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+
 <style>
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  font-family:system-ui,-apple-system,Segoe UI;
-}
-
-/* AGE GATE */
-#ageGate{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.95);
-  z-index:9999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.ageBox{
-  background:#141414;
-  padding:24px;
-  border-radius:12px;
-  max-width:320px;
-  text-align:center;
-  box-shadow:0 0 30px #ff0055;
-}
-.ageBtns{display:flex;gap:10px;margin-top:18px}
-.ageBtns button{
-  flex:1;padding:10px;border:none;border-radius:8px;
-  font-weight:600;cursor:pointer
-}
-.yes{background:#0f9d58;color:#fff}
-.no{background:#333;color:#fff}
-
-/* HEADER LOGO */
+body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .topLogo{text-align:center;padding:8px}
 .topLogo img{height:36px}
-
-/* PLAYER */
-#player{width:100%;max-height:60vh;background:#000}
-
-/* INFO */
 .info{padding:12px}
-.info h3{margin:6px 0;font-size:16px}
 .meta{font-size:13px;color:#aaa}
-
-/* ACTIONS */
 .actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
-.actions button{
-  padding:8px 14px;border:none;border-radius:8px;
-  background:#1c1c1c;color:#fff;cursor:pointer
-}
+.actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 .actions button:hover{background:#ff0055}
-
-/* RELATED */
-#related{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:12px;
-  padding:12px
-}
-.card{
-  background:#111;border-radius:8px;
-  overflow:hidden;cursor:pointer
-}
-.card video{
-  width:100%;aspect-ratio:16/9;
-  object-fit:cover;background:#000
-}
-.card p{
-  font-size:13px;margin:6px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
-}
-#loader{text-align:center;padding:20px;color:#888}
-
-@media(max-width:480px){
-  .actions button{flex:1}
-}
 </style>
 </head>
 
 <body>
 
-<!-- AGE GATE -->
-<div id="ageGate">
- <div class="ageBox">
-  <h2>🔞 Adult Content</h2>
-  <p>18+ Only</p>
-  <div class="ageBtns">
-   <button class="yes" onclick="allow()">I am 18+</button>
-   <button class="no" onclick="deny()">No</button>
-  </div>
- </div>
-</div>
-
-<!-- LOGO -->
 <div class="topLogo">
- <img src="/logo.png" alt="KamaBaba Viral">
+ <img src="/logo.png">
 </div>
 
-<!-- VIDEO -->
-<video id="player" controls playsinline preload="metadata"></video>
+<!-- ✅ VIDEO PLAYER -->
+<video
+ id="player"
+ class="video-js vjs-default-skin"
+ controls
+ preload="auto"
+ width="100%"
+ height="260"
+ playsinline>
+</video>
 
 <div class="info">
  <h3 id="title">Loading…</h3>
  <div class="meta">
   👁 <span id="viewCount">0</span>
-  &nbsp; 👍 <span id="likeCount">0</span>
-  &nbsp; 👎 <span id="dislikeCount">0</span>
- </div>
-
- <div class="actions">
-  <button onclick="like()">👍 Like</button>
-  <button onclick="dislike()">👎 Dislike</button>
-  <button onclick="share()">🔗 Share</button>
  </div>
 </div>
 
-<!-- ADSTERRA NATIVE -->
-<div style="padding:12px">
-<script async data-cfasync="false"
-src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
+<!-- ✅ VIDEO.JS -->
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 
-<h3 style="padding-left:12px">Related Videos</h3>
-<div id="loader">Loading…</div>
-<div id="related"></div>
+<!-- ✅ VAST PLUGIN -->
+<script src="https://cdn.jsdelivr.net/npm/videojs-contrib-ads@6/dist/videojs-contrib-ads.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/videojs-ima@1/dist/videojs.ima.min.js"></script>
 
 <script>
-/* AGE GATE */
-if(localStorage.adult==="yes") ageGate.style.display="none";
-function allow(){localStorage.adult="yes";ageGate.style.display="none"}
-function deny(){location.href="https://google.com"}
+const id = new URLSearchParams(location.search).get("id");
 
-/* DATA */
-const id=new URLSearchParams(location.search).get("id");
-const player=document.getElementById("player");
-const titleEl=document.getElementById("title");
-const viewCount=document.getElementById("viewCount");
-const likeCount=document.getElementById("likeCount");
-const dislikeCount=document.getElementById("dislikeCount");
-const related=document.getElementById("related");
-const loader=document.getElementById("loader");
-
-let allVideos=[];
-
-/* LOAD */
 fetch("/api/videos")
 .then(r=>r.json())
-.then(vs=>{
- allVideos=vs||[];
- const v=allVideos.find(x=>x._id===id);
- if(!v){titleEl.innerText="Video not found";return}
+.then(videos=>{
+ const v = videos.find(x=>x._id===id);
+ if(!v) return;
 
- player.src=v.url;
- titleEl.innerText=v.title;
- viewCount.innerText=v.views||0;
- likeCount.innerText=v.likes||0;
- dislikeCount.innerText=v.dislikes||0;
+ document.getElementById("title").innerText = v.title;
+ document.getElementById("viewCount").innerText = v.views || 0;
 
- const vk="viewed_"+id;
- if(!sessionStorage.getItem(vk)){
-  fetch("/api/view/"+id,{method:"POST"});
-  viewCount.innerText++;
-  sessionStorage.setItem(vk,"1");
- }
+ const player = videojs("player");
 
- renderRelated();
-});
-
-function renderRelated(){
- loader.style.display="none";
- related.innerHTML="";
- allVideos
- .filter(v=>v._id!==id)
- .slice(0,8)
- .forEach(v=>{
-  related.innerHTML+=`
-   <div class="card" onclick="location.href='/watch?id=${v._id}'">
-    <video src="${v.url}#t=1" muted preload="metadata"></video>
-    <p>${v.title}</p>
-   </div>`;
+ player.src({
+  src: v.url,
+  type: "video/mp4"
  });
-}
 
-/* ACTIONS */
-function like(){
- if(sessionStorage["l_"+id])return;
- fetch("/api/like/"+id,{method:"POST"});
- likeCount.innerText++;
- sessionStorage["l_"+id]=1;
-}
-function dislike(){
- if(sessionStorage["d_"+id])return;
- fetch("/api/dislike/"+id,{method:"POST"});
- dislikeCount.innerText++;
- sessionStorage["d_"+id]=1;
-}
-function share(){
- navigator.clipboard.writeText(location.href);
- alert("Link copied");
-}
+ // ✅ EXOCLICK VAST AD
+ player.ima({
+  adTagUrl: "https://s.magsrv.com/v1/vast.php?idzone=5809070",
+  debug: false,
+  timeout: 7000
+ });
 
-/* SMARTLINK (ONE TIME) */
-let opened=false;
-document.addEventListener("click",()=>{
- if(!opened){
-  window.open(
-   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
-   "_blank"
-  );
-  opened=true;
- }
-},{once:true});
+ player.ready(() => {
+  player.ima.initializeAdDisplayContainer();
+  player.play();
+ });
+});
 </script>
 
 </body>
