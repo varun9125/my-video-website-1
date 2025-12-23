@@ -1,137 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel | KamaBaba Viral</title>
+
+<link rel="icon" href="/favicon.ico">
+<meta name="robots" content="noindex,nofollow">
+
+<style>
+body{
+ margin:0;
+ background:#0b0b0b;
+ color:#fff;
+ font-family:system-ui;
+}
+
+.wrapper{
+ min-height:100vh;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+}
+
+.panel{
+ width:100%;
+ max-width:460px;
+ background:#141414;
+ padding:24px;
+ border-radius:16px;
+}
+
+label{display:block;margin-top:14px;font-size:13px;color:#bbb}
+input{
+ width:100%;
+ padding:12px;
+ margin-top:6px;
+ border-radius:10px;
+ border:1px solid #222;
+ background:#0f0f0f;
+ color:#fff;
+}
+
+button{
+ width:100%;
+ margin-top:18px;
+ padding:14px;
+ border:none;
+ border-radius:12px;
+ background:#ff0055;
+ color:#fff;
+ font-weight:600;
+ cursor:pointer;
+}
+
+.thumb-box{display:none;margin-top:14px}
+.thumb-grid{
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ gap:6px;
+}
+.thumb-grid img{
+ width:100%;
+ border-radius:6px;
+ cursor:pointer;
+ border:2px solid transparent;
+}
+.thumb-grid img.selected{border-color:#ff0055}
+
+.progress{display:none;height:8px;background:#222;margin-top:14px;border-radius:10px}
+.progress div{height:100%;width:0%;background:#ff0055}
+
+#status{margin-top:12px;font-size:14px;text-align:center}
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+<div class="panel">
+
+<h2 style="text-align:center">🔐 Admin Upload</h2>
+
+<label>Password</label>
+<input id="password" type="password">
+
+<label>Video Title</label>
+<input id="title" type="text">
+
+<label>Select Video</label>
+<input id="video" type="file" accept="video/*">
+
+<div class="thumb-box" id="thumbBox">
+ <p>Select Thumbnail</p>
+ <div class="thumb-grid" id="thumbGrid"></div>
+</div>
+
+<div class="progress" id="progress"><div id="bar"></div></div>
+
+<button id="btn">🚀 Upload</button>
+<div id="status"></div>
+
+</div>
+</div>
+
 <script>
 let selectedThumbnail = null;
 
-/* ===== GENERATE MULTIPLE THUMBNAILS (5 CLICKBAIT FRAMES) ===== */
-function generateThumbs(file){
- const box = document.getElementById("thumbBox");
- const grid = document.getElementById("thumbGrid");
- grid.innerHTML="";
- box.style.display="block";
-
- const video = document.createElement("video");
- video.src = URL.createObjectURL(file);
- video.muted = true;
- video.playsInline = true;
-
- video.onloadedmetadata = () => {
-   const d = video.duration;
-   const times = [
-     d * 0.15,
-     d * 0.30,
-     d * 0.45,
-     d * 0.60,
-     d * 0.75
-   ];
-
-   let i = 0;
-   const next = () => {
-     if(i >= times.length) return;
-     captureFrame(video, times[i++], next);
-   };
-   next();
- };
-}
-
-function captureFrame(video, time, done){
- const canvas = document.createElement("canvas");
- const ctx = canvas.getContext("2d");
-
- video.currentTime = time;
-
- video.onseeked = () => {
-   canvas.width = 320;
-   canvas.height = 180;
-   ctx.drawImage(video, 0, 0, 320, 180);
-
-   const img = document.createElement("img");
-   img.src = canvas.toDataURL("image/jpeg", 0.85);
-
-   img.onclick = () => {
-     document
-       .querySelectorAll(".thumb-grid img")
-       .forEach(i => i.classList.remove("selected"));
-     img.classList.add("selected");
-     selectedThumbnail = img.src;
-   };
-
-   document.getElementById("thumbGrid").appendChild(img);
-   done();
- };
-}
-
-/* ===== UPLOAD WITH THUMBNAIL ===== */
-function upload(){
- const btn = document.getElementById("btn");
- const status = document.getElementById("status");
- const bar = document.getElementById("bar");
- const progress = document.getElementById("progress");
-
- const password = passwordInput.value.trim();
- const title = titleInput.value.trim();
- const file = videoInput.files[0];
-
- if(!password){
-  status.innerHTML="<span class='err'>❌ Admin password required</span>";
-  return;
- }
- if(!file){
-  status.innerHTML="<span class='err'>❌ Select a video</span>";
-  return;
- }
- if(!selectedThumbnail){
-  status.innerHTML="<span class='err'>❌ Select a thumbnail</span>";
-  return;
- }
-
- btn.disabled = true;
- status.innerHTML = "⏳ Uploading… please wait";
- progress.style.display = "block";
- bar.style.width = "5%";
-
- const fd = new FormData();
- fd.append("password", password);
- fd.append("title", title || "Untitled");
- fd.append("video", file);
- fd.append("thumbnail", selectedThumbnail); // ✅ MAIN FIX
-
- const xhr = new XMLHttpRequest();
- xhr.open("POST", "/api/upload");
-
- xhr.upload.onprogress = e => {
-  if(e.lengthComputable){
-   bar.style.width = Math.round((e.loaded / e.total) * 90) + "%";
-  }
- };
-
- xhr.onload = () => {
-  bar.style.width = "100%";
-  try{
-   const res = JSON.parse(xhr.responseText || "{}");
-   if(res.success){
-    status.innerHTML = "<span class='ok'>✅ Upload successful</span>";
-    videoInput.value = "";
-    titleInput.value = "";
-    selectedThumbnail = null;
-    document.getElementById("thumbBox").style.display = "none";
-   }else{
-    status.innerHTML = "<span class='err'>❌ " + (res.error || "Failed") + "</span>";
-   }
-  }catch{
-   status.innerHTML = "<span class='err'>❌ Server error</span>";
-  }
-  btn.disabled = false;
- };
-
- xhr.onerror = () => {
-  status.innerHTML = "<span class='err'>❌ Network error</span>";
-  btn.disabled = false;
- };
-
- xhr.send(fd);
-}
-
-/* shortcuts */
 const passwordInput = document.getElementById("password");
 const titleInput = document.getElementById("title");
 const videoInput = document.getElementById("video");
+const thumbBox = document.getElementById("thumbBox");
+const thumbGrid = document.getElementById("thumbGrid");
+const btn = document.getElementById("btn");
+const status = document.getElementById("status");
+const bar = document.getElementById("bar");
+const progress = document.getElementById("progress");
+
+/* ===== THUMB GENERATION ===== */
+videoInput.addEventListener("change", () => {
+ const file = videoInput.files[0];
+ if(!file) return;
+
+ thumbGrid.innerHTML="";
+ thumbBox.style.display="block";
+ selectedThumbnail=null;
+
+ const video=document.createElement("video");
+ video.src=URL.createObjectURL(file);
+ video.muted=true;
+
+ video.onloadedmetadata=async()=>{
+  const d=video.duration;
+  const times=[0.15,0.3,0.45,0.6,0.75].map(x=>x*d);
+  for(const t of times){
+   const img=await capture(video,t);
+   thumbGrid.appendChild(img);
+  }
+ };
+});
+
+function capture(video,time){
+ return new Promise(res=>{
+  const c=document.createElement("canvas");
+  const x=c.getContext("2d");
+  video.currentTime=time;
+  video.onseeked=()=>{
+   c.width=320;c.height=180;
+   x.drawImage(video,0,0,320,180);
+   const img=document.createElement("img");
+   img.src=c.toDataURL("image/jpeg",0.9);
+   img.onclick=()=>{
+    document.querySelectorAll("#thumbGrid img").forEach(i=>i.classList.remove("selected"));
+    img.classList.add("selected");
+    selectedThumbnail=img.src;
+   };
+   res(img);
+  };
+ });
+}
+
+/* ===== UPLOAD ===== */
+btn.onclick=()=>{
+ if(!passwordInput.value) return status.innerText="❌ Password required";
+ if(!videoInput.files[0]) return status.innerText="❌ Select video";
+ if(!selectedThumbnail) return status.innerText="❌ Select thumbnail";
+
+ btn.disabled=true;
+ progress.style.display="block";
+ status.innerText="Uploading…";
+
+ const fd=new FormData();
+ fd.append("password",passwordInput.value);
+ fd.append("title",titleInput.value||"Untitled");
+ fd.append("video",videoInput.files[0]);
+ fd.append("thumbnail",selectedThumbnail);
+
+ const xhr=new XMLHttpRequest();
+ xhr.open("POST","/api/upload");
+
+ xhr.upload.onprogress=e=>{
+  if(e.lengthComputable){
+   bar.style.width=Math.round((e.loaded/e.total)*90)+"%";
+  }
+ };
+
+ xhr.onload=()=>{
+  bar.style.width="100%";
+  btn.disabled=false;
+  status.innerText="✅ Upload done";
+ };
+
+ xhr.onerror=()=>{
+  btn.disabled=false;
+  status.innerText="❌ Upload failed";
+ };
+
+ xhr.send(fd);
+};
 </script>
+
+</body>
+</html>
