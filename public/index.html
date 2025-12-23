@@ -6,6 +6,114 @@
 
 <title>KamaBaba Viral Videos 🔥 | Adult Desi Viral Clips</title>
 
+<meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral.">
+<meta name="robots" content="index, follow">
+
+<link rel="icon" href="/favicon.ico">
+<meta name="theme-color" content="#000000">
+
+<style>
+:root{--bg:#0b0b0b;--card:#141414;--accent:#ff0055;--soft:#888}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
+
+#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center}
+.ageBox{background:#141414;padding:25px;border-radius:12px;text-align:center}
+.ageBtns{display:flex;gap:10px;margin-top:20px}
+.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px}
+.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
+
+header{position:sticky;top:0;background:#111;padding:14px;text-align:center}
+header img{height:44px}
+#search{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:#1a1a1a;color:#fff}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:14px}
+.card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
+.thumb{aspect-ratio:16/9;background:#000}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.info{padding:9px}
+.title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.views{font-size:11px;color:var(--soft)}
+</style>
+</head>
+
+<body>
+
+<div id="ageGate">
+ <div class="ageBox">
+  <h2>🔞 Adult Content</h2>
+  <p>18+ Only</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="deny()">No</button>
+  </div>
+ </div>
+</div>
+
+<header>
+ <img src="/logo.png">
+ <input id="search" placeholder="Search hot videos...">
+</header>
+
+<div class="grid" id="grid"></div>
+
+<script>
+if(localStorage.adult==="yes") ageGate.style.display="none";
+function allow(){localStorage.adult="yes";ageGate.style.display="none"}
+function deny(){location.href="https://google.com"}
+
+let allVideos=[];
+
+/* 🔥 CLOUDINARY AUTO THUMBNAIL (FINAL) */
+function getThumb(url){
+ if(!url) return "";
+ if(!url.includes("/video/upload/")) return "";
+ return url
+  .replace("/video/upload/","/video/upload/so_2/")
+  .replace(/\.(mp4|webm|mov).*/i,".jpg");
+}
+
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{
+ allVideos = Array.isArray(vs)?vs:[];
+ draw();
+});
+
+function draw(){
+ grid.innerHTML="";
+ let list=allVideos.filter(v=>v.title.toLowerCase().includes(search.value.toLowerCase()));
+
+ list.forEach(v=>{
+  const thumb = v.thumbnail || getThumb(v.url);
+
+  grid.insertAdjacentHTML("beforeend",`
+   <div class="card" onclick="location.href='/watch?id=${v._id}'">
+    <div class="thumb">
+     <img src="${thumb}" loading="lazy" onerror="this.src='/logo.png'">
+    </div>
+    <div class="info">
+     <div class="title">${v.title}</div>
+     <div class="views">👁 ${v.views||0}</div>
+    </div>
+   </div>
+  `);
+ });
+}
+
+search.oninput=draw;
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>KamaBaba Viral Videos 🔥 | Adult Desi Viral Clips</title>
+
 <meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral. Hot, couple & viral clips updated daily.">
 <meta name="keywords" content="desi viral videos, adult videos, hot clips, couple videos">
 <meta name="robots" content="index, follow">
