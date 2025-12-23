@@ -25,16 +25,10 @@ body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
  align-items:center;
  justify-content:center
 }
-.ageBox{
- background:#141414;
- padding:24px;
- border-radius:12px;
- text-align:center;
-}
+.ageBox{background:#141414;padding:24px;border-radius:12px;text-align:center}
 .ageBtns{display:flex;gap:10px;margin-top:16px}
 .ageBtns button{
- flex:1;padding:10px;
- border:none;border-radius:8px;
+ flex:1;padding:10px;border:none;border-radius:8px;
  font-weight:600;cursor:pointer
 }
 .yes{background:#0f9d58;color:#fff}
@@ -64,14 +58,10 @@ header img{height:44px}
  overflow:hidden;
  cursor:pointer
 }
-.thumb{
- aspect-ratio:16/9;
- background:#000
-}
+.thumb{aspect-ratio:16/9;background:#000}
 .thumb img{
  width:100%;height:100%;
- object-fit:cover;
- display:block
+ object-fit:cover;display:block
 }
 .info{padding:9px}
 .title{
@@ -81,6 +71,25 @@ header img{height:44px}
  text-overflow:ellipsis
 }
 .views{font-size:11px;color:var(--soft)}
+
+/* PAGINATION */
+.pagination{
+ display:flex;
+ justify-content:center;
+ gap:6px;
+ padding:16px
+}
+.pagination button{
+ padding:7px 12px;
+ border:none;
+ border-radius:8px;
+ background:#1f1f1f;
+ color:#fff;
+ cursor:pointer
+}
+.pagination button.active{
+ background:var(--accent)
+}
 </style>
 </head>
 
@@ -104,6 +113,7 @@ header img{height:44px}
 </header>
 
 <div class="grid" id="grid"></div>
+<div class="pagination" id="pagination"></div>
 
 <!-- ADSTERRA -->
 <div style="padding:14px">
@@ -114,17 +124,18 @@ header img{height:44px}
 </div>
 
 <script>
-/* AGE GATE FIX */
+/* AGE GATE */
 const ageGate=document.getElementById("ageGate");
 if(localStorage.adult==="yes") ageGate.style.display="none";
-function allow(){
- localStorage.adult="yes";
- ageGate.style.display="none";
-}
+function allow(){localStorage.adult="yes";ageGate.style.display="none";}
 function deny(){location.href="https://google.com";}
 
-let allVideos=[];
 const grid=document.getElementById("grid");
+const pagination=document.getElementById("pagination");
+
+let allVideos=[];
+let page=1;
+const perPage=12;
 
 /* CLOUDINARY AUTO THUMB */
 function autoThumb(url){
@@ -146,15 +157,17 @@ fetch("/api/videos")
 function draw(){
  const q=search.value.toLowerCase();
  grid.innerHTML="";
- allVideos
- .filter(v=>v.title.toLowerCase().includes(q))
- .forEach(v=>{
+ pagination.innerHTML="";
+
+ const list=allVideos.filter(v=>v.title.toLowerCase().includes(q));
+ const totalPages=Math.ceil(list.length/perPage);
+
+ list.slice((page-1)*perPage,page*perPage).forEach(v=>{
   const thumb=v.thumbnail || autoThumb(v.url);
   grid.insertAdjacentHTML("beforeend",`
    <div class="card" onclick="location.href='/watch?id=${v._id}'">
     <div class="thumb">
-     <img src="${thumb}" loading="lazy"
-      onerror="this.src='/logo.png'">
+     <img src="${thumb}" loading="lazy" onerror="this.src='/logo.png'">
     </div>
     <div class="info">
      <div class="title">${v.title}</div>
@@ -163,9 +176,16 @@ function draw(){
    </div>
   `);
  });
+
+ for(let i=1;i<=totalPages;i++){
+  pagination.insertAdjacentHTML("beforeend",
+   `<button class="${i===page?'active':''}"
+    onclick="page=${i};draw();window.scrollTo(0,0)">
+    ${i}</button>`);
+ }
 }
 
-search.oninput=draw;
+search.oninput=()=>{page=1;draw();};
 
 /* SMARTLINK ONCE */
 let opened=false;
