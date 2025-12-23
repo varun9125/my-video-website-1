@@ -101,7 +101,7 @@ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/in
 document.getElementById("year").innerText=new Date().getFullYear();
 
 /* AGE GATE */
-if(localStorage.adult==="yes")ageGate.style.display="none";
+if(localStorage.adult==="yes") ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
 
@@ -111,9 +111,12 @@ let allVideos=[],page=1,perPage=12,keyword="",category="all";
 /* FETCH */
 fetch("/api/videos")
 .then(r=>r.json())
-.then(d=>{allVideos=d||[];draw();window.scrollTo(0,0)});
+.then(d=>{
+ allVideos = Array.isArray(d)?d:[];
+ draw();
+});
 
-/* CATEGORY LOGIC */
+/* CATEGORY */
 function cat(v){
  const t=v.title.toLowerCase();
  if(t.includes("desi"))return"desi";
@@ -131,7 +134,7 @@ function setCat(c,b){
  draw();
 }
 
-/* DRAW – THUMBNAIL FIXED */
+/* DRAW – FAST + STABLE */
 function draw(){
  grid.innerHTML="";
  pagination.innerHTML="";
@@ -142,22 +145,20 @@ function draw(){
  let total=Math.ceil(list.length/perPage);
 
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
-  grid.insertAdjacentHTML("beforeend",`
-   <div class="card" onclick="location.href='/watch?id=${v._id}'">
-    <div class="thumb">
-     <video
-      src="${v.url}#t=1"
-      muted
-      preload="metadata"
-      playsinline
-     ></video>
-    </div>
-    <div class="info">
-     <div class="title">${v.title}</div>
-     <div class="views">👁 ${v.views||0}</div>
-    </div>
+  const card=document.createElement("div");
+  card.className="card";
+  card.innerHTML=`
+   <div class="thumb">
+    <video muted preload="metadata" playsinline>
+     <source src="${v.url}#t=1" type="video/mp4">
+    </video>
    </div>
-  `);
+   <div class="info">
+    <div class="title">${v.title}</div>
+    <div class="views">👁 ${v.views||0}</div>
+   </div>`;
+  card.onclick=()=>location.href="/watch?id="+v._id;
+  grid.appendChild(card);
  });
 
  for(let i=1;i<=total;i++){
@@ -175,14 +176,11 @@ search.oninput=e=>{
  draw();
 };
 
-/* SMARTLINK (ONCE – SAFE) */
+/* SMARTLINK (ONCE ONLY) */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
-  window.open(
-   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
-   "_blank"
-  );
+  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
   opened=true;
  }
 },{once:true});
