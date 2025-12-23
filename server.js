@@ -10,53 +10,69 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-/* ================= CONFIG ================= */
+/* ================= BASIC CONFIG ================= */
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const BASE_URL = process.env.BASE_URL || "https://my-video-website-1-1.onrender.com";
+const BASE_URL =
+  process.env.BASE_URL || "https://my-video-website-1-1.onrender.com";
 
 /* ================= MIDDLEWARE ================= */
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public"), {
+  maxAge: "7d",   // static files cache → faster load
+}));
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
 });
 
 /* ================= DATABASE ================= */
 let dbReady = false;
 
+mongoose.set("strictQuery", false);
+
 mongoose
   .connect(process.env.MONGO_URI, {
-    serverSelectionTimeoutMS: 10000
+    serverSelectionTimeoutMS: 10000,
+    maxPoolSize: 10,
   })
   .then(() => {
     console.log("✅ MongoDB connected");
     dbReady = true;
   })
   .catch(err => {
-    console.error("❌ MongoDB failed", err.message);
+    console.error("❌ MongoDB connection error:", err.message);
     dbReady = false;
   });
 
-/* ================= MODEL ================= */
-const videoSchema = new mongoose.Schema({
-  title: String,
-  url: String,
-  views: { type: Number, default: 0 },
-  likes: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
+mongoose.connection.on("disconnected", () => {
+  console.error("❌ MongoDB disconnected");
+  dbReady = false;
 });
+
+/* ================= MODEL ================= */
+const videoSchema = new mongoose.Schema(
+  {
+    title: { type: String, trim: true },
+    url: { type: String, required: true },
+    views: { type: Number, default: 0 },
+    likes: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { versionKey: false }
+);
 
 const Video = mongoose.model("Video", videoSchema);
 
-/* ================= UPLOAD ================= */
+/* ================= UPLOAD SETUP ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
 });
 
 /* ================= ROUTES ================= */
@@ -71,14 +87,21 @@ app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-// GET VIDEOS
+// API: GET VIDEOS (FAST)
 app.get("/api/videos", async (req, res) => {
-  if (!dbReady) return res.json([]);
-  const videos = await Video.find().sort({ createdAt: -1 });
-  res.json(videos);
+  try {
+    if (!dbReady) return res.json([]);
+    const videos = await Video.find()
+      .sort({ createdAt: -1 })
+      .lean(); // ⚡ faster
+    res.json(videos);
+  } catch (e) {
+    console.error("GET VIDEOS ERROR:", e.message);
+    res.json([]);
+  }
 });
 
-// UPLOAD VIDEO
+// API: UPLOAD VIDEO
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     if (!dbReady) {
@@ -95,56 +118,77 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
 
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
-        { resource_type: "video", folder: "kamababa" },
-        (err, result) => (err ? reject(err) : resolve(result))
+        {
+          resource_type: "video",
+          folder: "kamababa",
+          eager_async: true,
+          chunk_size: 6 * 1024 * 1024, // ⚡ better streaming
+        },
+        (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        }
       ).end(req.file.buffer);
     });
 
     const video = await Video.create({
       title: req.body.title || "Untitled",
-      url: uploadResult.secure_url
+      url: uploadResult.secure_url,
     });
 
     res.json({ success: true, id: video._id });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ success: false });
+    console.error("UPLOAD ERROR:", e);
+    res.status(500).json({ success: false, error: "Upload failed" });
   }
 });
 
-// VIEW
+// API: VIEW
 app.post("/api/view/:id", async (req, res) => {
-  if (dbReady) await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+  try {
+    if (dbReady) {
+      await Video.findByIdAndUpdate(req.params.id, {
+        $inc: { views: 1 },
+      }).exec();
+    }
+  } catch {}
   res.json({ success: true });
 });
 
-// LIKE
+// API: LIKE
 app.post("/api/like/:id", async (req, res) => {
-  if (dbReady) await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
+  try {
+    if (dbReady) {
+      await Video.findByIdAndUpdate(req.params.id, {
+        $inc: { likes: 1 },
+      }).exec();
+    }
+  } catch {}
   res.json({ success: true });
 });
 
-// SITEMAP
+// SITEMAP (SEO)
 app.get("/sitemap.xml", async (req, res) => {
   res.setHeader("Content-Type", "application/xml");
 
   let urls = `<url><loc>${BASE_URL}/</loc></url>`;
 
   if (dbReady) {
-    const videos = await Video.find({}, "_id");
+    const videos = await Video.find({}, "_id").lean();
     videos.forEach(v => {
       urls += `<url><loc>${BASE_URL}/watch?id=${v._id}</loc></url>`;
     });
   }
 
-  res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls}
-</urlset>`);
+  res.send(
+    `<?xml version="1.0" encoding="UTF-8"?>` +
+      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+      urls +
+      `</urlset>`
+  );
 });
 
-/* ================= START ================= */
-app.listen(PORT, () => {
-  console.log("🚀 Server running on", PORT);
+/* ================= SAFE START ================= */
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
-
