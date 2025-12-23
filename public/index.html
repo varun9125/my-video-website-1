@@ -84,7 +84,7 @@ footer{text-align:center;padding:20px;color:#777;font-size:13px;border-top:1px s
 
 <div class="grid" id="grid"></div>
 
-<!-- ADSTERRA (UNCHANGED) -->
+<!-- ✅ ADSTERRA (UNCHANGED) -->
 <div style="padding:14px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
@@ -111,7 +111,7 @@ let allVideos=[],page=1,perPage=12,keyword="",category="all";
 /* FETCH */
 fetch("/api/videos")
 .then(r=>r.json())
-.then(d=>{allVideos=d;draw()});
+.then(d=>{allVideos=d||[];draw();window.scrollTo(0,0)});
 
 /* CATEGORY LOGIC */
 function cat(v){
@@ -127,50 +127,62 @@ function setCat(c,b){
  category=c;
  document.querySelectorAll(".categories button").forEach(x=>x.classList.remove("active"));
  b.classList.add("active");
- page=1;draw();
+ page=1;
+ draw();
 }
 
-/* DRAW */
+/* DRAW – THUMBNAIL FIXED */
 function draw(){
- grid.innerHTML=""; pagination.innerHTML="";
+ grid.innerHTML="";
+ pagination.innerHTML="";
+
  let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
- if(category!=="all")list=list.filter(v=>cat(v)===category);
+ if(category!=="all") list=list.filter(v=>cat(v)===category);
+
  let total=Math.ceil(list.length/perPage);
 
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
-  const card=document.createElement("div");
-  card.className="card";
-  card.innerHTML=`
-   <div class="thumb">
-    <video muted preload="none" data-src="${v.url}#t=1"></video>
+  grid.insertAdjacentHTML("beforeend",`
+   <div class="card" onclick="location.href='/watch?id=${v._id}'">
+    <div class="thumb">
+     <video
+      src="${v.url}#t=1"
+      muted
+      preload="metadata"
+      playsinline
+     ></video>
+    </div>
+    <div class="info">
+     <div class="title">${v.title}</div>
+     <div class="views">👁 ${v.views||0}</div>
+    </div>
    </div>
-   <div class="info">
-    <div class="title">${v.title}</div>
-    <div class="views">👁 ${v.views||0}</div>
-   </div>`;
-  card.onclick=()=>location.href="/watch?id="+v._id;
-
-  const vid=card.querySelector("video");
-  card.onmouseenter=()=>{vid.src=vid.dataset.src;vid.play()};
-  card.onmouseleave=()=>{vid.pause();vid.removeAttribute("src")};
-
-  grid.appendChild(card);
+  `);
  });
 
  for(let i=1;i<=total;i++){
   pagination.insertAdjacentHTML("beforeend",
-   `<button class="${i===page?'active':''}" onclick="page=${i};draw();window.scrollTo(0,0)">${i}</button>`);
+   `<button class="${i===page?'active':''}"
+    onclick="page=${i};draw();window.scrollTo(0,0)">
+    ${i}</button>`);
  }
 }
 
 /* SEARCH */
-search.oninput=e=>{keyword=e.target.value.toLowerCase();page=1;draw()};
+search.oninput=e=>{
+ keyword=e.target.value.toLowerCase();
+ page=1;
+ draw();
+};
 
-/* SMARTLINK (ONCE) */
+/* SMARTLINK (ONCE – SAFE) */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
-  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
+  window.open(
+   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
+   "_blank"
+  );
   opened=true;
  }
 },{once:true});
