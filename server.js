@@ -17,11 +17,15 @@ const BASE_URL =
 
 /* ================= MIDDLEWARE ================= */
 app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "3mb" })); // ⬅ thumbnail base64 safe
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public"), {
-  maxAge: "7d",   // static files cache → faster load
-}));
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: "7d",
+    etag: true,
+    lastModified: true,
+  })
+);
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
@@ -55,11 +59,12 @@ mongoose.connection.on("disconnected", () => {
   dbReady = false;
 });
 
-/* ================= MODEL ================= */
+/* ================= MODEL (THUMBNAIL ADDED) ================= */
 const videoSchema = new mongoose.Schema(
   {
     title: { type: String, trim: true },
     url: { type: String, required: true },
+    thumbnail: { type: String, default: "" }, // ✅ NEW
     views: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
@@ -72,7 +77,7 @@ const Video = mongoose.model("Video", videoSchema);
 /* ================= UPLOAD SETUP ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
+  limits: { fileSize: 100 * 1024 * 1024 },
 });
 
 /* ================= ROUTES ================= */
@@ -87,13 +92,13 @@ app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-// API: GET VIDEOS (FAST)
+// API: GET VIDEOS (FAST + LEAN)
 app.get("/api/videos", async (req, res) => {
   try {
     if (!dbReady) return res.json([]);
     const videos = await Video.find()
       .sort({ createdAt: -1 })
-      .lean(); // ⚡ faster
+      .lean();
     res.json(videos);
   } catch (e) {
     console.error("GET VIDEOS ERROR:", e.message);
@@ -101,7 +106,7 @@ app.get("/api/videos", async (req, res) => {
   }
 });
 
-// API: UPLOAD VIDEO
+// API: UPLOAD VIDEO + THUMBNAIL
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     if (!dbReady) {
@@ -116,13 +121,13 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       return res.status(400).json({ success: false, error: "No file" });
     }
 
+    /* ⬆ VIDEO UPLOAD */
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
           resource_type: "video",
-          folder: "kamababa",
-          eager_async: true,
-          chunk_size: 6 * 1024 * 1024, // ⚡ better streaming
+          folder: "kamababa/videos",
+          chunk_size: 6 * 1024 * 1024,
         },
         (err, result) => {
           if (err) reject(err);
@@ -131,9 +136,27 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       ).end(req.file.buffer);
     });
 
+    /* 🖼️ THUMBNAIL UPLOAD (OPTIONAL) */
+    let thumbnailUrl = "";
+
+    if (req.body.thumbnail) {
+      try {
+        const thumb = await cloudinary.uploader.upload(req.body.thumbnail, {
+          folder: "kamababa/thumbs",
+          resource_type: "image",
+          quality: "auto",
+          fetch_format: "auto",
+        });
+        thumbnailUrl = thumb.secure_url;
+      } catch (e) {
+        console.warn("⚠️ Thumbnail upload skipped");
+      }
+    }
+
     const video = await Video.create({
       title: req.body.title || "Untitled",
       url: uploadResult.secure_url,
+      thumbnail: thumbnailUrl,
     });
 
     res.json({ success: true, id: video._id });
