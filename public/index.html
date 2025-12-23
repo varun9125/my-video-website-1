@@ -48,7 +48,7 @@ header img{height:44px}
  border:none;background:#1a1a1a;color:#fff
 }
 
-/* GRID – SINGLE VIDEO */
+/* GRID */
 .grid{
  display:grid;
  grid-template-columns:1fr;
@@ -76,7 +76,6 @@ header img{height:44px}
  height:100%;
  object-fit:cover;
  display:block;
- filter:blur(0.4px);
  transform:scale(1.02);
 }
 
@@ -97,7 +96,8 @@ header img{height:44px}
 .title{
  font-size:14px;
  line-height:1.35;
- white-space:normal;   /* ✅ full title */
+ font-weight:600;   /* ✅ BOLD TITLE */
+ white-space:normal;
  overflow:visible;
 }
 .views{font-size:12px;color:var(--soft)}
@@ -218,9 +218,8 @@ function draw(){
 
 search.oninput=()=>{page=1;draw();};
 
-/* DURATION LOADER */
+/* DURATION FIX */
 function fmt(sec){
- if(!sec||isNaN(sec)) return "00:00";
  const m=Math.floor(sec/60);
  const s=Math.floor(sec%60);
  return m+":"+(s<10?"0"+s:s);
@@ -230,8 +229,13 @@ setTimeout(()=>{
   const v=document.createElement("video");
   v.src=d.dataset.url;
   v.preload="metadata";
+  v.crossOrigin="anonymous";   // ✅ FIX
   v.onloadedmetadata=()=>{
-   d.innerText=fmt(v.duration);
+   if(isNaN(v.duration)||!v.duration){
+     d.style.display="none";
+   }else{
+     d.innerText=fmt(v.duration);
+   }
    v.remove();
   };
  });
