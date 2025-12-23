@@ -36,16 +36,62 @@ body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
 .yes{background:#0f9d58;color:#fff}
 .no{background:#333;color:#fff}
 
-/* HEADER */
+/* ===== HEADER / MENU BAR (ONLY ADDITION) ===== */
 header{
  position:sticky;top:0;z-index:10;
- background:#111;padding:14px;text-align:center
+ background:#111;padding:10px 14px;border-bottom:1px solid #222
 }
-header img{height:44px}
+.topbar{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px
+}
+.brand{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ font-weight:800;
+ font-size:18px;
+ letter-spacing:.3px
+}
+.brand img{height:36px}
+.brand span{color:#fff}
+.search-icon{
+ font-size:20px;
+ cursor:pointer;
+ color:#fff
+}
 #search{
- width:100%;margin-top:10px;
- padding:12px;border-radius:10px;
- border:none;background:#1a1a1a;color:#fff
+ width:100%;
+ margin-top:10px;
+ padding:12px;
+ border-radius:10px;
+ border:none;
+ background:#1a1a1a;
+ color:#fff;
+ display:none;
+}
+
+/* TAGS */
+.tags{
+ display:flex;
+ gap:8px;
+ overflow-x:auto;
+ margin-top:10px;
+}
+.tags button{
+ padding:6px 14px;
+ border:none;
+ border-radius:20px;
+ background:#1f1f1f;
+ color:#fff;
+ font-size:13px;
+ cursor:pointer;
+ white-space:nowrap
+}
+.tags button.active{
+ background:var(--accent)
 }
 
 /* GRID */
@@ -75,7 +121,7 @@ header img{height:44px}
  width:100%;
  height:100%;
  object-fit:cover;
- display:block; /* ❌ blur removed */
+ display:block;
 }
 
 /* DURATION */
@@ -135,8 +181,23 @@ header img{height:44px}
 </div>
 
 <header>
- <img src="/logo.png">
+ <div class="topbar">
+  <div class="brand">
+   <img src="/logo.png" alt="logo">
+   <span>KamaBaba Viral</span>
+  </div>
+  <div class="search-icon" onclick="toggleSearch()">🔍</div>
+ </div>
+
  <input id="search" placeholder="Search hot videos...">
+
+ <div class="tags">
+  <button class="active" onclick="setTag('')">All</button>
+  <button onclick="setTag('hot')">🔥 Hot</button>
+  <button onclick="setTag('desi')">🇮🇳 Desi</button>
+  <button onclick="setTag('viral')">🚀 Viral</button>
+  <button onclick="setTag('new')">🆕 New</button>
+ </div>
 </header>
 
 <div class="grid" id="grid"></div>
@@ -159,17 +220,32 @@ function deny(){location.href="https://google.com";}
 
 const grid=document.getElementById("grid");
 const pagination=document.getElementById("pagination");
+const searchInput=document.getElementById("search");
 
 let allVideos=[];
 let page=1;
+let tag="";
 const perPage=8;
+
+function toggleSearch(){
+ searchInput.style.display =
+  searchInput.style.display==="block"?"none":"block";
+ searchInput.focus();
+}
+
+function setTag(t){
+ tag=t;
+ page=1;
+ document.querySelectorAll(".tags button").forEach(b=>b.classList.remove("active"));
+ event.target.classList.add("active");
+ draw();
+}
 
 /* CLOUDINARY AUTO THUMB */
 function autoThumb(url){
  if(!url || !url.includes("/video/upload/")) return "/logo.png";
- return url
-  .replace("/video/upload/","/video/upload/so_2/")
-  .replace(/\.(mp4|mov|webm).*/i,".jpg");
+ return url.replace("/video/upload/","/video/upload/so_2/")
+           .replace(/\.(mp4|mov|webm).*/i,".jpg");
 }
 
 /* LOAD */
@@ -180,13 +256,16 @@ fetch("/api/videos")
  draw();
 });
 
-/* DRAW */
 function draw(){
- const q=search.value.toLowerCase();
+ const q=searchInput.value.toLowerCase();
  grid.innerHTML="";
  pagination.innerHTML="";
 
- const list=allVideos.filter(v=>v.title.toLowerCase().includes(q));
+ let list=allVideos.filter(v=>{
+  const t=v.title.toLowerCase();
+  return t.includes(q) && (!tag || t.includes(tag));
+ });
+
  const total=Math.ceil(list.length/perPage);
 
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
@@ -194,7 +273,7 @@ function draw(){
   grid.insertAdjacentHTML("beforeend",`
    <div class="card" onclick="location.href='/watch?id=${v._id}'">
     <div class="thumb">
-     <img src="${thumb}" loading="lazy" onerror="this.src='/logo.png'">
+     <img src="${thumb}" loading="lazy">
      <div class="duration" data-url="${v.url}">--:--</div>
     </div>
     <div class="info">
@@ -214,44 +293,27 @@ function draw(){
  }
 }
 
-search.oninput=()=>{page=1;draw();};
+searchInput.oninput=()=>{page=1;draw();};
 
-/* ✅ FINAL DURATION FIX */
+/* DURATION */
 function fmt(sec){
  const m=Math.floor(sec/60);
  const s=Math.floor(sec%60);
  return m+":"+(s<10?"0"+s:s);
 }
-
 setTimeout(()=>{
  document.querySelectorAll(".duration").forEach(d=>{
   const v=document.createElement("video");
-  v.src = d.dataset.url + "#t=0.1";   // ✅ CRITICAL FIX
-  v.muted = true;
-  v.preload = "metadata";
-  v.onloadedmetadata = () => {
-    if(!isNaN(v.duration) && v.duration > 0){
-      d.innerText = fmt(v.duration);
-    }else{
-      d.style.display="none";
-    }
-    v.remove();
+  v.src=d.dataset.url+"#t=0.1";
+  v.preload="metadata";
+  v.onloadedmetadata=()=>{
+   if(v.duration) d.innerText=fmt(v.duration);
+   v.remove();
   };
  });
 },300);
-
-/* SMARTLINK (UNCHANGED) */
-let opened=false;
-document.addEventListener("click",()=>{
- if(!opened){
-  window.open(
-   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
-   "_blank"
-  );
-  opened=true;
- }
-},{once:true});
 </script>
 
 </body>
 </html>
+
