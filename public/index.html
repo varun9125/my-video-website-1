@@ -11,7 +11,7 @@
 <meta name="keywords" content="desi viral videos, adult videos, hot clips, couple videos">
 <meta name="robots" content="index, follow">
 
-<!-- LOGO / ICON -->
+<!-- ICONS -->
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/logo-192.png">
 <meta name="theme-color" content="#000000">
@@ -38,7 +38,7 @@ header img{height:44px}
 .categories button{padding:7px 14px;border:none;border-radius:20px;background:#222;color:#fff;cursor:pointer;white-space:nowrap}
 .categories button.active{background:var(--accent)}
 
-/* GRID (ORIGINAL SIMPLE) */
+/* GRID */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:14px}
 .card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
 .thumb{aspect-ratio:16/9;background:#000}
@@ -84,7 +84,7 @@ footer{text-align:center;padding:20px;color:#777;font-size:13px;border-top:1px s
 
 <div class="grid" id="grid"></div>
 
-<!-- ADSTERRA NATIVE (UNCHANGED) -->
+<!-- ADSTERRA (UNCHANGED) -->
 <div style="padding:14px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
@@ -107,18 +107,13 @@ function deny(){location.href="https://google.com"}
 
 /* STATE */
 let allVideos=[],page=1,perPage=12,keyword="",category="all";
-if(history.state?.page){page=history.state.page}
 
 /* FETCH */
 fetch("/api/videos")
 .then(r=>r.json())
-.then(d=>{
- allVideos=d;
- draw();
- window.scrollTo(0,0);
-});
+.then(d=>{allVideos=d;draw()});
 
-/* CATEGORY */
+/* CATEGORY LOGIC */
 function cat(v){
  const t=v.title.toLowerCase();
  if(t.includes("desi"))return"desi";
@@ -132,50 +127,46 @@ function setCat(c,b){
  category=c;
  document.querySelectorAll(".categories button").forEach(x=>x.classList.remove("active"));
  b.classList.add("active");
- page=1;
- history.replaceState({page},'');
- draw();
+ page=1;draw();
 }
 
 /* DRAW */
 function draw(){
- grid.innerHTML="";
- pagination.innerHTML="";
+ grid.innerHTML=""; pagination.innerHTML="";
  let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
  if(category!=="all")list=list.filter(v=>cat(v)===category);
  let total=Math.ceil(list.length/perPage);
 
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
-  grid.insertAdjacentHTML("beforeend",`
-   <div class="card" onclick="location.href='/watch?id=${v._id}'">
-    <div class="thumb">
-     <video src="${v.url}#t=1" muted preload="metadata"></video>
-    </div>
-    <div class="info">
-     <div class="title">${v.title}</div>
-     <div class="views">👁 ${v.views||0}</div>
-    </div>
+  const card=document.createElement("div");
+  card.className="card";
+  card.innerHTML=`
+   <div class="thumb">
+    <video muted preload="none" data-src="${v.url}#t=1"></video>
    </div>
-  `);
+   <div class="info">
+    <div class="title">${v.title}</div>
+    <div class="views">👁 ${v.views||0}</div>
+   </div>`;
+  card.onclick=()=>location.href="/watch?id="+v._id;
+
+  const vid=card.querySelector("video");
+  card.onmouseenter=()=>{vid.src=vid.dataset.src;vid.play()};
+  card.onmouseleave=()=>{vid.pause();vid.removeAttribute("src")};
+
+  grid.appendChild(card);
  });
 
  for(let i=1;i<=total;i++){
   pagination.insertAdjacentHTML("beforeend",
-   `<button class="${i===page?'active':''}"
-    onclick="page=${i};history.pushState({page},'',location.pathname);draw();window.scrollTo(0,0)">
-    ${i}</button>`);
+   `<button class="${i===page?'active':''}" onclick="page=${i};draw();window.scrollTo(0,0)">${i}</button>`);
  }
 }
 
 /* SEARCH */
-search.oninput=e=>{
- keyword=e.target.value.toLowerCase();
- page=1;
- history.replaceState({page},'');
- draw();
-};
+search.oninput=e=>{keyword=e.target.value.toLowerCase();page=1;draw()};
 
-/* SMARTLINK (ONCE ONLY – SAFE) */
+/* SMARTLINK (ONCE) */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
