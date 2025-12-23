@@ -1,213 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Panel | KamaBaba Viral</title>
-
-<link rel="icon" href="/favicon.ico">
-<meta name="robots" content="noindex,nofollow">
-
-<style>
-:root{
- --bg:#0b0b0b;
- --card:#141414;
- --accent:#ff0055;
- --soft:#999;
- --ok:#0f9d58;
- --err:#ff4444;
-}
-
-*{box-sizing:border-box}
-
-body{
- margin:0;
- background:linear-gradient(180deg,#000,#0b0b0b);
- color:#fff;
- font-family:system-ui,-apple-system,Segoe UI;
-}
-
-.wrapper{
- min-height:100vh;
- display:flex;
- align-items:center;
- justify-content:center;
- padding:20px;
-}
-
-.panel{
- width:100%;
- max-width:460px;
- background:var(--card);
- border-radius:16px;
- padding:24px;
- box-shadow:0 0 45px rgba(255,0,85,.3);
-}
-
-/* HEADER */
-.panel h1{
- margin:0 0 6px;
- text-align:center;
- color:var(--accent);
- letter-spacing:.5px;
-}
-.panel p{
- margin:0 0 20px;
- text-align:center;
- color:var(--soft);
- font-size:14px;
-}
-
-/* INPUTS */
-label{
- font-size:13px;
- color:#bbb;
- display:block;
- margin-top:14px;
-}
-
-input[type="password"],
-input[type="text"],
-input[type="file"]{
- width:100%;
- margin-top:6px;
- padding:12px;
- border-radius:10px;
- border:1px solid #222;
- background:#0f0f0f;
- color:#fff;
- font-size:14px;
-}
-
-input::file-selector-button{
- background:#222;
- color:#fff;
- border:none;
- padding:8px 12px;
- border-radius:6px;
- cursor:pointer;
-}
-
-/* THUMBNAIL PREVIEW */
-.thumb-box{
- margin-top:14px;
- display:none;
-}
-.thumb-box h4{
- margin:6px 0 10px;
- font-size:13px;
- color:#ccc;
-}
-.thumb-grid{
- display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:8px;
-}
-.thumb-grid img{
- width:100%;
- border-radius:8px;
- cursor:pointer;
- border:2px solid transparent;
-}
-.thumb-grid img.selected{
- border-color:var(--accent);
-}
-
-/* PROGRESS */
-.progress{
- width:100%;
- height:8px;
- background:#222;
- border-radius:10px;
- margin-top:18px;
- overflow:hidden;
- display:none;
-}
-.progress div{
- height:100%;
- width:0%;
- background:linear-gradient(90deg,#ff0055,#ff3380);
- transition:width .25s;
-}
-
-/* BUTTON */
-button{
- width:100%;
- margin-top:18px;
- padding:14px;
- border:none;
- border-radius:12px;
- font-size:15px;
- font-weight:600;
- cursor:pointer;
- background:linear-gradient(135deg,#ff0055,#ff3377);
- color:#fff;
-}
-
-button:disabled{
- opacity:.6;
- cursor:not-allowed;
-}
-
-/* STATUS */
-#status{
- margin-top:16px;
- min-height:22px;
- text-align:center;
- font-size:14px;
-}
-.ok{color:var(--ok)}
-.err{color:var(--err)}
-
-.footer{
- text-align:center;
- margin-top:18px;
- font-size:12px;
- color:#666;
-}
-</style>
-</head>
-
-<body>
-
-<div class="wrapper">
- <div class="panel">
-
-  <h1>🔐 Admin Upload</h1>
-  <p>KamaBaba Viral • Secure Control Panel</p>
-
-  <label>Admin Password</label>
-  <input type="password" id="password" placeholder="••••••••">
-
-  <label>Video Title (SEO Friendly)</label>
-  <input type="text" id="title" placeholder="Hot desi viral clip">
-
-  <label>Select Video (MP4 / MOV)</label>
-  <input type="file" id="video" accept="video/*" onchange="generateThumbs(this.files[0])">
-
-  <!-- Thumbnail Preview -->
-  <div class="thumb-box" id="thumbBox">
-   <h4>Select Thumbnail (manual)</h4>
-   <div class="thumb-grid" id="thumbGrid"></div>
-  </div>
-
-  <div class="progress" id="progress">
-    <div id="bar"></div>
-  </div>
-
-  <button id="btn" onclick="upload()">🚀 Upload Video</button>
-
-  <div id="status"></div>
-
-  <div class="footer">© KamaBaba Viral — Admin Access</div>
-
- </div>
-</div>
-
 <script>
 let selectedThumbnail = null;
 
-/* ===== GENERATE THUMBNAILS (CLIENT SIDE) ===== */
+/* ===== GENERATE MULTIPLE THUMBNAILS (5 CLICKBAIT FRAMES) ===== */
 function generateThumbs(file){
  const box = document.getElementById("thumbBox");
  const grid = document.getElementById("thumbGrid");
@@ -217,18 +11,28 @@ function generateThumbs(file){
  const video = document.createElement("video");
  video.src = URL.createObjectURL(file);
  video.muted = true;
+ video.playsInline = true;
 
  video.onloadedmetadata = () => {
-   const duration = video.duration;
-   const times = [duration*0.15, duration*0.4, duration*0.7];
+   const d = video.duration;
+   const times = [
+     d * 0.15,
+     d * 0.30,
+     d * 0.45,
+     d * 0.60,
+     d * 0.75
+   ];
 
-   times.forEach(t=>{
-     captureFrame(video, t);
-   });
+   let i = 0;
+   const next = () => {
+     if(i >= times.length) return;
+     captureFrame(video, times[i++], next);
+   };
+   next();
  };
 }
 
-function captureFrame(video, time){
+function captureFrame(video, time, done){
  const canvas = document.createElement("canvas");
  const ctx = canvas.getContext("2d");
 
@@ -237,23 +41,25 @@ function captureFrame(video, time){
  video.onseeked = () => {
    canvas.width = 320;
    canvas.height = 180;
-   ctx.drawImage(video,0,0,320,180);
+   ctx.drawImage(video, 0, 0, 320, 180);
 
    const img = document.createElement("img");
-   img.src = canvas.toDataURL("image/jpeg",0.8);
+   img.src = canvas.toDataURL("image/jpeg", 0.85);
 
-   img.onclick = ()=>{
-     document.querySelectorAll(".thumb-grid img")
-       .forEach(i=>i.classList.remove("selected"));
+   img.onclick = () => {
+     document
+       .querySelectorAll(".thumb-grid img")
+       .forEach(i => i.classList.remove("selected"));
      img.classList.add("selected");
      selectedThumbnail = img.src;
    };
 
    document.getElementById("thumbGrid").appendChild(img);
+   done();
  };
 }
 
-/* ===== UPLOAD ===== */
+/* ===== UPLOAD WITH THUMBNAIL ===== */
 function upload(){
  const btn = document.getElementById("btn");
  const status = document.getElementById("status");
@@ -272,47 +78,53 @@ function upload(){
   status.innerHTML="<span class='err'>❌ Select a video</span>";
   return;
  }
+ if(!selectedThumbnail){
+  status.innerHTML="<span class='err'>❌ Select a thumbnail</span>";
+  return;
+ }
 
- btn.disabled=true;
- status.innerHTML="⏳ Uploading… please wait";
- progress.style.display="block";
- bar.style.width="5%";
+ btn.disabled = true;
+ status.innerHTML = "⏳ Uploading… please wait";
+ progress.style.display = "block";
+ bar.style.width = "5%";
 
  const fd = new FormData();
  fd.append("password", password);
  fd.append("title", title || "Untitled");
  fd.append("video", file);
+ fd.append("thumbnail", selectedThumbnail); // ✅ MAIN FIX
 
  const xhr = new XMLHttpRequest();
- xhr.open("POST","/api/upload");
+ xhr.open("POST", "/api/upload");
 
- xhr.upload.onprogress = e=>{
+ xhr.upload.onprogress = e => {
   if(e.lengthComputable){
-   bar.style.width = Math.round((e.loaded/e.total)*90)+"%";
+   bar.style.width = Math.round((e.loaded / e.total) * 90) + "%";
   }
  };
 
- xhr.onload = ()=>{
-  bar.style.width="100%";
+ xhr.onload = () => {
+  bar.style.width = "100%";
   try{
-   const res = JSON.parse(xhr.responseText||"{}");
+   const res = JSON.parse(xhr.responseText || "{}");
    if(res.success){
-    status.innerHTML="<span class='ok'>✅ Upload successful</span>";
-    videoInput.value="";
-    titleInput.value="";
-    document.getElementById("thumbBox").style.display="none";
+    status.innerHTML = "<span class='ok'>✅ Upload successful</span>";
+    videoInput.value = "";
+    titleInput.value = "";
+    selectedThumbnail = null;
+    document.getElementById("thumbBox").style.display = "none";
    }else{
-    status.innerHTML="<span class='err'>❌ "+(res.error||"Failed")+"</span>";
+    status.innerHTML = "<span class='err'>❌ " + (res.error || "Failed") + "</span>";
    }
   }catch{
-   status.innerHTML="<span class='err'>❌ Server error</span>";
+   status.innerHTML = "<span class='err'>❌ Server error</span>";
   }
-  btn.disabled=false;
+  btn.disabled = false;
  };
 
- xhr.onerror = ()=>{
-  status.innerHTML="<span class='err'>❌ Network error</span>";
-  btn.disabled=false;
+ xhr.onerror = () => {
+  status.innerHTML = "<span class='err'>❌ Network error</span>";
+  btn.disabled = false;
  };
 
  xhr.send(fd);
@@ -323,6 +135,3 @@ const passwordInput = document.getElementById("password");
 const titleInput = document.getElementById("title");
 const videoInput = document.getElementById("video");
 </script>
-
-</body>
-</html>
