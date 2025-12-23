@@ -10,7 +10,6 @@
 <link rel="icon" href="/favicon.ico" />
 <meta name="theme-color" content="#000000" />
 
-<!-- ERO VERIFICATION (AS IS) -->
 <meta name="eroads_" content="045a4e1e1cf1a7e5e5f062c48d692dbb" />
 
 <style>
@@ -52,7 +51,7 @@ header img{height:44px}
 /* GRID – SINGLE VIDEO */
 .grid{
  display:grid;
- grid-template-columns:1fr; /* ✅ SINGLE COLUMN */
+ grid-template-columns:1fr;
  gap:16px;
  padding:14px;
  max-width:720px;
@@ -64,17 +63,42 @@ header img{height:44px}
  overflow:hidden;
  cursor:pointer
 }
-.thumb{aspect-ratio:16/9;background:#000}
-.thumb img{
- width:100%;height:100%;
- object-fit:cover;display:block
+
+/* THUMB */
+.thumb{
+ aspect-ratio:16/9;
+ background:#000;
+ position:relative;
+ overflow:hidden;
 }
+.thumb img{
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ display:block;
+ filter:blur(0.4px);
+ transform:scale(1.02);
+}
+
+/* DURATION */
+.duration{
+ position:absolute;
+ right:8px;
+ bottom:8px;
+ background:rgba(0,0,0,.75);
+ padding:3px 6px;
+ font-size:11px;
+ border-radius:4px;
+ color:#fff;
+}
+
+/* INFO */
 .info{padding:10px}
 .title{
  font-size:14px;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis
+ line-height:1.35;
+ white-space:normal;   /* ✅ full title */
+ overflow:visible;
 }
 .views{font-size:12px;color:var(--soft)}
 
@@ -101,7 +125,6 @@ header img{height:44px}
 
 <body>
 
-<!-- AGE GATE -->
 <div id="ageGate">
  <div class="ageBox">
   <h2>🔞 Adult Content</h2>
@@ -118,17 +141,15 @@ header img{height:44px}
  <input id="search" placeholder="Search hot videos...">
 </header>
 
-<!-- VIDEO GRID -->
 <div class="grid" id="grid"></div>
 
-<!-- ✅ ADSTERRA (NOW ABOVE PAGINATION ONLY) -->
+<!-- ADSTERRA (UNCHANGED) -->
 <div style="padding:14px;max-width:720px;margin:0 auto">
 <script async data-cfasync="false"
  src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
-<!-- PAGINATION -->
 <div class="pagination" id="pagination"></div>
 
 <script>
@@ -153,7 +174,7 @@ function autoThumb(url){
   .replace(/\.(mp4|mov|webm).*/i,".jpg");
 }
 
-/* LOAD VIDEOS */
+/* LOAD */
 fetch("/api/videos")
 .then(r=>r.json())
 .then(vs=>{
@@ -176,6 +197,7 @@ function draw(){
    <div class="card" onclick="location.href='/watch?id=${v._id}'">
     <div class="thumb">
      <img src="${thumb}" loading="lazy" onerror="this.src='/logo.png'">
+     <div class="duration" data-url="${v.url}">00:00</div>
     </div>
     <div class="info">
      <div class="title">${v.title}</div>
@@ -186,16 +208,36 @@ function draw(){
  });
 
  for(let i=1;i<=total;i++){
-  pagination.insertAdjacentHTML("beforeend",
-   `<button class="${i===page?'active':''}"
+  pagination.insertAdjacentHTML("beforeend",`
+   <button class="${i===page?'active':''}"
     onclick="page=${i};draw();window.scrollTo(0,0)">
-    ${i}</button>`);
+    ${i}</button>
+  `);
  }
 }
 
 search.oninput=()=>{page=1;draw();};
 
-/* SMARTLINK (ONCE) */
+/* DURATION LOADER */
+function fmt(sec){
+ if(!sec||isNaN(sec)) return "00:00";
+ const m=Math.floor(sec/60);
+ const s=Math.floor(sec%60);
+ return m+":"+(s<10?"0"+s:s);
+}
+setTimeout(()=>{
+ document.querySelectorAll(".duration").forEach(d=>{
+  const v=document.createElement("video");
+  v.src=d.dataset.url;
+  v.preload="metadata";
+  v.onloadedmetadata=()=>{
+   d.innerText=fmt(v.duration);
+   v.remove();
+  };
+ });
+},300);
+
+/* SMARTLINK (UNCHANGED) */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
