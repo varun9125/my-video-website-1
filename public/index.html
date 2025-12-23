@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,77 +22,36 @@
 body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
 
 /* AGE GATE */
-#ageGate{
- position:fixed;inset:0;background:rgba(0,0,0,.95);
- z-index:9999;display:flex;align-items:center;justify-content:center
-}
-.ageBox{
- background:#141414;padding:25px;border-radius:12px;
- max-width:320px;text-align:center;box-shadow:0 0 30px #ff0055
-}
+#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center}
+.ageBox{background:#141414;padding:25px;border-radius:12px;max-width:320px;text-align:center;box-shadow:0 0 30px #ff0055}
 .ageBtns{display:flex;gap:10px;margin-top:20px}
-.ageBtns button{
- flex:1;padding:10px;border:none;border-radius:8px;
- font-weight:600;cursor:pointer
-}
-.yes{background:#0f9d58;color:#fff}
-.no{background:#333;color:#fff}
+.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
+.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
 
 /* HEADER */
-header{
- position:sticky;top:0;z-index:99;
- background:#111;padding:14px;border-bottom:1px solid #222;
- text-align:center
-}
+header{position:sticky;top:0;z-index:99;background:#111;padding:14px;border-bottom:1px solid #222;text-align:center}
 header img{height:44px}
-#search{
- width:100%;margin-top:10px;padding:12px;
- border-radius:10px;border:none;background:#1a1a1a;color:#fff
-}
+#search{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:#1a1a1a;color:#fff}
 
 /* CATEGORY */
-.categories{
- display:flex;gap:8px;overflow-x:auto;padding:10px
-}
-.categories button{
- padding:7px 14px;border:none;border-radius:20px;
- background:#222;color:#fff;cursor:pointer;white-space:nowrap
-}
+.categories{display:flex;gap:8px;overflow-x:auto;padding:10px}
+.categories button{padding:7px 14px;border:none;border-radius:20px;background:#222;color:#fff;cursor:pointer;white-space:nowrap}
 .categories button.active{background:var(--accent)}
 
-/* GRID (PEHLE JAISA SIMPLE) */
-.grid{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
- gap:14px;padding:14px
-}
-.card{
- background:var(--card);
- border-radius:12px;overflow:hidden;
- cursor:pointer
-}
+/* GRID (ORIGINAL SIMPLE) */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:14px}
+.card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
 .thumb{aspect-ratio:16/9;background:#000}
 .thumb video{width:100%;height:100%;object-fit:cover}
 .info{padding:9px}
-.title{
- font-size:13px;white-space:nowrap;
- overflow:hidden;text-overflow:ellipsis
-}
+.title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .views{font-size:11px;color:var(--soft)}
 
-.pagination{
- display:flex;justify-content:center;gap:6px;padding:18px
-}
-.pagination button{
- padding:7px 12px;border:none;border-radius:8px;
- background:#1f1f1f;color:#fff;cursor:pointer
-}
+.pagination{display:flex;justify-content:center;gap:6px;padding:18px}
+.pagination button{padding:7px 12px;border:none;border-radius:8px;background:#1f1f1f;color:#fff;cursor:pointer}
 .pagination button.active{background:var(--accent)}
 
-footer{
- text-align:center;padding:20px;
- color:#777;font-size:13px;border-top:1px solid #222
-}
+footer{text-align:center;padding:20px;color:#777;font-size:13px;border-top:1px solid #222}
 </style>
 </head>
 
@@ -126,7 +84,7 @@ footer{
 
 <div class="grid" id="grid"></div>
 
-<!-- ADSTERRA NATIVE -->
+<!-- ADSTERRA NATIVE (UNCHANGED) -->
 <div style="padding:14px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
@@ -140,23 +98,27 @@ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/in
 </footer>
 
 <script>
-year.innerText=new Date().getFullYear();
+document.getElementById("year").innerText=new Date().getFullYear();
 
 /* AGE GATE */
 if(localStorage.adult==="yes")ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
 
-/* DATA */
+/* STATE */
 let allVideos=[],page=1,perPage=12,keyword="",category="all";
-
-/* RESTORE PAGE ON BACK */
 if(history.state?.page){page=history.state.page}
 
+/* FETCH */
 fetch("/api/videos")
 .then(r=>r.json())
-.then(d=>{allVideos=d;draw();window.scrollTo(0,0)});
+.then(d=>{
+ allVideos=d;
+ draw();
+ window.scrollTo(0,0);
+});
 
+/* CATEGORY */
 function cat(v){
  const t=v.title.toLowerCase();
  if(t.includes("desi"))return"desi";
@@ -175,33 +137,37 @@ function setCat(c,b){
  draw();
 }
 
+/* DRAW */
 function draw(){
- grid.innerHTML="";pagination.innerHTML="";
+ grid.innerHTML="";
+ pagination.innerHTML="";
  let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
  if(category!=="all")list=list.filter(v=>cat(v)===category);
  let total=Math.ceil(list.length/perPage);
 
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
-  grid.innerHTML+=`
-  <div class="card" onclick="location.href='/watch?id=${v._id}'">
-   <div class="thumb">
-    <video src="${v.url}#t=1" muted preload="metadata"></video>
+  grid.insertAdjacentHTML("beforeend",`
+   <div class="card" onclick="location.href='/watch?id=${v._id}'">
+    <div class="thumb">
+     <video src="${v.url}#t=1" muted preload="metadata"></video>
+    </div>
+    <div class="info">
+     <div class="title">${v.title}</div>
+     <div class="views">👁 ${v.views||0}</div>
+    </div>
    </div>
-   <div class="info">
-    <div class="title">${v.title}</div>
-    <div class="views">👁 ${v.views||0}</div>
-   </div>
-  </div>`;
+  `);
  });
 
  for(let i=1;i<=total;i++){
-  pagination.innerHTML+=
+  pagination.insertAdjacentHTML("beforeend",
    `<button class="${i===page?'active':''}"
     onclick="page=${i};history.pushState({page},'',location.pathname);draw();window.scrollTo(0,0)">
-    ${i}</button>`;
+    ${i}</button>`);
  }
 }
 
+/* SEARCH */
 search.oninput=e=>{
  keyword=e.target.value.toLowerCase();
  page=1;
@@ -209,7 +175,7 @@ search.oninput=e=>{
  draw();
 };
 
-/* SMARTLINK (ONE TIME) */
+/* SMARTLINK (ONCE ONLY – SAFE) */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
