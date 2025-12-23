@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>KamaBaba Viral Videos 🔥 | Adult Desi Viral Clips</title>
-
 <meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral.">
 <meta name="robots" content="index, follow">
 
@@ -17,28 +16,77 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
 
-#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center}
-.ageBox{background:#141414;padding:25px;border-radius:12px;text-align:center}
-.ageBtns{display:flex;gap:10px;margin-top:20px}
-.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px}
-.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
+/* AGE GATE */
+#ageGate{
+ position:fixed;inset:0;
+ background:rgba(0,0,0,.95);
+ z-index:9999;
+ display:flex;
+ align-items:center;
+ justify-content:center
+}
+.ageBox{
+ background:#141414;
+ padding:24px;
+ border-radius:12px;
+ text-align:center;
+}
+.ageBtns{display:flex;gap:10px;margin-top:16px}
+.ageBtns button{
+ flex:1;padding:10px;
+ border:none;border-radius:8px;
+ font-weight:600;cursor:pointer
+}
+.yes{background:#0f9d58;color:#fff}
+.no{background:#333;color:#fff}
 
-header{position:sticky;top:0;background:#111;padding:14px;text-align:center}
+/* HEADER */
+header{
+ position:sticky;top:0;z-index:10;
+ background:#111;padding:14px;text-align:center
+}
 header img{height:44px}
-#search{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:#1a1a1a;color:#fff}
+#search{
+ width:100%;margin-top:10px;
+ padding:12px;border-radius:10px;
+ border:none;background:#1a1a1a;color:#fff
+}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:14px}
-.card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
-.thumb{aspect-ratio:16/9;background:#000}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+/* GRID */
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+ gap:14px;padding:14px
+}
+.card{
+ background:var(--card);
+ border-radius:12px;
+ overflow:hidden;
+ cursor:pointer
+}
+.thumb{
+ aspect-ratio:16/9;
+ background:#000
+}
+.thumb img{
+ width:100%;height:100%;
+ object-fit:cover;
+ display:block
+}
 .info{padding:9px}
-.title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.title{
+ font-size:13px;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis
+}
 .views{font-size:11px;color:var(--soft)}
 </style>
 </head>
 
 <body>
 
+<!-- AGE GATE -->
 <div id="ageGate">
  <div class="ageBox">
   <h2>🔞 Adult Content</h2>
@@ -57,40 +105,56 @@ header img{height:44px}
 
 <div class="grid" id="grid"></div>
 
+<!-- ADSTERRA -->
+<div style="padding:14px">
+<script async data-cfasync="false"
+ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js">
+</script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
 <script>
+/* AGE GATE FIX */
+const ageGate=document.getElementById("ageGate");
 if(localStorage.adult==="yes") ageGate.style.display="none";
-function allow(){localStorage.adult="yes";ageGate.style.display="none"}
-function deny(){location.href="https://google.com"}
+function allow(){
+ localStorage.adult="yes";
+ ageGate.style.display="none";
+}
+function deny(){location.href="https://google.com";}
 
 let allVideos=[];
+const grid=document.getElementById("grid");
 
-/* 🔥 CLOUDINARY AUTO THUMBNAIL (FINAL) */
-function getThumb(url){
- if(!url) return "";
- if(!url.includes("/video/upload/")) return "";
+/* CLOUDINARY AUTO THUMB */
+function autoThumb(url){
+ if(!url || !url.includes("/video/upload/")) return "/logo.png";
  return url
   .replace("/video/upload/","/video/upload/so_2/")
-  .replace(/\.(mp4|webm|mov).*/i,".jpg");
+  .replace(/\.(mp4|mov|webm).*/i,".jpg");
 }
 
+/* LOAD VIDEOS */
 fetch("/api/videos")
 .then(r=>r.json())
 .then(vs=>{
- allVideos = Array.isArray(vs)?vs:[];
+ allVideos=Array.isArray(vs)?vs:[];
  draw();
 });
 
+/* DRAW */
 function draw(){
+ const q=search.value.toLowerCase();
  grid.innerHTML="";
- let list=allVideos.filter(v=>v.title.toLowerCase().includes(search.value.toLowerCase()));
-
- list.forEach(v=>{
-  const thumb = v.thumbnail || getThumb(v.url);
-
+ allVideos
+ .filter(v=>v.title.toLowerCase().includes(q))
+ .forEach(v=>{
+  const thumb=v.thumbnail || autoThumb(v.url);
   grid.insertAdjacentHTML("beforeend",`
    <div class="card" onclick="location.href='/watch?id=${v._id}'">
     <div class="thumb">
-     <img src="${thumb}" loading="lazy" onerror="this.src='/logo.png'">
+     <img src="${thumb}" loading="lazy"
+      onerror="this.src='/logo.png'">
     </div>
     <div class="info">
      <div class="title">${v.title}</div>
@@ -102,178 +166,15 @@ function draw(){
 }
 
 search.oninput=draw;
-</script>
 
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>KamaBaba Viral Videos 🔥 | Adult Desi Viral Clips</title>
-
-<meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral. Hot, couple & viral clips updated daily.">
-<meta name="keywords" content="desi viral videos, adult videos, hot clips, couple videos">
-<meta name="robots" content="index, follow">
-
-<link rel="icon" href="/favicon.ico">
-<link rel="apple-touch-icon" href="/logo-192.png">
-<meta name="theme-color" content="#000000">
-
-<style>
-:root{--bg:#0b0b0b;--card:#141414;--accent:#ff0055;--soft:#888}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
-#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center}
-.ageBox{background:#141414;padding:25px;border-radius:12px;max-width:320px;text-align:center;box-shadow:0 0 30px #ff0055}
-.ageBtns{display:flex;gap:10px;margin-top:20px}
-.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600;cursor:pointer}
-.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
-header{position:sticky;top:0;z-index:99;background:#111;padding:14px;border-bottom:1px solid #222;text-align:center}
-header img{height:44px}
-#search{width:100%;margin-top:10px;padding:12px;border-radius:10px;border:none;background:#1a1a1a;color:#fff}
-.categories{display:flex;gap:8px;overflow-x:auto;padding:10px}
-.categories button{padding:7px 14px;border:none;border-radius:20px;background:#222;color:#fff;cursor:pointer;white-space:nowrap}
-.categories button.active{background:var(--accent)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;padding:14px}
-.card{background:var(--card);border-radius:12px;overflow:hidden;cursor:pointer}
-.thumb{aspect-ratio:16/9;background:#000}
-.thumb video{width:100%;height:100%;object-fit:cover}
-.info{padding:9px}
-.title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.views{font-size:11px;color:var(--soft)}
-.pagination{display:flex;justify-content:center;gap:6px;padding:18px}
-.pagination button{padding:7px 12px;border:none;border-radius:8px;background:#1f1f1f;color:#fff;cursor:pointer}
-.pagination button.active{background:var(--accent)}
-footer{text-align:center;padding:20px;color:#777;font-size:13px;border-top:1px solid #222}
-</style>
-</head>
-
-<body>
-
-<div id="ageGate">
- <div class="ageBox">
-  <h2>🔞 Adult Content</h2>
-  <p>18+ Only</p>
-  <div class="ageBtns">
-   <button class="yes" onclick="allow()">I am 18+</button>
-   <button class="no" onclick="deny()">No</button>
-  </div>
- </div>
-</div>
-
-<header>
- <img src="/logo.png" alt="KamaBaba Logo">
- <input id="search" placeholder="Search hot videos...">
-</header>
-
-<div class="categories">
- <button class="active" onclick="setCat('all',this)">All</button>
- <button onclick="setCat('hot',this)">🔥 Hot</button>
- <button onclick="setCat('desi',this)">🇮🇳 Desi</button>
- <button onclick="setCat('couple',this)">💑 Couple</button>
- <button onclick="setCat('viral',this)">🚀 Viral</button>
-</div>
-
-<div class="grid" id="grid"></div>
-
-<!-- ADSTERRA -->
-<div style="padding:14px">
-<script async data-cfasync="false"
-src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
-
-<div class="pagination" id="pagination"></div>
-
-<footer>
- © <span id="year"></span> KamaBaba Viral — All Rights Reserved
-</footer>
-
-<script>
-document.getElementById("year").innerText=new Date().getFullYear();
-
-if(localStorage.adult==="yes") ageGate.style.display="none";
-function allow(){localStorage.adult="yes";ageGate.style.display="none"}
-function deny(){location.href="https://google.com"}
-
-let allVideos=[],page=1,perPage=12,keyword="",category="all";
-
-fetch("/api/videos")
-.then(r=>r.json())
-.then(d=>{
- allVideos = Array.isArray(d)?d:[];
- draw();
-});
-
-function cat(v){
- const t=v.title.toLowerCase();
- if(t.includes("desi"))return"desi";
- if(t.includes("couple"))return"couple";
- if(t.includes("viral"))return"viral";
- if(t.includes("hot")||t.includes("sexy"))return"hot";
- return"other";
-}
-
-function setCat(c,b){
- category=c;
- document.querySelectorAll(".categories button").forEach(x=>x.classList.remove("active"));
- b.classList.add("active");
- page=1;
- draw();
-}
-
-/* ✅ FINAL THUMBNAIL FIX */
-function draw(){
- grid.innerHTML="";
- pagination.innerHTML="";
-
- let list=allVideos.filter(v=>v.title.toLowerCase().includes(keyword));
- if(category!=="all") list=list.filter(v=>cat(v)===category);
-
- let total=Math.ceil(list.length/perPage);
-
- list.slice((page-1)*perPage,page*perPage).forEach(v=>{
-  const poster = v.thumbnail || (v.url + "#t=1");
-
-  grid.insertAdjacentHTML("beforeend",`
-   <div class="card" onclick="location.href='/watch?id=${v._id}'">
-    <div class="thumb">
-     <video
-      poster="${poster}"
-      muted
-      preload="none"
-      playsinline>
-     </video>
-    </div>
-    <div class="info">
-     <div class="title">${v.title}</div>
-     <div class="views">👁 ${v.views||0}</div>
-    </div>
-   </div>
-  `);
- });
-
- for(let i=1;i<=total;i++){
-  pagination.insertAdjacentHTML("beforeend",
-   `<button class="${i===page?'active':''}"
-    onclick="page=${i};draw();window.scrollTo(0,0)">
-    ${i}</button>`);
- }
-}
-
-search.oninput=e=>{
- keyword=e.target.value.toLowerCase();
- page=1;
- draw();
-};
-
+/* SMARTLINK ONCE */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
-  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
+  window.open(
+   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
+   "_blank"
+  );
   opened=true;
  }
 },{once:true});
