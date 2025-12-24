@@ -71,14 +71,27 @@ app.post("/api/save-video", async (req, res) => {
       thumbnail: "",
     });
 
-    return res.json({
-      success: true,
-      id: video._id
-    });
+    return res.json({ success: true, id: video._id });
 
   } catch (err) {
     console.error("SAVE VIDEO ERROR:", err.message);
     return res.json({ success: false, error: "Server error" });
+  }
+});
+
+/* ✅ GET ALL VIDEOS (FOR INDEX PAGE) */
+app.get("/api/videos", async (req, res) => {
+  try {
+    if (!dbReady) return res.json([]);
+
+    const videos = await Video.find()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json(videos);
+  } catch (err) {
+    console.error("GET VIDEOS ERROR:", err.message);
+    res.json([]);
   }
 });
 
