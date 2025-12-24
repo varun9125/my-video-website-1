@@ -77,7 +77,7 @@ const Video = mongoose.model("Video", videoSchema);
 /* ================= UPLOAD SETUP ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 },
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2GB तक बढ़ाया
 });
 
 /* ================= ROUTES ================= */
@@ -128,14 +128,27 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
 
     /* 🎥 VIDEO UPLOAD */
     const videoUpload = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
-          resource_type: "video",
-          folder: "kamababa/videos",
-          chunk_size: 6 * 1024 * 1024,
-        },
-        (err, result) => err ? reject(err) : resolve(result)
-      ).end(req.file.buffer);
+      let retries = 3; // रिट्राई लॉजिक जोड़ा
+      const attemptUpload = () => {
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: "video",
+            folder: "kamababa/videos",
+            chunk_size: 10 * 1024 * 1024, // 10MB चंक्स (बेहतर स्पीड)
+            quality: "auto", // ऑटो क्वालिटी रिडक्शन
+            format: "mp4", // फॉर्मेट फिक्स
+          },
+          (err, result) => {
+            if (err && retries > 0) {
+              retries--;
+              console.warn(`⚠️ Upload retry ${3 - retries}`);
+              return attemptUpload();
+            }
+            err ? reject(err) : resolve(result);
+          }
+        ).end(req.file.buffer);
+      };
+      attemptUpload();
     });
 
     if (!videoUpload?.secure_url) {
@@ -227,4 +240,3 @@ app.get("/sitemap.xml", async (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
