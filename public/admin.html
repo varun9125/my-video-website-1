@@ -17,10 +17,6 @@ label{display:block;margin-top:14px;font-size:13px;color:#bbb}
 input{width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid #222;background:#0f0f0f;color:#fff}
 button{width:100%;margin-top:18px;padding:14px;border:none;border-radius:12px;background:#ff0055;color:#fff;font-weight:600;cursor:pointer}
 button:disabled{opacity:.6;cursor:not-allowed}
-.thumb-box{display:none;margin-top:14px}
-.thumb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.thumb-grid img{width:100%;border-radius:6px;cursor:pointer;border:2px solid transparent}
-.thumb-grid img.selected{border-color:#ff0055}
 .progress{display:none;height:8px;background:#222;margin-top:14px;border-radius:10px;overflow:hidden}
 .progress div{height:100%;width:0%;background:#ff0055;transition:width .2s}
 #status{margin-top:12px;font-size:14px;text-align:center;min-height:20px}
@@ -36,21 +32,15 @@ button:disabled{opacity:.6;cursor:not-allowed}
 <h2>🔐 Admin Upload</h2>
 
 <label>Password</label>
-<input id="password" type="password" placeholder="Admin password">
+<input id="password" type="password">
 
 <label>Video Title</label>
-<input id="title" type="text" placeholder="SEO friendly title">
+<input id="title" type="text">
 
 <label>Select Video</label>
 <input id="video" type="file" accept="video/*">
 
-<div class="thumb-box" id="thumbBox">
- <p style="font-size:13px;color:#bbb">Select Thumbnail</p>
- <div class="thumb-grid" id="thumbGrid"></div>
-</div>
-
 <div class="progress" id="progress"><div id="bar"></div></div>
-
 <button id="btn">🚀 Upload</button>
 <div id="status"></div>
 
@@ -61,122 +51,83 @@ button:disabled{opacity:.6;cursor:not-allowed}
 /* ===== CLOUDINARY CONFIG ===== */
 const CLOUD_NAME = "doeuirlh";
 const UPLOAD_PRESET = "kamababa_unsigned";
-const CHUNK_SIZE = 10 * 1024 * 1024; // 🔥 10MB chunks
+const CHUNK = 20 * 1024 * 1024; // 🔥 20MB (stable)
 
-let selectedThumbnail=null;
-const passwordInput=document.getElementById("password");
-const titleInput=document.getElementById("title");
-const videoInput=document.getElementById("video");
-const thumbBox=document.getElementById("thumbBox");
-const thumbGrid=document.getElementById("thumbGrid");
-const btn=document.getElementById("btn");
-const status=document.getElementById("status");
-const bar=document.getElementById("bar");
-const progress=document.getElementById("progress");
+/* ===== ELEMENTS ===== */
+const btn = document.getElementById("btn");
+const bar = document.getElementById("bar");
+const progress = document.getElementById("progress");
+const status = document.getElementById("status");
 
-/* ===== THUMBNAIL (UNCHANGED) ===== */
-videoInput.addEventListener("change",()=>{
- const file=videoInput.files[0];
- if(!file||!file.type.startsWith("video/")) return;
+btn.onclick = async () => {
+ const password = passwordInput.value.trim();
+ const file = videoInput.files[0];
+ const title = titleInput.value.trim() || "Untitled";
 
- thumbGrid.innerHTML="";
- thumbBox.style.display="block";
- selectedThumbnail=null;
-
- const video=document.createElement("video");
- video.src=URL.createObjectURL(file);
- video.muted=true;
-
- video.onloadedmetadata=async()=>{
-  const d=video.duration;
-  for(const t of [0.2,0.4,0.6,0.8]){
-   const img=await capture(video,d*t);
-   thumbGrid.appendChild(img);
-  }
- };
-});
-
-function capture(video,time){
- return new Promise(resolve=>{
-  const c=document.createElement("canvas");
-  const x=c.getContext("2d");
-  video.currentTime=time;
-  video.onseeked=()=>{
-   c.width=320;c.height=180;
-   x.drawImage(video,0,0,320,180);
-   const img=document.createElement("img");
-   img.src=c.toDataURL("image/jpeg",0.9);
-   img.onclick=()=>{
-    document.querySelectorAll("#thumbGrid img").forEach(i=>i.classList.remove("selected"));
-    img.classList.add("selected");
-    selectedThumbnail=img.src;
-   };
-   resolve(img);
-  };
- });
-}
-
-/* ===== FAST CHUNKED UPLOAD ===== */
-btn.onclick=async()=>{
- if(!passwordInput.value||!videoInput.files[0]||!selectedThumbnail){
-  status.innerHTML="<span class='err'>❌ Missing data</span>";return;
+ if(!password || !file){
+  status.innerHTML="<span class='err'>Missing data</span>";
+  return;
  }
 
- btn.disabled=true;
- progress.style.display="block";
- status.innerText="Uploading in chunks…";
+ btn.disabled = true;
+ progress.style.display = "block";
+ status.innerText = "Uploading…";
 
- const file=videoInput.files[0];
- let uploaded=0;
+ const total = file.size;
+ let start = 0;
+ let uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`;
 
- while(uploaded < file.size){
-  const chunk=file.slice(uploaded, uploaded + CHUNK_SIZE);
-  const fd=new FormData();
-  fd.append("file", chunk);
+ while (start < total) {
+  const end = Math.min(start + CHUNK, total);
+  const blob = file.slice(start, end);
+
+  const fd = new FormData();
+  fd.append("file", blob);
   fd.append("upload_preset", UPLOAD_PRESET);
   fd.append("folder", "kamababa/videos");
-  fd.append("chunk_size", CHUNK_SIZE);
 
-  const res=await fetch(
-   `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,
-   { method:"POST", body:fd }
-  );
+  await new Promise((resolve, reject) => {
+   const xhr = new XMLHttpRequest();
+   xhr.open("POST", uploadUrl, true);
+   xhr.setRequestHeader(
+     "Content-Range",
+     `bytes ${start}-${end-1}/${total}`
+   );
 
-  const data=await res.json();
-  if(!data.secure_url){
-   status.innerHTML="<span class='err'>❌ Upload failed</span>";
-   btn.disabled=false;return;
-  }
+   xhr.onload = () => {
+    if (xhr.status >= 200 && xhr.status < 300) {
+     const res = JSON.parse(xhr.responseText || "{}");
+     if (res.secure_url) uploadUrl = res.secure_url;
+     resolve();
+    } else reject();
+   };
 
-  uploaded += CHUNK_SIZE;
-  bar.style.width=Math.min(80, Math.round((uploaded/file.size)*80))+"%";
+   xhr.onerror = reject;
+   xhr.send(fd);
+  });
 
-  if(uploaded >= file.size){
-   bar.style.width="90%";
-   status.innerText="Saving to server…";
-
-   const save=await fetch("/api/save-video",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-     password:passwordInput.value,
-     title:titleInput.value||"Untitled",
-     url:data.secure_url
-    })
-   });
-
-   const out=await save.json();
-   if(out.success){
-    bar.style.width="100%";
-    status.innerHTML="<span class='ok'>✅ Upload successful</span>";
-    videoInput.value="";titleInput.value="";thumbBox.style.display="none";
-   }else{
-    status.innerHTML="<span class='err'>❌ Save failed</span>";
-   }
-   btn.disabled=false;
-   break;
-  }
+  start = end;
+  bar.style.width = Math.round((start / total) * 80) + "%";
  }
+
+ bar.style.width = "90%";
+ status.innerText = "Saving…";
+
+ const save = await fetch("/api/save-video",{
+  method:"POST",
+  headers:{ "Content-Type":"application/json" },
+  body:JSON.stringify({ password, title, url: uploadUrl })
+ });
+
+ const out = await save.json();
+ if(out.success){
+  bar.style.width = "100%";
+  status.innerHTML="<span class='ok'>✅ Upload successful</span>";
+ }else{
+  status.innerHTML="<span class='err'>Save failed</span>";
+ }
+
+ btn.disabled = false;
 };
 </script>
 
