@@ -5,30 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Kama Baba Viral – Trending Viral Videos & Entertainment Platform</title>
-
-<meta name="description" content="Kama Baba Viral is a fast-growing platform for trending viral videos, short clips, and online entertainment. Discover the latest popular content updated regularly.">
+<meta name="description" content="Kama Baba Viral is a fast-growing platform for trending viral videos and online entertainment.">
 
 <meta name="robots" content="index, follow">
-<meta name="googlebot" content="index, follow">
-
 <link rel="icon" href="/favicon.ico">
-<meta name="theme-color" content="#000000">
 
-<!-- ===== ADSTERRA POPUNDER (HEAD) ===== -->
+<!-- POPUNDER (HEAD – OK) -->
 <script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
-header{text-align:center;padding:20px}
+header{text-align:center;padding:16px}
 h1{color:#ff0055;margin:0}
-h2{color:#ccc;font-weight:400;font-size:16px}
-.main{max-width:900px;margin:auto;padding:16px}
+h2{color:#aaa;font-weight:400;font-size:15px}
+.main{max-width:900px;margin:auto;padding:12px}
 .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .video-card{background:#111;border-radius:12px;padding:8px;cursor:pointer}
 .video-card img{width:100%;border-radius:8px}
 .video-card p{font-size:13px;margin:8px 0 0;color:#ddd}
 .ad-box{text-align:center;margin:20px 0}
-.seo-text{margin-top:30px;font-size:14px;color:#bbb;line-height:1.6}
 footer{text-align:center;font-size:12px;color:#777;padding:20px}
 </style>
 </head>
@@ -37,76 +32,67 @@ footer{text-align:center;font-size:12px;color:#777;padding:20px}
 
 <header>
   <h1>Kama Baba Viral</h1>
-  <h2>Trending Viral Videos & Online Entertainment Platform</h2>
+  <h2>Trending Viral Videos & Online Entertainment</h2>
 </header>
 
-<!-- ===== TOP NATIVE BANNER ===== -->
-<div class="ad-box">
-  <script async="async" data-cfasync="false" src="https://evadereprimand.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-  <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
-
 <div class="main">
-
   <div class="video-grid" id="videos"></div>
-
-  <!-- ===== MID BANNER 160x300 ===== -->
-  <div class="ad-box">
-    <script type="text/javascript">
-      atOptions = {
-        'key' : '3dc8adbe32b29fd7a5266d7e0bdfae1a',
-        'format' : 'iframe',
-        'height' : 300,
-        'width' : 160,
-        'params' : {}
-      };
-    </script>
-    <script type="text/javascript" src="https://evadereprimand.com/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
-  </div>
-
-  <div class="seo-text">
-    <p>
-      Kama Baba Viral is an emerging online entertainment platform focused on trending viral videos and popular short clips.
-      Our goal is to provide users with engaging, frequently updated content that reflects current online trends.
-    </p>
-    <p>
-      On Kama Baba Viral, you can explore a growing collection of viral videos curated for easy viewing and smooth playback.
-      We continuously update our platform to improve user experience and bring fresh entertainment content.
-    </p>
-  </div>
-
-</div>
-
-<!-- ===== FOOTER SMARTLINK ===== -->
-<div class="ad-box">
-  <a href="https://evadereprimand.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a" target="_blank" rel="nofollow sponsored" style="color:#ff0055;text-decoration:none;font-weight:600">
-    🔥 Explore More Trending Content
-  </a>
 </div>
 
 <footer>
-  © 2025 Kama Baba Viral · All rights reserved
+  © 2025 Kama Baba Viral
 </footer>
 
 <script>
-fetch("/api/videos")
-.then(res=>res.json())
-.then(data=>{
- const box=document.getElementById("videos");
- if(!data||!data.length){
-  box.innerHTML="<p style='color:#777'>No videos yet.</p>";
-  return;
- }
- data.forEach(v=>{
-  const d=document.createElement("div");
-  d.className="video-card";
-  d.onclick=()=>location.href="/watch?id="+v._id;
-  d.innerHTML=`
-   <img src="${v.thumbnail||'https://via.placeholder.com/300x180/111/666?text=Video'}">
-   <p>${v.title||'Untitled Video'}</p>
-  `;
-  box.appendChild(d);
- });
+let page = 1;
+let loading = false;
+let hasMore = true;
+
+const box = document.getElementById("videos");
+
+function loadVideos() {
+  if (loading || !hasMore) return;
+  loading = true;
+
+  fetch(`/api/videos?page=${page}`)
+    .then(res => res.json())
+    .then(data => {
+
+      data.videos.forEach((v, i) => {
+        const card = document.createElement("div");
+        card.className = "video-card";
+        card.onclick = () => location.href = "/watch?id=" + v._id;
+        card.innerHTML = `
+          <img loading="lazy" src="${v.thumbnail || 'https://via.placeholder.com/300x180/111/666?text=Video'}">
+          <p>${v.title || 'Untitled Video'}</p>
+        `;
+        box.appendChild(card);
+
+        /* 🔥 AD AFTER EVERY 8 VIDEOS (NOT ON TOP) */
+        if (box.children.length % 8 === 0) {
+          const ad = document.createElement("div");
+          ad.className = "ad-box";
+          ad.innerHTML = `
+            <script async data-cfasync="false" src="https://evadereprimand.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+            <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+          `;
+          box.appendChild(ad);
+        }
+      });
+
+      hasMore = data.hasMore;
+      page++;
+      loading = false;
+    });
+}
+
+loadVideos();
+
+/* INFINITE SCROLL */
+window.addEventListener("scroll", () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+    loadVideos();
+  }
 });
 </script>
 
