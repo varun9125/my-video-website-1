@@ -65,6 +65,11 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  <img src="/logo.png">
 </div>
 
+<!-- ================= AD 1 : TOP ================= -->
+<script async data-cfasync="false"
+src="https://pl28304315.effectivegatecpm.com/AD1/invoke.js"></script>
+<div id="container-AD1"></div>
+
 <div class="playerWrap">
  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
@@ -78,16 +83,25 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- ADSTERRA -->
-<div style="padding:12px">
+<!-- ================= AD 2 : AFTER PLAYER ================= -->
 <script async data-cfasync="false"
-src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
+src="https://pl28304315.effectivegatecpm.com/AD2/invoke.js"></script>
+<div id="container-AD2"></div>
 
 <h3 style="padding-left:12px">Related Videos</h3>
+
+<!-- ================= AD 3 : BEFORE RELATED ================= -->
+<script async data-cfasync="false"
+src="https://pl28304315.effectivegatecpm.com/AD3/invoke.js"></script>
+<div id="container-AD3"></div>
+
 <div id="loader">Loading…</div>
 <div id="related"></div>
+
+<!-- ================= AD 4 : BOTTOM ================= -->
+<script async data-cfasync="false"
+src="https://pl28304315.effectivegatecpm.com/AD4/invoke.js"></script>
+<div id="container-AD4"></div>
 
 <script>
 /* AGE GATE */
@@ -151,17 +165,13 @@ fetch("/api/videos")
  loader.style.display="none";
 });
 
-/* ✅ RELATED FIXED */
+/* RELATED */
 function renderRelated(){
  loader.style.display="none";
  related.innerHTML="";
-
  if(!allVideos.length) return;
 
- allVideos
- .filter(v=>v._id!==id)
- .slice(0,8)
- .forEach(v=>{
+ allVideos.filter(v=>v._id!==id).slice(0,8).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`
