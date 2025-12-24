@@ -8,178 +8,187 @@
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
+<!-- VIDEO.JS -->
+<link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
+<script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+
+<!-- GOOGLE IMA SDK -->
+<script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+
+<!-- VIDEOJS IMA -->
+<script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
+
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
-.top{padding:10px;text-align:center;border-bottom:1px solid #222}
-.top img{height:36px}
+#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center}
+.ageBox{background:#141414;padding:24px;border-radius:12px;max-width:320px;text-align:center}
+.ageBtns{display:flex;gap:10px;margin-top:18px}
+.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600}
+.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
 
-.adbox{padding:12px;text-align:center}
+.topLogo{text-align:center;padding:8px}
+.topLogo img{height:36px}
 
-.playerWrap{width:100%;max-width:900px;margin:0 auto;background:#000}
-video{width:100%;height:auto;max-height:70vh;background:#000}
+.playerWrap{width:100%;aspect-ratio:16/9;background:#000}
+.video-js{width:100%;height:100%}
 
-.info{padding:12px;max-width:900px;margin:auto}
-h1{font-size:18px;margin:0 0 6px}
+.info{padding:12px}
 .meta{font-size:13px;color:#aaa}
-.actions{display:flex;gap:10px;margin-top:10px}
-.actions button{
- padding:8px 14px;
- border:none;
- border-radius:8px;
- background:#1c1c1c;
- color:#fff;
- cursor:pointer
-}
 
-.related-title{padding:12px;max-width:900px;margin:auto}
-.grid{
- display:grid;
- grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
- gap:12px;
- padding:12px;
- max-width:900px;
- margin:auto
-}
+.actions{display:flex;gap:10px;margin-top:10px}
+.actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
+
+#related{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:12px}
 .card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
-.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.card video{width:100%;aspect-ratio:16/9;object-fit:cover}
 .card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-#msg{padding:20px;text-align:center;color:#888}
+#loader{text-align:center;padding:20px;color:#888}
 </style>
 </head>
 
 <body>
 
-<div class="top">
- <img src="/logo.png" alt="KamaBaba Viral">
+<!-- AGE GATE -->
+<div id="ageGate">
+ <div class="ageBox">
+  <h2>🔞 Adult Content</h2>
+  <p>18+ Only</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="deny()">No</button>
+  </div>
+ </div>
 </div>
 
-<!-- 🔥 TOP AD -->
-<div class="adbox">
-<script async data-cfasync="false"
- src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+<div class="topLogo">
+ <img src="/logo.png">
 </div>
 
 <div class="playerWrap">
- <video id="player" controls playsinline preload="metadata"></video>
+ <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
 <div class="info">
- <h1 id="title">Loading…</h1>
- <div class="meta">
-  👁 <span id="views">0</span> · 👍 <span id="likes">0</span>
- </div>
-
+ <h3 id="title">Loading…</h3>
+ <div class="meta">👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span></div>
  <div class="actions">
   <button onclick="like()">👍 Like</button>
   <button onclick="share()">🔗 Share</button>
  </div>
 </div>
 
-<!-- 🔥 MID AD -->
-<div class="adbox">
+<!-- ADSTERRA -->
+<div style="padding:12px">
 <script async data-cfasync="false"
- src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
-<div class="related-title">
- <h3>Related Videos</h3>
-</div>
-
-<div id="msg">Loading…</div>
-<div class="grid" id="related"></div>
+<h3 style="padding-left:12px">Related Videos</h3>
+<div id="loader">Loading…</div>
+<div id="related"></div>
 
 <script>
-const id = new URLSearchParams(location.search).get("id");
-const player = document.getElementById("player");
-const titleEl = document.getElementById("title");
-const viewsEl = document.getElementById("views");
-const likesEl = document.getElementById("likes");
-const related = document.getElementById("related");
-const msg = document.getElementById("msg");
+/* AGE GATE */
+if(localStorage.adult==="yes") ageGate.style.display="none";
+function allow(){localStorage.adult="yes";ageGate.style.display="none"}
+function deny(){location.href="https://google.com"}
 
-let allVideos = [];
-let current = null;
+const id=new URLSearchParams(location.search).get("id");
+const titleEl=document.getElementById("title");
+const viewCount=document.getElementById("viewCount");
+const likeCount=document.getElementById("likeCount");
+const related=document.getElementById("related");
+const loader=document.getElementById("loader");
 
-/* LOAD VIDEOS */
+let allVideos=[];
+let player=videojs("player");
+
+/* LOAD DATA */
 fetch("/api/videos")
 .then(r=>r.json())
-.then(list=>{
- allVideos = Array.isArray(list) ? list : [];
- current = allVideos.find(v=>v._id === id);
+.then(vs=>{
+ allVideos = Array.isArray(vs) ? vs : [];
+ const v = allVideos.find(x=>x._id===id);
 
- if(!current){
-  titleEl.innerText = "Video not found";
-  msg.innerText = "This video does not exist.";
+ if(!v){
+  titleEl.innerText="Video not found";
+  loader.style.display="none";
   return;
  }
 
- titleEl.innerText = current.title || "Untitled";
- viewsEl.innerText = current.views || 0;
- likesEl.innerText = current.likes || 0;
+ titleEl.innerText=v.title;
+ viewCount.innerText=v.views||0;
+ likeCount.innerText=v.likes||0;
 
- player.src = current.url;
- player.load();
+ player.src({src:v.url,type:"video/mp4"});
+
+ /* 🔥 EXOCLICK (SAFE) */
+ try{
+  player.ima({
+   adTagUrl:"https://s.magsrv.com/v1/vast.php?idzone=5809070",
+   timeout:8000
+  });
+
+  player.one("play",()=>{
+   try{
+    player.ima.initializeAdDisplayContainer();
+    player.ima.requestAds();
+   }catch(e){}
+  });
+ }catch(e){}
 
  if(!sessionStorage["v_"+id]){
   fetch("/api/view/"+id,{method:"POST"});
-  viewsEl.innerText = Number(viewsEl.innerText)+1;
+  viewCount.innerText++;
   sessionStorage["v_"+id]=1;
  }
 
  renderRelated();
- msg.style.display="none";
 })
 .catch(()=>{
- msg.innerText="Failed to load video.";
+ loader.style.display="none";
 });
 
-/* RELATED */
+/* ✅ RELATED FIXED */
 function renderRelated(){
+ loader.style.display="none";
  related.innerHTML="";
+
+ if(!allVideos.length) return;
+
  allVideos
  .filter(v=>v._id!==id)
- .slice(0,12)
+ .slice(0,8)
  .forEach(v=>{
-  const d=document.createElement("div");
-  d.className="card";
-  d.onclick=()=>location.href="/watch.html?id="+v._id;
-
-  const thumb=v.thumbnail||
-   "https://via.placeholder.com/320x180/111/666?text=Video";
-
-  d.innerHTML=`
-   <img src="${thumb}" loading="lazy">
-   <p>${v.title||"Untitled"}</p>
-  `;
-  related.appendChild(d);
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`
+   <video src="${v.url}#t=1" muted preload="metadata"></video>
+   <p>${v.title}</p>`;
+  c.onclick=()=>location.href="/watch?id="+v._id;
+  related.appendChild(c);
  });
 }
 
-/* LIKE */
 function like(){
- if(sessionStorage["l_"+id]) return;
+ if(sessionStorage["l_"+id])return;
  fetch("/api/like/"+id,{method:"POST"});
- likesEl.innerText = Number(likesEl.innerText)+1;
+ likeCount.innerText++;
  sessionStorage["l_"+id]=1;
 }
 
-/* SHARE */
 function share(){
  navigator.clipboard.writeText(location.href);
  alert("Link copied");
 }
 
-/* 🔥 SMARTLINK (FIRST CLICK ONLY) */
+/* SMARTLINK */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
-  window.open(
-   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
-   "_blank"
-  );
+  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
   opened=true;
  }
 },{once:true});
