@@ -75,6 +75,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  <div class="actions">
   <button onclick="like()">👍 Like</button>
   <button onclick="share()">🔗 Share</button>
+  <button onclick="nextVideo()">⏭️ Next</button> <!-- नया Next बटन -->
  </div>
 </div>
 
@@ -92,8 +93,8 @@ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/in
 <script>
 /* AGE GATE */
 if(localStorage.adult==="yes") ageGate.style.display="none";
-function allow(){localStorage.adult="yes";ageGate.style.display="none"}
-function deny(){location.href="https://google.com"}
+function allow(){localStorage.adult="yes"; ageGate.style.display="none";}
+function deny(){location.href="https://google.com";}
 
 const id=new URLSearchParams(location.search).get("id");
 const titleEl=document.getElementById("title");
@@ -182,6 +183,13 @@ function like(){
 function share(){
  navigator.clipboard.writeText(location.href);
  alert("Link copied");
+}
+
+function nextVideo(){ // नया Next फंक्शन
+ const currentIndex = allVideos.findIndex(v => v._id === id);
+ const nextIndex = (currentIndex + 1) % allVideos.length;
+ const nextId = allVideos[nextIndex]._id;
+ location.href = "/watch?id=" + nextId;
 }
 
 /* SMARTLINK */
