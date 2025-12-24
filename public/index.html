@@ -1,99 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 
-<title>Kama Baba Viral – Trending Viral Videos & Entertainment Platform</title>
-<meta name="description" content="Kama Baba Viral is a fast-growing platform for trending viral videos and online entertainment.">
+<title>KamaBaba Viral Videos 🔥 | Adult Desi Viral Clips</title>
+<meta name="description" content="Watch trending desi viral adult videos on KamaBaba Viral." />
+<meta name="robots" content="index, follow" />
+<link rel="icon" href="/favicon.ico" />
+<meta name="theme-color" content="#000000" />
 
-<meta name="robots" content="index, follow">
-<link rel="icon" href="/favicon.ico">
+<meta name="eroads_" content="045a4e1e1cf1a7e5e5f062c48d692dbb" />
 
-<!-- POPUNDER (HEAD – OK) -->
+<!-- ===== ADSTERRA POPUNDER (HEAD – SAFE) ===== -->
 <script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
 
 <style>
-body{margin:0;background:#000;color:#fff;font-family:system-ui}
-header{text-align:center;padding:16px}
-h1{color:#ff0055;margin:0}
-h2{color:#aaa;font-weight:400;font-size:15px}
-.main{max-width:900px;margin:auto;padding:12px}
-.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
-.video-card{background:#111;border-radius:12px;padding:8px;cursor:pointer}
-.video-card img{width:100%;border-radius:8px}
-.video-card p{font-size:13px;margin:8px 0 0;color:#ddd}
-.ad-box{text-align:center;margin:20px 0}
-footer{text-align:center;font-size:12px;color:#777;padding:20px}
+:root{
+  --bg:#0b0b0b;
+  --card:#141414;
+  --accent:#ff0055;
+  --soft:#888;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
+
+/* AGE GATE */
+#ageGate{
+ position:fixed;inset:0;background:rgba(0,0,0,.95);
+ z-index:9999;display:flex;align-items:center;justify-content:center
+}
+.ageBox{background:#141414;padding:24px;border-radius:12px;text-align:center}
+.ageBtns{display:flex;gap:10px;margin-top:16px}
+.ageBtns button{
+ flex:1;padding:10px;border:none;border-radius:8px;
+ font-weight:600;cursor:pointer
+}
+.yes{background:#0f9d58;color:#fff}
+.no{background:#333;color:#fff}
+
+/* HEADER */
+header{
+ position:sticky;top:0;z-index:10;
+ background:#111;padding:10px 14px;border-bottom:1px solid #222
+}
+.topbar{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:10px
+}
+.brand{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ font-weight:800;
+ font-size:18px;
+ letter-spacing:.3px
+}
+.brand img{height:36px}
+.search-icon{font-size:20px;cursor:pointer}
+#search{
+ width:100%;
+ margin-top:10px;
+ padding:12px;
+ border-radius:10px;
+ border:none;
+ background:#1a1a1a;
+ color:#fff;
+ display:none;
+}
+
+/* TAGS */
+.tags{
+ display:flex;
+ gap:8px;
+ overflow-x:auto;
+ margin-top:10px;
+}
+.tags button{
+ padding:6px 14px;
+ border:none;
+ border-radius:20px;
+ background:#1f1f1f;
+ color:#fff;
+ font-size:13px;
+ cursor:pointer;
+ white-space:nowrap
+}
+.tags button.active{background:var(--accent)}
+
+/* GRID */
+.grid{
+ display:grid;
+ grid-template-columns:1fr;
+ gap:16px;
+ padding:14px;
+ max-width:720px;
+ margin:0 auto;
+}
+.card{
+ background:var(--card);
+ border-radius:12px;
+ overflow:hidden;
+ cursor:pointer
+}
+.thumb{aspect-ratio:16/9;background:#000;position:relative}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.duration{
+ position:absolute;right:8px;bottom:8px;
+ background:rgba(0,0,0,.75);
+ padding:3px 6px;font-size:11px;border-radius:4px
+}
+.info{padding:10px}
+.title{font-size:14px;font-weight:600}
+.views{font-size:12px;color:var(--soft)}
+
+/* PAGINATION */
+.pagination{
+ display:flex;justify-content:center;gap:6px;padding:18px
+}
+.pagination button{
+ padding:8px 14px;border:none;border-radius:8px;
+ background:#1f1f1f;color:#fff;cursor:pointer
+}
+.pagination button.active{background:var(--accent)}
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1>Kama Baba Viral</h1>
-  <h2>Trending Viral Videos & Online Entertainment</h2>
-</header>
-
-<div class="main">
-  <div class="video-grid" id="videos"></div>
+<div id="ageGate">
+ <div class="ageBox">
+  <h2>🔞 Adult Content</h2>
+  <p>18+ Only</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="deny()">No</button>
+  </div>
+ </div>
 </div>
 
-<footer>
-  © 2025 Kama Baba Viral
-</footer>
+<header>
+ <div class="topbar">
+  <div class="brand">
+   <img src="/logo.png">
+   <span>KamaBaba Viral</span>
+  </div>
+  <div class="search-icon" onclick="toggleSearch()">🔍</div>
+ </div>
+
+ <input id="search" placeholder="Search hot videos...">
+
+ <div class="tags">
+  <button class="active" onclick="setTag('')">All</button>
+  <button onclick="setTag('hot')">🔥 Hot</button>
+  <button onclick="setTag('desi')">🇮🇳 Desi</button>
+  <button onclick="setTag('viral')">🚀 Viral</button>
+  <button onclick="setTag('new')">🆕 New</button>
+ </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<!-- ===== ADSTERRA NATIVE / BANNER (CONTENT KE BAAD – SAFE) ===== -->
+<div style="padding:14px;max-width:720px;margin:0 auto;text-align:center">
+<script async data-cfasync="false"
+ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
+<div class="pagination" id="pagination"></div>
+
+<!-- ===== ADSTERRA SMARTLINK (FOOTER SAFE CLICK) ===== -->
+<div style="text-align:center;padding:14px">
+ <a href="https://evadereprimand.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a"
+  target="_blank" rel="nofollow sponsored"
+  style="color:#ff0055;font-weight:600;text-decoration:none">
+  🔥 Unlock More Exclusive Content
+ </a>
+</div>
 
 <script>
-let page = 1;
-let loading = false;
-let hasMore = true;
+/* ===== TUMHARA ORIGINAL JS – UNCHANGED ===== */
+const ageGate=document.getElementById("ageGate");
+if(localStorage.adult==="yes") ageGate.style.display="none";
+function allow(){localStorage.adult="yes";ageGate.style.display="none";}
+function deny(){location.href="https://google.com";}
 
-const box = document.getElementById("videos");
+const grid=document.getElementById("grid");
+const pagination=document.getElementById("pagination");
+const searchInput=document.getElementById("search");
 
-function loadVideos() {
-  if (loading || !hasMore) return;
-  loading = true;
+let allVideos=[];
+let page=1;
+let tag="";
+const perPage=8;
 
-  fetch(`/api/videos?page=${page}`)
-    .then(res => res.json())
-    .then(data => {
-
-      data.videos.forEach((v, i) => {
-        const card = document.createElement("div");
-        card.className = "video-card";
-        card.onclick = () => location.href = "/watch?id=" + v._id;
-        card.innerHTML = `
-          <img loading="lazy" src="${v.thumbnail || 'https://via.placeholder.com/300x180/111/666?text=Video'}">
-          <p>${v.title || 'Untitled Video'}</p>
-        `;
-        box.appendChild(card);
-
-        /* 🔥 AD AFTER EVERY 8 VIDEOS (NOT ON TOP) */
-        if (box.children.length % 8 === 0) {
-          const ad = document.createElement("div");
-          ad.className = "ad-box";
-          ad.innerHTML = `
-            <script async data-cfasync="false" src="https://evadereprimand.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-            <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-          `;
-          box.appendChild(ad);
-        }
-      });
-
-      hasMore = data.hasMore;
-      page++;
-      loading = false;
-    });
+function toggleSearch(){
+ searchInput.style.display =
+  searchInput.style.display==="block"?"none":"block";
+ searchInput.focus();
 }
 
-loadVideos();
+function setTag(t){
+ tag=t;page=1;
+ document.querySelectorAll(".tags button").forEach(b=>b.classList.remove("active"));
+ event.target.classList.add("active");
+ draw();
+}
 
-/* INFINITE SCROLL */
-window.addEventListener("scroll", () => {
-  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-    loadVideos();
-  }
-});
+function autoThumb(url){
+ if(!url || !url.includes("/video/upload/")) return "/logo.png";
+ return url.replace("/video/upload/","/video/upload/so_2/")
+           .replace(/\.(mp4|mov|webm).*/i,".jpg");
+}
+
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{ allVideos=Array.isArray(vs)?vs:[]; draw(); });
+
+function draw(){
+ const q=searchInput.value.toLowerCase();
+ grid.innerHTML=""; pagination.innerHTML="";
+ let list=allVideos.filter(v=>{
+  const t=v.title.toLowerCase();
+  return t.includes(q) && (!tag || t.includes(tag));
+ });
+ const total=Math.ceil(list.length/perPage);
+
+ list.slice((page-1)*perPage,page*perPage).forEach(v=>{
+  const thumb=v.thumbnail||autoThumb(v.url);
+  grid.insertAdjacentHTML("beforeend",`
+   <div class="card" onclick="location.href='/watch?id=${v._id}'">
+    <div class="thumb">
+     <img src="${thumb}" loading="lazy">
+     <div class="duration" data-url="${v.url}">--:--</div>
+    </div>
+    <div class="info">
+     <div class="title">${v.title}</div>
+     <div class="views">👁 ${v.views||0}</div>
+    </div>
+   </div>
+  `);
+ });
+
+ for(let i=1;i<=total;i++){
+  pagination.insertAdjacentHTML("beforeend",`
+   <button class="${i===page?'active':''}"
+    onclick="page=${i};draw();window.scrollTo(0,0)">
+    ${i}</button>
+  `);
+ }
+}
+searchInput.oninput=()=>{page=1;draw();};
 </script>
 
 </body>
