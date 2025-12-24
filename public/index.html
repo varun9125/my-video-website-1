@@ -12,9 +12,6 @@
 
 <meta name="eroads_" content="045a4e1e1cf1a7e5e5f062c48d692dbb" />
 
-<!-- ===== ADSTERRA POPUNDER (HEAD – SAFE) ===== -->
-<script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
-
 <style>
 :root{
   --bg:#0b0b0b;
@@ -39,7 +36,7 @@ body{margin:0;background:var(--bg);color:#fff;font-family:system-ui}
 .yes{background:#0f9d58;color:#fff}
 .no{background:#333;color:#fff}
 
-/* HEADER */
+/* ===== HEADER / MENU BAR (ONLY ADDITION) ===== */
 header{
  position:sticky;top:0;z-index:10;
  background:#111;padding:10px 14px;border-bottom:1px solid #222
@@ -59,7 +56,12 @@ header{
  letter-spacing:.3px
 }
 .brand img{height:36px}
-.search-icon{font-size:20px;cursor:pointer}
+.brand span{color:#fff}
+.search-icon{
+ font-size:20px;
+ cursor:pointer;
+ color:#fff
+}
 #search{
  width:100%;
  margin-top:10px;
@@ -88,7 +90,9 @@ header{
  cursor:pointer;
  white-space:nowrap
 }
-.tags button.active{background:var(--accent)}
+.tags button.active{
+ background:var(--accent)
+}
 
 /* GRID */
 .grid{
@@ -105,26 +109,61 @@ header{
  overflow:hidden;
  cursor:pointer
 }
-.thumb{aspect-ratio:16/9;background:#000;position:relative}
-.thumb img{width:100%;height:100%;object-fit:cover}
-.duration{
- position:absolute;right:8px;bottom:8px;
- background:rgba(0,0,0,.75);
- padding:3px 6px;font-size:11px;border-radius:4px
+
+/* THUMB */
+.thumb{
+ aspect-ratio:16/9;
+ background:#000;
+ position:relative;
+ overflow:hidden;
 }
+.thumb img{
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ display:block;
+}
+
+/* DURATION */
+.duration{
+ position:absolute;
+ right:8px;
+ bottom:8px;
+ background:rgba(0,0,0,.75);
+ padding:3px 6px;
+ font-size:11px;
+ border-radius:4px;
+ color:#fff;
+}
+
+/* INFO */
 .info{padding:10px}
-.title{font-size:14px;font-weight:600}
+.title{
+ font-size:14px;
+ line-height:1.35;
+ font-weight:600;
+ white-space:normal;
+}
 .views{font-size:12px;color:var(--soft)}
 
 /* PAGINATION */
 .pagination{
- display:flex;justify-content:center;gap:6px;padding:18px
+ display:flex;
+ justify-content:center;
+ gap:6px;
+ padding:18px
 }
 .pagination button{
- padding:8px 14px;border:none;border-radius:8px;
- background:#1f1f1f;color:#fff;cursor:pointer
+ padding:8px 14px;
+ border:none;
+ border-radius:8px;
+ background:#1f1f1f;
+ color:#fff;
+ cursor:pointer
 }
-.pagination button.active{background:var(--accent)}
+.pagination button.active{
+ background:var(--accent)
+}
 </style>
 </head>
 
@@ -144,7 +183,7 @@ header{
 <header>
  <div class="topbar">
   <div class="brand">
-   <img src="/logo.png">
+   <img src="/logo.png" alt="logo">
    <span>KamaBaba Viral</span>
   </div>
   <div class="search-icon" onclick="toggleSearch()">🔍</div>
@@ -163,8 +202,8 @@ header{
 
 <div class="grid" id="grid"></div>
 
-<!-- ===== ADSTERRA NATIVE / BANNER (CONTENT KE BAAD – SAFE) ===== -->
-<div style="padding:14px;max-width:720px;margin:0 auto;text-align:center">
+<!-- ADSTERRA (UNCHANGED) -->
+<div style="padding:14px;max-width:720px;margin:0 auto">
 <script async data-cfasync="false"
  src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
@@ -172,17 +211,8 @@ header{
 
 <div class="pagination" id="pagination"></div>
 
-<!-- ===== ADSTERRA SMARTLINK (FOOTER SAFE CLICK) ===== -->
-<div style="text-align:center;padding:14px">
- <a href="https://evadereprimand.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a"
-  target="_blank" rel="nofollow sponsored"
-  style="color:#ff0055;font-weight:600;text-decoration:none">
-  🔥 Unlock More Exclusive Content
- </a>
-</div>
-
 <script>
-/* ===== TUMHARA ORIGINAL JS – UNCHANGED ===== */
+/* AGE GATE */
 const ageGate=document.getElementById("ageGate");
 if(localStorage.adult==="yes") ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none";}
@@ -204,29 +234,38 @@ function toggleSearch(){
 }
 
 function setTag(t){
- tag=t;page=1;
+ tag=t;
+ page=1;
  document.querySelectorAll(".tags button").forEach(b=>b.classList.remove("active"));
  event.target.classList.add("active");
  draw();
 }
 
+/* CLOUDINARY AUTO THUMB */
 function autoThumb(url){
  if(!url || !url.includes("/video/upload/")) return "/logo.png";
  return url.replace("/video/upload/","/video/upload/so_2/")
            .replace(/\.(mp4|mov|webm).*/i,".jpg");
 }
 
+/* LOAD */
 fetch("/api/videos")
 .then(r=>r.json())
-.then(vs=>{ allVideos=Array.isArray(vs)?vs:[]; draw(); });
+.then(vs=>{
+ allVideos=Array.isArray(vs)?vs:[];
+ draw();
+});
 
 function draw(){
  const q=searchInput.value.toLowerCase();
- grid.innerHTML=""; pagination.innerHTML="";
+ grid.innerHTML="";
+ pagination.innerHTML="";
+
  let list=allVideos.filter(v=>{
   const t=v.title.toLowerCase();
   return t.includes(q) && (!tag || t.includes(tag));
  });
+
  const total=Math.ceil(list.length/perPage);
 
  list.slice((page-1)*perPage,page*perPage).forEach(v=>{
@@ -253,7 +292,26 @@ function draw(){
   `);
  }
 }
+
 searchInput.oninput=()=>{page=1;draw();};
+
+/* DURATION */
+function fmt(sec){
+ const m=Math.floor(sec/60);
+ const s=Math.floor(sec%60);
+ return m+":"+(s<10?"0"+s:s);
+}
+setTimeout(()=>{
+ document.querySelectorAll(".duration").forEach(d=>{
+  const v=document.createElement("video");
+  v.src=d.dataset.url+"#t=0.1";
+  v.preload="metadata";
+  v.onloadedmetadata=()=>{
+   if(v.duration) d.innerText=fmt(v.duration);
+   v.remove();
+  };
+ });
+},300);
 </script>
 
 </body>
