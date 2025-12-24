@@ -94,22 +94,6 @@ header{
  background:var(--accent)
 }
 
-/* SORTING */
-.sorting{
- display:flex;
- gap:8px;
- margin-top:10px;
-}
-.sorting button{
- padding:6px 14px;
- border:none;
- border-radius:20px;
- background:#1f1f1f;
- color:#fff;
- font-size:13px;
- cursor:pointer;
-}
-
 /* GRID */
 .grid{
  display:grid;
@@ -123,11 +107,7 @@ header{
  background:var(--card);
  border-radius:12px;
  overflow:hidden;
- cursor:pointer;
- transition: transform 0.3s; /* हॉवर एनिमेशन जोड़ा */
-}
-.card:hover{
- transform: scale(1.05);
+ cursor:pointer
 }
 
 /* THUMB */
@@ -156,18 +136,6 @@ header{
  color:#fff;
 }
 
-/* HOT BADGE */
-.hot-badge{
- position:absolute;
- top:8px;
- left:8px;
- background:#ff0055;
- color:#fff;
- padding:2px 6px;
- font-size:10px;
- border-radius:4px;
-}
-
 /* INFO */
 .info{padding:10px}
 .title{
@@ -178,8 +146,24 @@ header{
 }
 .views{font-size:12px;color:var(--soft)}
 
-/* LOADER */
-#loader{text-align:center;padding:20px;color:#888}
+/* PAGINATION */
+.pagination{
+ display:flex;
+ justify-content:center;
+ gap:6px;
+ padding:18px
+}
+.pagination button{
+ padding:8px 14px;
+ border:none;
+ border-radius:8px;
+ background:#1f1f1f;
+ color:#fff;
+ cursor:pointer
+}
+.pagination button.active{
+ background:var(--accent)
+}
 </style>
 </head>
 
@@ -213,20 +197,10 @@ header{
   <button onclick="setTag('desi')">🇮🇳 Desi</button>
   <button onclick="setTag('viral')">🚀 Viral</button>
   <button onclick="setTag('new')">🆕 New</button>
-  <button onclick="setTag('hd')">HD</button> <!-- नया टैग -->
-  <button onclick="setTag('amateur')">👩 Amateur</button> <!-- नया टैग -->
- </div>
-
- <div class="sorting">
-  <button onclick="setSort('createdAt')">Latest</button>
-  <button onclick="setSort('views')">Most Viewed</button>
-  <button onclick="setSort('likes')">Most Liked</button>
  </div>
 </header>
 
 <div class="grid" id="grid"></div>
-
-<div id="loader">Loading more...</div>
 
 <!-- ADSTERRA (UNCHANGED) -->
 <div style="padding:14px;max-width:720px;margin:0 auto">
@@ -235,21 +209,22 @@ header{
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
+<div class="pagination" id="pagination"></div>
+
 <script>
 /* AGE GATE */
 const ageGate=document.getElementById("ageGate");
 if(localStorage.adult==="yes") ageGate.style.display="none";
-function allow(){localStorage.adult="yes"; ageGate.style.display="none";}
+function allow(){localStorage.adult="yes";ageGate.style.display="none";}
 function deny(){location.href="https://google.com";}
 
 const grid=document.getElementById("grid");
-const loader=document.getElementById("loader");
+const pagination=document.getElementById("pagination");
 const searchInput=document.getElementById("search");
 
 let allVideos=[];
 let page=1;
 let tag="";
-let sortBy="createdAt"; // नया सॉर्टिंग वेरिएबल
 const perPage=8;
 
 function toggleSearch(){
@@ -263,12 +238,6 @@ function setTag(t){
  page=1;
  document.querySelectorAll(".tags button").forEach(b=>b.classList.remove("active"));
  event.target.classList.add("active");
- draw();
-}
-
-function setSort(s){ // नया सॉर्टिंग फंक्शन
- sortBy=s;
- page=1;
  draw();
 }
 
@@ -290,44 +259,60 @@ fetch("/api/videos")
 function draw(){
  const q=searchInput.value.toLowerCase();
  grid.innerHTML="";
+ pagination.innerHTML="";
 
  let list=allVideos.filter(v=>{
   const t=v.title.toLowerCase();
-  // फजी सर्च: partial matches
-  return t.includes(q) || q.split(' ').some(word => t.includes(word));
- }).sort((a, b) => {
-  if (sortBy === "views") return b.views - a.views;
-  if (sortBy === "likes") return b.likes - a.likes;
-  return new Date(b.createdAt) - new Date(a.createdAt);
+  return t.includes(q) && (!tag || t.includes(tag));
  });
 
- const start = (page - 1) * perPage;
- const end = start + perPage;
- const currentList = list.slice(start, end);
+ const total=Math.ceil(list.length/perPage);
 
- currentList.forEach(v=>{
+ list.slice((page-1)*perPage,page*perPage).forEach(v=>{
   const thumb=v.thumbnail||autoThumb(v.url);
   grid.insertAdjacentHTML("beforeend",`
    <div class="card" onclick="location.href='/watch?id=${v._id}'">
     <div class="thumb">
      <img src="${thumb}" loading="lazy">
      <div class="duration" data-url="${v.url}">--:--</div>
-     ${v.views > 1000 ? '<div class="hot-badge">🔥 Hot</div>' : ''} <!-- हॉट बैज -->
     </div>
     <div class="info">
      <div class="title">${v.title}</div>
-     <div class="views">👁 ${v.views||0} 👍 ${v.likes||0}</div> <!-- लाइक्स जोड़ा -->
+     <div class="views">👁 ${v.views||0}</div>
     </div>
    </div>
   `);
  });
 
- // इनफिनिट स्क्रॉल
- if (currentList.length === perPage) {
-  loader.style.display = "block";
- } else {
-  loader.style.display = "none";
+ for(let i=1;i<=total;i++){
+  pagination.insertAdjacentHTML("beforeend",`
+   <button class="${i===page?'active':''}"
+    onclick="page=${i};draw();window.scrollTo(0,0)">
+    ${i}</button>
+  `);
  }
 }
 
-searchInput.on
+searchInput.oninput=()=>{page=1;draw();};
+
+/* DURATION */
+function fmt(sec){
+ const m=Math.floor(sec/60);
+ const s=Math.floor(sec%60);
+ return m+":"+(s<10?"0"+s:s);
+}
+setTimeout(()=>{
+ document.querySelectorAll(".duration").forEach(d=>{
+  const v=document.createElement("video");
+  v.src=d.dataset.url+"#t=0.1";
+  v.preload="metadata";
+  v.onloadedmetadata=()=>{
+   if(v.duration) d.innerText=fmt(v.duration);
+   v.remove();
+  };
+ });
+},300);
+</script>
+
+</body>
+</html>
