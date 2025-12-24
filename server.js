@@ -2,10 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const mongoose = require("mongoose");
-const multer = require("multer");
-const cloudinary = require("cloudinary").v2;
 const path = require("path");
-const fs = require("fs");
 const cors = require("cors");
 
 const app = express();
@@ -26,14 +23,6 @@ app.use(express.static(path.join(__dirname, "public"), {
   maxAge: 0,
   etag: false,
 }));
-
-/* ================= CLOUDINARY ================= */
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
 
 /* ================= DATABASE ================= */
 let dbReady = false;
@@ -57,52 +46,43 @@ const Video = mongoose.model("Video", new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 }));
 
-/* ================= MULTER (DISK SAFE) ================= */
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: "tmp/",
-    filename: (_, file, cb) =>
-      cb(null, Date.now() + path.extname(file.originalname)),
-  }),
-  limits: { fileSize: 1024 * 1024 * 1024 }, // 1GB
-});
-
 /* ================= ROUTES ================= */
 
-app.post("/api/upload", upload.single("video"), async (req, res) => {
+/* ✅ SAVE VIDEO (FROM ADMIN PANEL) */
+app.post("/api/save-video", async (req, res) => {
   try {
-    if (!dbReady)
-      return res.status(503).json({ error: "DB not ready" });
+    const { password, title, url } = req.body;
 
-    if (req.body.password !== ADMIN_PASSWORD)
-      return res.status(401).json({ error: "Wrong password" });
+    if (!password || !url) {
+      return res.json({ success: false, error: "Missing data" });
+    }
 
-    if (!req.file)
-      return res.status(400).json({ error: "No file" });
+    if (password !== ADMIN_PASSWORD) {
+      return res.json({ success: false, error: "Wrong password" });
+    }
 
-    /* ⬆️ Upload to Cloudinary */
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      resource_type: "video",
-      folder: "kamababa/videos",
-    });
-
-    fs.unlinkSync(req.file.path); // temp delete
+    if (!dbReady) {
+      return res.json({ success: false, error: "Database not ready" });
+    }
 
     const video = await Video.create({
-      title: req.body.title || "Untitled",
-      url: result.secure_url,
-      thumbnail: req.body.thumbnail || "",
+      title: title || "Untitled",
+      url: url,
+      thumbnail: "",
     });
 
-    res.json({ success: true, id: video._id });
+    return res.json({
+      success: true,
+      id: video._id
+    });
 
-  } catch (e) {
-    console.error("UPLOAD ERROR:", e.message);
-    res.status(500).json({ error: "Upload failed" });
+  } catch (err) {
+    console.error("SAVE VIDEO ERROR:", err.message);
+    return res.json({ success: false, error: "Server error" });
   }
 });
 
 /* ================= START ================= */
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
