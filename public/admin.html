@@ -58,11 +58,11 @@ button:disabled{opacity:.6;cursor:not-allowed}
 </div>
 
 <script>
-/* ===== CLOUDINARY CONFIG (FIXED) ===== */
+/* ===== CLOUDINARY CONFIG ===== */
 const CLOUD_NAME = "doeuirlh";
 const UPLOAD_PRESET = "kamababa_unsigned";
+const CHUNK_SIZE = 10 * 1024 * 1024; // 🔥 10MB chunks
 
-/* ===== ELEMENTS ===== */
 let selectedThumbnail=null;
 const passwordInput=document.getElementById("password");
 const titleInput=document.getElementById("title");
@@ -116,7 +116,7 @@ function capture(video,time){
  });
 }
 
-/* ===== UPLOAD (BIG VIDEO FIXED) ===== */
+/* ===== FAST CHUNKED UPLOAD ===== */
 btn.onclick=async()=>{
  if(!passwordInput.value||!videoInput.files[0]||!selectedThumbnail){
   status.innerHTML="<span class='err'>❌ Missing data</span>";return;
@@ -124,55 +124,59 @@ btn.onclick=async()=>{
 
  btn.disabled=true;
  progress.style.display="block";
- status.innerText="Uploading video…";
+ status.innerText="Uploading in chunks…";
 
- /* 1️⃣ Upload video directly to Cloudinary */
- const fd=new FormData();
- fd.append("file",videoInput.files[0]);
- fd.append("upload_preset",UPLOAD_PRESET);
- fd.append("folder","kamababa/videos");
+ const file=videoInput.files[0];
+ let uploaded=0;
 
- const xhr=new XMLHttpRequest();
- xhr.open("POST",`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`);
+ while(uploaded < file.size){
+  const chunk=file.slice(uploaded, uploaded + CHUNK_SIZE);
+  const fd=new FormData();
+  fd.append("file", chunk);
+  fd.append("upload_preset", UPLOAD_PRESET);
+  fd.append("folder", "kamababa/videos");
+  fd.append("chunk_size", CHUNK_SIZE);
 
- xhr.upload.onprogress=e=>{
-  if(e.lengthComputable){
-   bar.style.width=Math.round((e.loaded/e.total)*80)+"%";
-  }
- };
+  const res=await fetch(
+   `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`,
+   { method:"POST", body:fd }
+  );
 
- xhr.onload=async()=>{
-  const data=JSON.parse(xhr.responseText||"{}");
+  const data=await res.json();
   if(!data.secure_url){
    status.innerHTML="<span class='err'>❌ Upload failed</span>";
    btn.disabled=false;return;
   }
 
-  bar.style.width="85%";
-  status.innerText="Saving to server…";
+  uploaded += CHUNK_SIZE;
+  bar.style.width=Math.min(80, Math.round((uploaded/file.size)*80))+"%";
 
-  /* 2️⃣ Save URL to server */
-  const res=await fetch("/api/save-video",{
-   method:"POST",
-   headers:{ "Content-Type":"application/json" },
-   body:JSON.stringify({
-    password:passwordInput.value,
-    title:titleInput.value||"Untitled",
-    url:data.secure_url
-   })
-  });
+  if(uploaded >= file.size){
+   bar.style.width="90%";
+   status.innerText="Saving to server…";
 
-  const out=await res.json();
-  if(out.success){
-   bar.style.width="100%";
-   status.innerHTML="<span class='ok'>✅ Upload successful</span>";
-   videoInput.value="";titleInput.value="";thumbBox.style.display="none";
-  }else{
-   status.innerHTML="<span class='err'>❌ Save failed</span>";
+   const save=await fetch("/api/save-video",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+     password:passwordInput.value,
+     title:titleInput.value||"Untitled",
+     url:data.secure_url
+    })
+   });
+
+   const out=await save.json();
+   if(out.success){
+    bar.style.width="100%";
+    status.innerHTML="<span class='ok'>✅ Upload successful</span>";
+    videoInput.value="";titleInput.value="";thumbBox.style.display="none";
+   }else{
+    status.innerHTML="<span class='err'>❌ Save failed</span>";
+   }
+   btn.disabled=false;
+   break;
   }
-  btn.disabled=false;
- };
- xhr.send(fd);
+ }
 };
 </script>
 
