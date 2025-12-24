@@ -9,21 +9,83 @@
 <meta name="robots" content="noindex,nofollow">
 
 <style>
-body{margin:0;background:#0b0b0b;color:#fff;font-family:system-ui}
-.wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.panel{width:100%;max-width:460px;background:#141414;padding:24px;border-radius:16px;box-shadow:0 0 30px rgba(255,0,85,.25)}
+body{
+ margin:0;
+ background:#0b0b0b;
+ color:#fff;
+ font-family:system-ui;
+}
+.wrapper{
+ min-height:100vh;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+}
+.panel{
+ width:100%;
+ max-width:460px;
+ background:#141414;
+ padding:24px;
+ border-radius:16px;
+ box-shadow:0 0 30px rgba(255,0,85,.25);
+}
 h2{text-align:center;margin:0 0 10px;color:#ff0055}
 label{display:block;margin-top:14px;font-size:13px;color:#bbb}
-input{width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid #222;background:#0f0f0f;color:#fff}
-button{width:100%;margin-top:18px;padding:14px;border:none;border-radius:12px;background:#ff0055;color:#fff;font-weight:600;cursor:pointer}
+input{
+ width:100%;
+ padding:12px;
+ margin-top:6px;
+ border-radius:10px;
+ border:1px solid #222;
+ background:#0f0f0f;
+ color:#fff;
+}
+button{
+ width:100%;
+ margin-top:18px;
+ padding:14px;
+ border:none;
+ border-radius:12px;
+ background:#ff0055;
+ color:#fff;
+ font-weight:600;
+ cursor:pointer;
+}
 button:disabled{opacity:.6;cursor:not-allowed}
 .thumb-box{display:none;margin-top:14px}
-.thumb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.thumb-grid img{width:100%;border-radius:6px;cursor:pointer;border:2px solid transparent}
+.thumb-grid{
+ display:grid;
+ grid-template-columns:repeat(5,1fr);
+ gap:6px;
+}
+.thumb-grid img{
+ width:100%;
+ border-radius:6px;
+ cursor:pointer;
+ border:2px solid transparent;
+}
 .thumb-grid img.selected{border-color:#ff0055}
-.progress{display:none;height:8px;background:#222;margin-top:14px;border-radius:10px;overflow:hidden}
-.progress div{height:100%;width:0%;background:#ff0055;transition:width .2s}
-#status{margin-top:12px;font-size:14px;text-align:center;min-height:20px}
+.progress{
+ display:none;
+ height:8px;
+ background:#222;
+ margin-top:14px;
+ border-radius:10px;
+ overflow:hidden;
+}
+.progress div{
+ height:100%;
+ width:0%;
+ background:#ff0055;
+ transition:width .2s;
+}
+#status{
+ margin-top:12px;
+ font-size:14px;
+ text-align:center;
+ min-height:20px;
+}
 .ok{color:#0f9d58}
 .err{color:#ff4444}
 </style>
@@ -45,7 +107,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
 <input id="video" type="file" accept="video/*">
 
 <div class="thumb-box" id="thumbBox">
- <p style="font-size:13px;color:#bbb">Select Thumbnail (choose one)</p>
+ <p style="font-size:13px;color:#bbb">Select Thumbnail</p>
  <div class="thumb-grid" id="thumbGrid"></div>
 </div>
 
@@ -58,12 +120,8 @@ button:disabled{opacity:.6;cursor:not-allowed}
 </div>
 
 <script>
-/* ===== CLOUDINARY CONFIG ===== */
-const CLOUD_NAME = "doeuirlh";
-const UPLOAD_PRESET = "kamababa_unsigned";
-
-/* ===== ELEMENTS ===== */
 let selectedThumbnail=null;
+
 const passwordInput=document.getElementById("password");
 const titleInput=document.getElementById("title");
 const videoInput=document.getElementById("video");
@@ -74,10 +132,16 @@ const status=document.getElementById("status");
 const bar=document.getElementById("bar");
 const progress=document.getElementById("progress");
 
-/* ===== THUMBNAIL GENERATION (5 OPTIONS – FIXED BACK) ===== */
+/* ===== THUMBNAIL GENERATION ===== */
 videoInput.addEventListener("change",()=>{
  const file=videoInput.files[0];
- if(!file || !file.type.startsWith("video/")) return;
+ if(!file) return;
+
+ if(!file.type.startsWith("video/")){
+  status.innerHTML="<span class='err'>❌ Invalid video file</span>";
+  videoInput.value="";
+  return;
+ }
 
  thumbGrid.innerHTML="";
  thumbBox.style.display="block";
@@ -118,7 +182,7 @@ function capture(video,time){
  });
 }
 
-/* ===== UPLOAD (STABLE & FAST) ===== */
+/* ===== UPLOAD ===== */
 btn.onclick=()=>{
  if(!passwordInput.value.trim()){
   status.innerHTML="<span class='err'>❌ Password required</span>";return;
@@ -133,62 +197,49 @@ btn.onclick=()=>{
  btn.disabled=true;
  progress.style.display="block";
  bar.style.width="5%";
- status.innerText="Uploading to Cloudinary…";
+ status.innerText="Uploading…";
 
  const fd=new FormData();
- fd.append("file",videoInput.files[0]);
- fd.append("upload_preset",UPLOAD_PRESET);
- fd.append("folder","kamababa/videos");
+ fd.append("password",passwordInput.value.trim());
+ fd.append("title",titleInput.value.trim()||"Untitled");
+ fd.append("video",videoInput.files[0]);
+ fd.append("thumbnail",selectedThumbnail);
 
  const xhr=new XMLHttpRequest();
- xhr.open("POST",`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`);
+ xhr.open("POST","/api/upload");
 
  xhr.upload.onprogress=e=>{
   if(e.lengthComputable){
-   bar.style.width=Math.round((e.loaded/e.total)*80)+"%";
+   bar.style.width=Math.round((e.loaded/e.total)*90)+"%";
   }
  };
 
- xhr.onload=async()=>{
-  let data={};
-  try{ data=JSON.parse(xhr.responseText||"{}"); }catch{}
-  if(!data.secure_url){
-   status.innerHTML="<span class='err'>❌ Upload failed</span>";
-   btn.disabled=false;return;
-  }
-
-  bar.style.width="90%";
-  status.innerText="Saving to server…";
-
-  const res=await fetch("/api/save-video",{
-   method:"POST",
-   headers:{ "Content-Type":"application/json" },
-   body:JSON.stringify({
-    password:passwordInput.value.trim(),
-    title:titleInput.value.trim()||"Untitled",
-    url:data.secure_url,
-    thumbnail:selectedThumbnail
-   })
-  });
-
-  const out=await res.json();
-  if(out.success){
-   bar.style.width="100%";
-   status.innerHTML="<span class='ok'>✅ Upload successful</span>";
-   passwordInput.value="";
-   titleInput.value="";
-   videoInput.value="";
-   thumbBox.style.display="none";
-   selectedThumbnail=null;
-  }else{
-   status.innerHTML="<span class='err'>❌ Save failed</span>";
-  }
+ xhr.onload=()=>{
+  bar.style.width="100%";
   btn.disabled=false;
+
+  try{
+   const res=JSON.parse(xhr.responseText||"{}");
+   if(res.success){
+    status.innerHTML="<span class='ok'>✅ Upload successful</span>";
+    passwordInput.value="";
+    titleInput.value="";
+    videoInput.value="";
+    thumbBox.style.display="none";
+    progress.style.display="none";
+    bar.style.width="0%";
+    selectedThumbnail=null;
+   }else{
+    status.innerHTML="<span class='err'>❌ "+(res.error||"Upload failed")+"</span>";
+   }
+  }catch{
+   status.innerHTML="<span class='err'>❌ Server error</span>";
+  }
  };
 
  xhr.onerror=()=>{
-  status.innerHTML="<span class='err'>❌ Network error</span>";
   btn.disabled=false;
+  status.innerHTML="<span class='err'>❌ Network error</span>";
  };
 
  xhr.send(fd);
