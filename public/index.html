@@ -94,13 +94,13 @@ header{
  background:var(--accent)
 }
 
-/* SORT OPTIONS */
-.sort{
+/* SORTING */
+.sorting{
  display:flex;
  gap:8px;
  margin-top:10px;
 }
-.sort button{
+.sorting button{
  padding:6px 14px;
  border:none;
  border-radius:20px;
@@ -108,9 +108,6 @@ header{
  color:#fff;
  font-size:13px;
  cursor:pointer;
-}
-.sort button.active{
- background:var(--accent)
 }
 
 /* GRID */
@@ -127,7 +124,7 @@ header{
  border-radius:12px;
  overflow:hidden;
  cursor:pointer;
- transition: transform 0.3s; /* Hover animation */
+ transition: transform 0.3s; /* हॉवर एनिमेशन जोड़ा */
 }
 .card:hover{
  transform: scale(1.05);
@@ -181,8 +178,6 @@ header{
 }
 .views{font-size:12px;color:var(--soft)}
 
-/* PAGINATION (REMOVED FOR INFINITE SCROLL) */
-
 /* LOADER */
 #loader{text-align:center;padding:20px;color:#888}
 </style>
@@ -218,12 +213,12 @@ header{
   <button onclick="setTag('desi')">🇮🇳 Desi</button>
   <button onclick="setTag('viral')">🚀 Viral</button>
   <button onclick="setTag('new')">🆕 New</button>
-  <button onclick="setTag('hd')">HD</button>
-  <button onclick="setTag('amateur')">👩 Amateur</button>
+  <button onclick="setTag('hd')">HD</button> <!-- नया टैग -->
+  <button onclick="setTag('amateur')">👩 Amateur</button> <!-- नया टैग -->
  </div>
 
- <div class="sort">
-  <button class="active" onclick="setSort('createdAt')">Latest</button>
+ <div class="sorting">
+  <button onclick="setSort('createdAt')">Latest</button>
   <button onclick="setSort('views')">Most Viewed</button>
   <button onclick="setSort('likes')">Most Liked</button>
  </div>
@@ -231,7 +226,7 @@ header{
 
 <div class="grid" id="grid"></div>
 
-<div id="loader">Loading more videos...</div>
+<div id="loader">Loading more...</div>
 
 <!-- ADSTERRA (UNCHANGED) -->
 <div style="padding:14px;max-width:720px;margin:0 auto">
@@ -244,7 +239,7 @@ header{
 /* AGE GATE */
 const ageGate=document.getElementById("ageGate");
 if(localStorage.adult==="yes") ageGate.style.display="none";
-function allow(){localStorage.adult="yes";ageGate.style.display="none";}
+function allow(){localStorage.adult="yes"; ageGate.style.display="none";}
 function deny(){location.href="https://google.com";}
 
 const grid=document.getElementById("grid");
@@ -254,7 +249,7 @@ const searchInput=document.getElementById("search");
 let allVideos=[];
 let page=1;
 let tag="";
-let sortBy="createdAt";
+let sortBy="createdAt"; // नया सॉर्टिंग वेरिएबल
 const perPage=8;
 
 function toggleSearch(){
@@ -271,11 +266,9 @@ function setTag(t){
  draw();
 }
 
-function setSort(s){
+function setSort(s){ // नया सॉर्टिंग फंक्शन
  sortBy=s;
  page=1;
- document.querySelectorAll(".sort button").forEach(b=>b.classList.remove("active"));
- event.target.classList.add("active");
  draw();
 }
 
@@ -300,13 +293,9 @@ function draw(){
 
  let list=allVideos.filter(v=>{
   const t=v.title.toLowerCase();
-  // Fuzzy search: partial matches
-  return (!q || t.includes(q) || q.split(' ').some(word => t.includes(word))) &&
-         (!tag || t.includes(tag));
- });
-
- // Sorting
- list.sort((a, b) => {
+  // फजी सर्च: partial matches
+  return t.includes(q) || q.split(' ').some(word => t.includes(word));
+ }).sort((a, b) => {
   if (sortBy === "views") return b.views - a.views;
   if (sortBy === "likes") return b.likes - a.likes;
   return new Date(b.createdAt) - new Date(a.createdAt);
@@ -323,39 +312,22 @@ function draw(){
     <div class="thumb">
      <img src="${thumb}" loading="lazy">
      <div class="duration" data-url="${v.url}">--:--</div>
-     ${v.views > 1000 ? '<div class="hot-badge">🔥 Hot</div>' : ''}
+     ${v.views > 1000 ? '<div class="hot-badge">🔥 Hot</div>' : ''} <!-- हॉट बैज -->
     </div>
     <div class="info">
      <div class="title">${v.title}</div>
-     <div class="views">👁 ${v.views||0} 👍 ${v.likes||0}</div>
+     <div class="views">👁 ${v.views||0} 👍 ${v.likes||0}</div> <!-- लाइक्स जोड़ा -->
     </div>
    </div>
   `);
  });
 
- // Infinite scroll: hide loader if no more
- if (end >= list.length) {
-  loader.style.display = "none";
- } else {
+ // इनफिनिट स्क्रॉल
+ if (currentList.length === perPage) {
   loader.style.display = "block";
+ } else {
+  loader.style.display = "none";
  }
 }
 
-searchInput.oninput=()=>{page=1;draw();};
-
-// Infinite scroll
-let loading = false;
-window.addEventListener("scroll", () => {
- if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && !loading) {
-  loading = true;
-  page++;
-  draw();
-  loading = false;
- }
-});
-
-/* DURATION */
-function fmt(sec){
- const m=Math.floor(sec/60);
- const s=Math.floor(sec%60);
- return
+searchInput.on
