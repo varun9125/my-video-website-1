@@ -54,19 +54,15 @@ button{
 }
 button:disabled{opacity:.6;cursor:not-allowed}
 
-.thumb-box{display:none;margin-top:14px}
-.thumb-grid{
- display:grid;
- grid-template-columns:repeat(5,1fr);
- gap:6px;
+.thumb-preview{
+ margin-top:10px;
+ display:none;
 }
-.thumb-grid img{
+.thumb-preview img{
  width:100%;
- border-radius:6px;
- cursor:pointer;
- border:2px solid transparent;
+ border-radius:8px;
+ border:2px solid #ff0055;
 }
-.thumb-grid img.selected{border-color:#ff0055}
 
 .progress{
  display:none;
@@ -108,14 +104,11 @@ button:disabled{opacity:.6;cursor:not-allowed}
 <label>Select Video</label>
 <input id="video" type="file" accept="video/*">
 
-<div class="thumb-box" id="thumbBox">
- <p style="font-size:13px;color:#bbb">Select Thumbnail</p>
- <div class="thumb-grid" id="thumbGrid"></div>
+<label>Select Thumbnail (from device gallery)</label>
+<input id="thumbFile" type="file" accept="image/*">
 
- <p style="font-size:13px;color:#bbb;margin-top:10px">
-  Choose from existing videos
- </p>
- <div class="thumb-grid" id="galleryGrid"></div>
+<div class="thumb-preview" id="thumbPreview">
+ <img id="thumbImg">
 </div>
 
 <div class="progress" id="progress"><div id="bar"></div></div>
@@ -132,83 +125,33 @@ let selectedThumbnail=null;
 const passwordInput=document.getElementById("password");
 const titleInput=document.getElementById("title");
 const videoInput=document.getElementById("video");
-const thumbBox=document.getElementById("thumbBox");
-const thumbGrid=document.getElementById("thumbGrid");
-const galleryGrid=document.getElementById("galleryGrid");
+const thumbFile=document.getElementById("thumbFile");
+const thumbPreview=document.getElementById("thumbPreview");
+const thumbImg=document.getElementById("thumbImg");
 const btn=document.getElementById("btn");
 const status=document.getElementById("status");
 const bar=document.getElementById("bar");
 const progress=document.getElementById("progress");
 
-/* ===== LOAD GALLERY FROM EXISTING VIDEOS ===== */
-fetch("/api/videos")
-.then(r=>r.json())
-.then(videos=>{
- if(!Array.isArray(videos)) return;
- videos.forEach(v=>{
-  if(!v.thumbnail) return;
-  const img=document.createElement("img");
-  img.src=v.thumbnail;
-  img.onclick=()=>{
-   document.querySelectorAll(".thumb-grid img")
-    .forEach(i=>i.classList.remove("selected"));
-   img.classList.add("selected");
-   selectedThumbnail=v.thumbnail;
-  };
-  galleryGrid.appendChild(img);
- });
-});
-
-/* ===== THUMBNAIL FROM VIDEO ===== */
-videoInput.addEventListener("change",()=>{
- const file=videoInput.files[0];
+/* ===== DEVICE GALLERY THUMBNAIL ===== */
+thumbFile.addEventListener("change",()=>{
+ const file=thumbFile.files[0];
  if(!file) return;
 
- if(!file.type.startsWith("video/")){
-  status.innerHTML="<span class='err'>❌ Invalid video file</span>";
-  videoInput.value="";
+ if(!file.type.startsWith("image/")){
+  status.innerHTML="<span class='err'>❌ Invalid image</span>";
+  thumbFile.value="";
   return;
  }
 
- thumbGrid.innerHTML="";
- thumbBox.style.display="block";
- selectedThumbnail=null;
-
- const video=document.createElement("video");
- video.src=URL.createObjectURL(file);
- video.muted=true;
- video.playsInline=true;
-
- video.onloadedmetadata=async()=>{
-  const d=video.duration;
-  const times=[0.15,0.3,0.45,0.6,0.75].map(x=>x*d);
-  for(const t of times){
-   const img=await capture(video,t);
-   thumbGrid.appendChild(img);
-  }
+ const reader=new FileReader();
+ reader.onload=()=>{
+  selectedThumbnail=reader.result;
+  thumbImg.src=reader.result;
+  thumbPreview.style.display="block";
  };
+ reader.readAsDataURL(file);
 });
-
-function capture(video,time){
- return new Promise(resolve=>{
-  const canvas=document.createElement("canvas");
-  const ctx=canvas.getContext("2d");
-  video.currentTime=time;
-  video.onseeked=()=>{
-   canvas.width=320;canvas.height=180;
-   ctx.drawImage(video,0,0,320,180);
-   const img=document.createElement("img");
-   img.src=canvas.toDataURL("image/jpeg",0.9);
-   img.onclick=()=>{
-    document.querySelectorAll(".thumb-grid img")
-     .forEach(i=>i.classList.remove("selected"));
-    img.classList.add("selected");
-    selectedThumbnail=img.src;
-   };
-   resolve(img);
-  };
- });
-}
 
 /* ===== UPLOAD ===== */
 btn.onclick=()=>{
@@ -219,7 +162,7 @@ btn.onclick=()=>{
   status.innerHTML="<span class='err'>❌ Select a video</span>";return;
  }
  if(!selectedThumbnail){
-  status.innerHTML="<span class='err'>❌ Select a thumbnail</span>";return;
+  status.innerHTML="<span class='err'>❌ Select thumbnail from device</span>";return;
  }
 
  btn.disabled=true;
@@ -252,7 +195,8 @@ btn.onclick=()=>{
     passwordInput.value="";
     titleInput.value="";
     videoInput.value="";
-    thumbBox.style.display="none";
+    thumbFile.value="";
+    thumbPreview.style.display="none";
     progress.style.display="none";
     bar.style.width="0%";
     selectedThumbnail=null;
