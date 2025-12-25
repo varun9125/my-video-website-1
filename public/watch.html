@@ -8,9 +8,6 @@
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
-<!-- POPUNDER (ANTI-ADBLOCK) -->
-<script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
-
 <!-- VIDEO.JS -->
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
@@ -52,10 +49,6 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 
 <body>
 
-<!-- SMARTLINK (DIRECT URL – HIDDEN) -->
-<a href="https://evadereprimand.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a"
-   target="_blank" rel="nofollow noopener" style="display:none"></a>
-
 <!-- AGE GATE -->
 <div id="ageGate">
  <div class="ageBox">
@@ -85,25 +78,11 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- NATIVE BANNER (UNCHANGED) -->
+<!-- ADSTERRA -->
 <div style="padding:12px">
 <script async data-cfasync="false"
 src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
-
-<!-- 160x300 BANNER -->
-<div style="max-width:720px;margin:20px auto;text-align:center">
-<script>
-atOptions = {
- 'key' : '3dc8adbe32b29fd7a5266d7e0bdfae1a',
- 'format' : 'iframe',
- 'height' : 300,
- 'width' : 160,
- 'params' : {}
-};
-</script>
-<script src="https://evadereprimand.com/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
 </div>
 
 <h3 style="padding-left:12px">Related Videos</h3>
@@ -145,12 +124,13 @@ fetch("/api/videos")
 
  player.src({src:v.url,type:"video/mp4"});
 
- /* IMA ADS */
+ /* 🔥 EXOCLICK (SAFE) */
  try{
   player.ima({
    adTagUrl:"https://s.magsrv.com/v1/vast.php?idzone=5809070",
    timeout:8000
   });
+
   player.one("play",()=>{
    try{
     player.ima.initializeAdDisplayContainer();
@@ -167,15 +147,52 @@ fetch("/api/videos")
 
  renderRelated();
 })
-.catch(()=>{ loader.style.display="none"; });
+.catch(()=>{
+ loader.style.display="none";
+});
 
+/* ✅ RELATED FIXED */
 function renderRelated(){
  loader.style.display="none";
  related.innerHTML="";
+
  if(!allVideos.length) return;
 
  allVideos
  .filter(v=>v._id!==id)
  .slice(0,8)
  .forEach(v=>{
-  const c=document.createElem
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`
+   <video src="${v.url}#t=1" muted preload="metadata"></video>
+   <p>${v.title}</p>`;
+  c.onclick=()=>location.href="/watch?id="+v._id;
+  related.appendChild(c);
+ });
+}
+
+function like(){
+ if(sessionStorage["l_"+id])return;
+ fetch("/api/like/"+id,{method:"POST"});
+ likeCount.innerText++;
+ sessionStorage["l_"+id]=1;
+}
+
+function share(){
+ navigator.clipboard.writeText(location.href);
+ alert("Link copied");
+}
+
+/* SMARTLINK */
+let opened=false;
+document.addEventListener("click",()=>{
+ if(!opened){
+  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
+  opened=true;
+ }
+},{once:true});
+</script>
+
+</body>
+</html>
