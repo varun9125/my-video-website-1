@@ -6,6 +6,7 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const path = require("path");
 const cors = require("cors");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,10 +18,8 @@ const BASE_URL =
 
 /* ================= MIDDLEWARE ================= */
 app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
-
-// IMPORTANT: base64 thumbnail ke liye limit badhayi
-app.use(express.json({ limit: "15mb" }));
-app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 app.use(
   express.static(path.join(__dirname, "public"), {
@@ -41,7 +40,6 @@ cloudinary.config({
 let dbReady = false;
 
 mongoose.set("strictQuery", false);
-
 mongoose
   .connect(process.env.MONGO_URI, {
     serverSelectionTimeoutMS: 10000,
@@ -51,56 +49,45 @@ mongoose
     console.log("✅ MongoDB connected");
     dbReady = true;
   })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err.message);
-    dbReady = false;
-  });
+  .catch(() => (dbReady = false));
 
 /* ================= MODEL ================= */
 const videoSchema = new mongoose.Schema(
   {
-    title: { type: String, trim: true },
-    url: { type: String, required: true },
-    thumbnail: { type: String, default: "" },
+    title: String,
+    url: String,
+    thumbnail: String,
     views: { type: Number, default: 0 },
     likes: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
   },
   { versionKey: false }
 );
-
 const Video = mongoose.model("Video", videoSchema);
 
-/* ================= MULTER ================= */
+/* ================= MULTER (FAST) ================= */
 const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 200 * 1024 * 1024 }, // 200MB video safe
+  dest: "/tmp",                 // 🔥 disk storage
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
 });
 
 /* ================= ROUTES ================= */
 
 app.get("/", (req, res) => {
-  res.set("Cache-Control", "no-store");
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.get("/watch", (req, res) => {
-  res.set("Cache-Control", "no-store");
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-/* ========= GET VIDEOS ========= */
 app.get("/api/videos", async (req, res) => {
-  try {
-    if (!dbReady) return res.json([]);
-    const videos = await Video.find().sort({ createdAt: -1 }).lean();
-    res.json(videos);
-  } catch {
-    res.json([]);
-  }
+  if (!dbReady) return res.json([]);
+  const videos = await Video.find().sort({ createdAt: -1 }).lean();
+  res.json(videos);
 });
 
-/* ========= UPLOAD VIDEO + DEVICE THUMB ========= */
+/* ========= FAST UPLOAD ========= */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     if (!dbReady)
@@ -110,46 +97,26 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       return res.status(401).json({ success: false, error: "Wrong password" });
 
     if (!req.file)
-      return res.status(400).json({ success: false, error: "No video file" });
+      return res.status(400).json({ success: false, error: "No video" });
 
-    /* 🎥 VIDEO UPLOAD */
-    const videoUpload = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          {
-            resource_type: "video",
-            folder: "kamababa/videos",
-            chunk_size: 6 * 1024 * 1024,
-          },
-          (err, result) => (err ? reject(err) : resolve(result))
-        )
-        .end(req.file.buffer);
+    /* 🎥 VIDEO UPLOAD (FAST) */
+    const videoUpload = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "video",
+      folder: "kamababa/videos",
+      chunk_size: 10 * 1024 * 1024, // bigger chunk = faster
     });
 
-    if (!videoUpload?.secure_url)
-      throw new Error("Video upload failed");
+    fs.unlink(req.file.path, () => {}); // cleanup tmp file
 
-    /* 🖼️ THUMBNAIL FROM DEVICE (BASE64) */
+    /* 🖼️ THUMBNAIL (DEVICE IMAGE) */
     let thumbnailUrl = "";
-
-    if (
-      req.body.thumbnail &&
-      typeof req.body.thumbnail === "string" &&
-      req.body.thumbnail.startsWith("data:image")
-    ) {
-      const thumbUpload = await cloudinary.uploader.upload(
-        req.body.thumbnail,
-        {
-          folder: "kamababa/thumbs",
-          resource_type: "image",
-          quality: "auto",
-          fetch_format: "auto",
-        }
-      );
-      thumbnailUrl = thumbUpload.secure_url;
+    if (req.body.thumbnail?.startsWith("data:image")) {
+      const thumb = await cloudinary.uploader.upload(req.body.thumbnail, {
+        folder: "kamababa/thumbs",
+      });
+      thumbnailUrl = thumb.secure_url;
     }
 
-    /* 💾 SAVE DB */
     await Video.create({
       title: req.body.title || "Untitled",
       url: videoUpload.secure_url,
@@ -158,8 +125,8 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
 
     res.json({ success: true });
   } catch (e) {
-    console.error("❌ UPLOAD ERROR:", e.message);
-    res.status(500).json({ success: false, error: "Upload failed" });
+    console.error("UPLOAD ERROR:", e.message);
+    res.status(500).json({ success: false });
   }
 });
 
@@ -175,24 +142,6 @@ app.post("/api/like/:id", async (req, res) => {
   if (dbReady)
     await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
   res.json({ success: true });
-});
-
-/* ========= SITEMAP ========= */
-app.get("/sitemap.xml", async (req, res) => {
-  res.setHeader("Content-Type", "application/xml");
-  let urls = `<url><loc>${BASE_URL}/</loc></url>`;
-
-  if (dbReady) {
-    const vids = await Video.find({}, "_id").lean();
-    vids.forEach((v) => {
-      urls += `<url><loc>${BASE_URL}/watch?id=${v._id}</loc></url>`;
-    });
-  }
-
-  res.send(
-    `<?xml version="1.0" encoding="UTF-8"?>` +
-      `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`
-  );
 });
 
 /* ================= START ================= */
