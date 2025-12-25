@@ -53,6 +53,7 @@ button{
  cursor:pointer;
 }
 button:disabled{opacity:.6;cursor:not-allowed}
+
 .thumb-box{display:none;margin-top:14px}
 .thumb-grid{
  display:grid;
@@ -66,6 +67,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
  border:2px solid transparent;
 }
 .thumb-grid img.selected{border-color:#ff0055}
+
 .progress{
  display:none;
  height:8px;
@@ -109,6 +111,11 @@ button:disabled{opacity:.6;cursor:not-allowed}
 <div class="thumb-box" id="thumbBox">
  <p style="font-size:13px;color:#bbb">Select Thumbnail</p>
  <div class="thumb-grid" id="thumbGrid"></div>
+
+ <p style="font-size:13px;color:#bbb;margin-top:10px">
+  Or choose from existing gallery
+ </p>
+ <div class="thumb-grid" id="galleryGrid"></div>
 </div>
 
 <div class="progress" id="progress"><div id="bar"></div></div>
@@ -127,12 +134,31 @@ const titleInput=document.getElementById("title");
 const videoInput=document.getElementById("video");
 const thumbBox=document.getElementById("thumbBox");
 const thumbGrid=document.getElementById("thumbGrid");
+const galleryGrid=document.getElementById("galleryGrid");
 const btn=document.getElementById("btn");
 const status=document.getElementById("status");
 const bar=document.getElementById("bar");
 const progress=document.getElementById("progress");
 
-/* ===== THUMBNAIL GENERATION ===== */
+/* ===== LOAD THUMBNAIL GALLERY ===== */
+fetch("/api/thumbnails")
+.then(r=>r.json())
+.then(list=>{
+ if(!Array.isArray(list)) return;
+ list.forEach(src=>{
+  const img=document.createElement("img");
+  img.src=src;
+  img.onclick=()=>{
+   document.querySelectorAll(".thumb-grid img")
+    .forEach(i=>i.classList.remove("selected"));
+   img.classList.add("selected");
+   selectedThumbnail=src;
+  };
+  galleryGrid.appendChild(img);
+ });
+});
+
+/* ===== THUMBNAIL FROM VIDEO ===== */
 videoInput.addEventListener("change",()=>{
  const file=videoInput.files[0];
  if(!file) return;
@@ -173,7 +199,8 @@ function capture(video,time){
    const img=document.createElement("img");
    img.src=canvas.toDataURL("image/jpeg",0.9);
    img.onclick=()=>{
-    document.querySelectorAll("#thumbGrid img").forEach(i=>i.classList.remove("selected"));
+    document.querySelectorAll(".thumb-grid img")
+     .forEach(i=>i.classList.remove("selected"));
     img.classList.add("selected");
     selectedThumbnail=img.src;
    };
