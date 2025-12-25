@@ -19,17 +19,43 @@
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .playerWrap{width:100%;aspect-ratio:16/9;background:#000}
 .video-js{width:100%;height:100%}
-#related{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;padding:12px}
-.card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
-.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
-.card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+#related{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+ gap:12px;
+ padding:12px
+}
+.card{
+ background:#111;
+ border-radius:8px;
+ overflow:hidden;
+ cursor:pointer
+}
+.card img{
+ width:100%;
+ aspect-ratio:16/9;
+ object-fit:cover
+}
+.card p{
+ font-size:13px;
+ margin:6px;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis
+}
 </style>
 </head>
 
 <body>
 
 <div class="playerWrap">
- <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
+ <video id="player"
+  class="video-js vjs-default-skin"
+  controls
+  playsinline
+  preload="auto">
+ </video>
 </div>
 
 <!-- NATIVE BANNER -->
@@ -68,6 +94,38 @@ document.addEventListener("click",()=>{
   opened=true;
  }
 },{once:true});
+
+/* ===== VIDEO LOAD + RELATED ===== */
+const id = new URLSearchParams(location.search).get("id");
+const related = document.getElementById("related");
+const player = videojs("player");
+
+fetch("/api/videos")
+.then(r=>r.json())
+.then(videos=>{
+ if(!Array.isArray(videos)) return;
+
+ const v = videos.find(x=>x._id===id);
+ if(!v) return;
+
+ /* MAIN VIDEO */
+ player.src({ src:v.url, type:"video/mp4" });
+
+ /* RELATED (IMAGE THUMB ONLY) */
+ videos
+ .filter(x=>x._id!==id)
+ .slice(0,8)
+ .forEach(x=>{
+  const card=document.createElement("div");
+  card.className="card";
+  card.innerHTML=`
+   <img src="${x.thumbnail || '/logo.png'}">
+   <p>${x.title}</p>
+  `;
+  card.onclick=()=>location.href="/watch?id="+x._id;
+  related.appendChild(card);
+ });
+});
 </script>
 
 </body>
