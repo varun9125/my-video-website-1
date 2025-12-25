@@ -113,7 +113,7 @@ button:disabled{opacity:.6;cursor:not-allowed}
  <div class="thumb-grid" id="thumbGrid"></div>
 
  <p style="font-size:13px;color:#bbb;margin-top:10px">
-  Or choose from existing gallery
+  Choose from existing videos
  </p>
  <div class="thumb-grid" id="galleryGrid"></div>
 </div>
@@ -140,19 +140,20 @@ const status=document.getElementById("status");
 const bar=document.getElementById("bar");
 const progress=document.getElementById("progress");
 
-/* ===== LOAD THUMBNAIL GALLERY ===== */
-fetch("/api/thumbnails")
+/* ===== LOAD GALLERY FROM EXISTING VIDEOS ===== */
+fetch("/api/videos")
 .then(r=>r.json())
-.then(list=>{
- if(!Array.isArray(list)) return;
- list.forEach(src=>{
+.then(videos=>{
+ if(!Array.isArray(videos)) return;
+ videos.forEach(v=>{
+  if(!v.thumbnail) return;
   const img=document.createElement("img");
-  img.src=src;
+  img.src=v.thumbnail;
   img.onclick=()=>{
    document.querySelectorAll(".thumb-grid img")
     .forEach(i=>i.classList.remove("selected"));
    img.classList.add("selected");
-   selectedThumbnail=src;
+   selectedThumbnail=v.thumbnail;
   };
   galleryGrid.appendChild(img);
  });
@@ -244,7 +245,6 @@ btn.onclick=()=>{
  xhr.onload=()=>{
   bar.style.width="100%";
   btn.disabled=false;
-
   try{
    const res=JSON.parse(xhr.responseText||"{}");
    if(res.success){
@@ -257,7 +257,7 @@ btn.onclick=()=>{
     bar.style.width="0%";
     selectedThumbnail=null;
    }else{
-    status.innerHTML="<span class='err'>❌ "+(res.error||"Upload failed")+"</span>";
+    status.innerHTML="<span class='err'>❌ Upload failed</span>";
    }
   }catch{
    status.innerHTML="<span class='err'>❌ Server error</span>";
