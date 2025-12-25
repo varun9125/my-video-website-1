@@ -15,10 +15,43 @@
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:14px;max-width:720px;margin:0 auto}
-.card{background:#111;border-radius:12px;overflow:hidden}
-.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:16px;
+ padding:14px;
+ max-width:720px;
+ margin:0 auto
+}
+.card{
+ background:#111;
+ border-radius:12px;
+ overflow:hidden;
+ cursor:pointer
+}
+.card img{
+ width:100%;
+ aspect-ratio:16/9;
+ object-fit:cover
+}
 .info{padding:8px;font-size:13px}
+.pagination{
+ display:flex;
+ justify-content:center;
+ gap:6px;
+ padding:18px
+}
+.pagination button{
+ padding:8px 14px;
+ border:none;
+ border-radius:8px;
+ background:#1f1f1f;
+ color:#fff;
+ cursor:pointer
+}
+.pagination button.active{
+ background:#ff0055
+}
 </style>
 </head>
 
@@ -28,9 +61,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 <a href="https://evadereprimand.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a"
    target="_blank" rel="nofollow noopener" style="display:none"></a>
 
-<div class="grid">
- <!-- videos load here -->
-</div>
+<div class="grid" id="grid"></div>
 
 <!-- NATIVE BANNER -->
 <div style="padding:14px;max-width:720px;margin:0 auto">
@@ -38,6 +69,8 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  src="https://evadereprimand.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
+
+<div class="pagination" id="pagination"></div>
 
 <!-- BANNER 160x300 -->
 <div style="max-width:720px;margin:20px auto;text-align:center">
@@ -52,6 +85,50 @@ atOptions = {
 </script>
 <script src="https://evadereprimand.com/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
 </div>
+
+<script>
+const grid=document.getElementById("grid");
+const pagination=document.getElementById("pagination");
+
+let allVideos=[];
+let page=1;
+const perPage=12;
+
+/* LOAD VIDEOS */
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{
+ allVideos=Array.isArray(vs)?vs:[];
+ draw();
+});
+
+function draw(){
+ grid.innerHTML="";
+ pagination.innerHTML="";
+
+ const total=Math.ceil(allVideos.length/perPage);
+ const list=allVideos.slice((page-1)*perPage,page*perPage);
+
+ list.forEach(v=>{
+  const thumb=v.thumbnail || "/logo.png";
+  grid.insertAdjacentHTML("beforeend",`
+   <div class="card" onclick="location.href='/watch?id=${v._id}'">
+    <img src="${thumb}" loading="lazy">
+    <div class="info">${v.title}</div>
+   </div>
+  `);
+ });
+
+ for(let i=1;i<=total;i++){
+  pagination.insertAdjacentHTML("beforeend",`
+   <button class="${i===page?'active':''}"
+    onclick="page=${i};draw();window.scrollTo(0,0)">
+    ${i}
+   </button>
+  `);
+ }
+}
+</script>
 
 </body>
 </html>
