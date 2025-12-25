@@ -63,12 +63,13 @@ const videoSchema = new mongoose.Schema(
   },
   { versionKey: false }
 );
+
 const Video = mongoose.model("Video", videoSchema);
 
 /* ================= MULTER (FAST) ================= */
 const upload = multer({
-  dest: "/tmp",                 // 🔥 disk storage
-  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB
+  dest: "/tmp",
+  limits: { fileSize: 500 * 1024 * 1024 },
 });
 
 /* ================= ROUTES ================= */
@@ -81,13 +82,14 @@ app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
+/* GET VIDEOS */
 app.get("/api/videos", async (req, res) => {
   if (!dbReady) return res.json([]);
   const videos = await Video.find().sort({ createdAt: -1 }).lean();
   res.json(videos);
 });
 
-/* ========= FAST UPLOAD ========= */
+/* UPLOAD */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     if (!dbReady)
@@ -99,16 +101,14 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
     if (!req.file)
       return res.status(400).json({ success: false, error: "No video" });
 
-    /* 🎥 VIDEO UPLOAD (FAST) */
     const videoUpload = await cloudinary.uploader.upload(req.file.path, {
       resource_type: "video",
       folder: "kamababa/videos",
-      chunk_size: 10 * 1024 * 1024, // bigger chunk = faster
+      chunk_size: 10 * 1024 * 1024,
     });
 
-    fs.unlink(req.file.path, () => {}); // cleanup tmp file
+    fs.unlink(req.file.path, () => {});
 
-    /* 🖼️ THUMBNAIL (DEVICE IMAGE) */
     let thumbnailUrl = "";
     if (req.body.thumbnail?.startsWith("data:image")) {
       const thumb = await cloudinary.uploader.upload(req.body.thumbnail, {
@@ -130,21 +130,57 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
   }
 });
 
-/* ========= VIEW ========= */
+/* VIEW */
 app.post("/api/view/:id", async (req, res) => {
   if (dbReady)
     await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
   res.json({ success: true });
 });
 
-/* ========= LIKE ========= */
+/* LIKE */
 app.post("/api/like/:id", async (req, res) => {
   if (dbReady)
     await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
   res.json({ success: true });
 });
 
-/* ================= START ================= */
+/* DELETE VIDEO */
+app.post("/api/delete/:id", async (req, res) => {
+  try {
+    if (req.body.password !== ADMIN_PASSWORD)
+      return res.status(401).json({ success: false, error: "Wrong password" });
+
+    if (!dbReady)
+      return res.status(503).json({ success: false, error: "DB not ready" });
+
+    const video = await Video.findById(req.params.id);
+    if (!video)
+      return res.json({ success: false, error: "Video not found" });
+
+    const videoPublicId =
+      "kamababa/videos/" + video.url.split("/").pop().split(".")[0];
+
+    await cloudinary.uploader.destroy(videoPublicId, {
+      resource_type: "video",
+    });
+
+    if (video.thumbnail) {
+      const thumbPublicId =
+        "kamababa/thumbs/" +
+        video.thumbnail.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(thumbPublicId);
+    }
+
+    await Video.findByIdAndDelete(req.params.id);
+
+    res.json({ success: true });
+  } catch (e) {
+    console.error("DELETE ERROR:", e.message);
+    res.json({ success: false });
+  }
+});
+
+/* START */
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
