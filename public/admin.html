@@ -54,36 +54,13 @@ button{
 }
 button:disabled{opacity:.6;cursor:not-allowed}
 
-.thumb-preview{
- margin-top:10px;
- display:none;
-}
-.thumb-preview img{
- width:100%;
- border-radius:8px;
- border:2px solid #ff0055;
-}
+.thumb-preview{margin-top:10px;display:none}
+.thumb-preview img{width:100%;border-radius:8px;border:2px solid #ff0055}
 
-.progress{
- display:none;
- height:8px;
- background:#222;
- margin-top:14px;
- border-radius:10px;
- overflow:hidden;
-}
-.progress div{
- height:100%;
- width:0%;
- background:#ff0055;
- transition:width .2s;
-}
-#status{
- margin-top:12px;
- font-size:14px;
- text-align:center;
- min-height:20px;
-}
+.progress{display:none;height:8px;background:#222;margin-top:14px;border-radius:10px;overflow:hidden}
+.progress div{height:100%;width:0%;background:#ff0055;transition:width .2s}
+
+#status{margin-top:12px;font-size:14px;text-align:center;min-height:20px}
 .ok{color:#0f9d58}
 .err{color:#ff4444}
 </style>
@@ -116,6 +93,11 @@ button:disabled{opacity:.6;cursor:not-allowed}
 <button id="btn">🚀 Upload</button>
 <div id="status"></div>
 
+<hr style="margin:20px 0;border-color:#222">
+
+<h3 style="text-align:center;color:#bbb">Delete Existing Videos</h3>
+<div id="videoList"></div>
+
 </div>
 </div>
 
@@ -132,18 +114,12 @@ const btn=document.getElementById("btn");
 const status=document.getElementById("status");
 const bar=document.getElementById("bar");
 const progress=document.getElementById("progress");
+const videoList=document.getElementById("videoList");
 
-/* ===== DEVICE GALLERY THUMBNAIL ===== */
+/* THUMBNAIL FROM DEVICE */
 thumbFile.addEventListener("change",()=>{
  const file=thumbFile.files[0];
  if(!file) return;
-
- if(!file.type.startsWith("image/")){
-  status.innerHTML="<span class='err'>❌ Invalid image</span>";
-  thumbFile.value="";
-  return;
- }
-
  const reader=new FileReader();
  reader.onload=()=>{
   selectedThumbnail=reader.result;
@@ -153,16 +129,10 @@ thumbFile.addEventListener("change",()=>{
  reader.readAsDataURL(file);
 });
 
-/* ===== UPLOAD ===== */
+/* UPLOAD */
 btn.onclick=()=>{
- if(!passwordInput.value.trim()){
-  status.innerHTML="<span class='err'>❌ Password required</span>";return;
- }
- if(!videoInput.files[0]){
-  status.innerHTML="<span class='err'>❌ Select a video</span>";return;
- }
- if(!selectedThumbnail){
-  status.innerHTML="<span class='err'>❌ Select thumbnail from device</span>";return;
+ if(!passwordInput.value||!videoInput.files[0]||!selectedThumbnail){
+  status.innerHTML="<span class='err'>❌ Missing fields</span>";return;
  }
 
  btn.disabled=true;
@@ -171,50 +141,61 @@ btn.onclick=()=>{
  status.innerText="Uploading…";
 
  const fd=new FormData();
- fd.append("password",passwordInput.value.trim());
- fd.append("title",titleInput.value.trim()||"Untitled");
+ fd.append("password",passwordInput.value);
+ fd.append("title",titleInput.value||"Untitled");
  fd.append("video",videoInput.files[0]);
  fd.append("thumbnail",selectedThumbnail);
 
- const xhr=new XMLHttpRequest();
- xhr.open("POST","/api/upload");
-
- xhr.upload.onprogress=e=>{
-  if(e.lengthComputable){
-   bar.style.width=Math.round((e.loaded/e.total)*90)+"%";
-  }
- };
-
- xhr.onload=()=>{
-  bar.style.width="100%";
+ fetch("/api/upload",{method:"POST",body:fd})
+ .then(r=>r.json())
+ .then(res=>{
   btn.disabled=false;
-  try{
-   const res=JSON.parse(xhr.responseText||"{}");
-   if(res.success){
-    status.innerHTML="<span class='ok'>✅ Upload successful</span>";
-    passwordInput.value="";
-    titleInput.value="";
-    videoInput.value="";
-    thumbFile.value="";
-    thumbPreview.style.display="none";
-    progress.style.display="none";
-    bar.style.width="0%";
-    selectedThumbnail=null;
-   }else{
-    status.innerHTML="<span class='err'>❌ Upload failed</span>";
-   }
-  }catch{
-   status.innerHTML="<span class='err'>❌ Server error</span>";
+  progress.style.display="none";
+  bar.style.width="0%";
+  if(res.success){
+   status.innerHTML="<span class='ok'>✅ Upload successful</span>";
+   loadVideos();
+  }else{
+   status.innerHTML="<span class='err'>❌ Upload failed</span>";
   }
- };
-
- xhr.onerror=()=>{
-  btn.disabled=false;
-  status.innerHTML="<span class='err'>❌ Network error</span>";
- };
-
- xhr.send(fd);
+ });
 };
+
+/* LOAD VIDEOS */
+function loadVideos(){
+ fetch("/api/videos")
+ .then(r=>r.json())
+ .then(videos=>{
+  videoList.innerHTML="";
+  videos.forEach(v=>{
+   const row=document.createElement("div");
+   row.style.cssText="display:flex;align-items:center;gap:8px;margin:6px 0";
+   row.innerHTML=`
+    <img src="${v.thumbnail||'/logo.png'}" style="width:60px;height:34px;object-fit:cover;border-radius:4px">
+    <span style="flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.title}</span>
+    <button style="background:#ff4444;padding:6px 10px;border-radius:6px"
+     onclick="deleteVideo('${v._id}')">🗑</button>
+   `;
+   videoList.appendChild(row);
+  });
+ });
+}
+loadVideos();
+
+/* DELETE */
+function deleteVideo(id){
+ if(!confirm("Delete this video permanently?")) return;
+ fetch("/api/delete/"+id,{
+  method:"POST",
+  headers:{ "Content-Type":"application/json" },
+  body:JSON.stringify({ password: passwordInput.value })
+ })
+ .then(r=>r.json())
+ .then(res=>{
+  if(res.success){ loadVideos(); alert("Deleted"); }
+  else alert("Delete failed");
+ });
+}
 </script>
 
 </body>
