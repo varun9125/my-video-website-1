@@ -8,8 +8,8 @@
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
-<!-- POPUNDER (ANTI-ADBLOCK) -->
-<script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
+<!-- ADSTERRA POPUNDER (ANTI-ADBLOCK) -->
+<script src="https://pl28304315.effectivegatecpm.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
 
 <!-- VIDEO.JS -->
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
@@ -58,17 +58,17 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </video>
 </div>
 
-<!-- NATIVE BANNER -->
+<!-- ADSTERRA NATIVE BANNER -->
 <div style="padding:12px">
 <script async data-cfasync="false"
- src="https://evadereprimand.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
 <h3 style="padding-left:12px">Related Videos</h3>
 <div id="related"></div>
 
-<!-- BANNER 160x300 -->
+<!-- ADSTERRA BANNER 160x300 -->
 <div style="max-width:720px;margin:20px auto;text-align:center">
 <script>
 atOptions = {
@@ -79,23 +79,23 @@ atOptions = {
  'params' : {}
 };
 </script>
-<script src="https://evadereprimand.com/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
+<script src="https://pl28304315.effectivegatecpm.com/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
 </div>
 
 <script>
-/* SMARTLINK (CLICK BASED) */
+/* ADSTERRA SMARTLINK (CLICK BASED) */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
   window.open(
-   "https://evadereprimand.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
+   "https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a",
    "_blank"
   );
   opened=true;
  }
 },{once:true});
 
-/* ===== VIDEO LOAD + RELATED ===== */
+/* ===== VIDEO LOAD + RELATED (UNCHANGED) ===== */
 const id = new URLSearchParams(location.search).get("id");
 const related = document.getElementById("related");
 const player = videojs("player");
@@ -108,10 +108,8 @@ fetch("/api/videos")
  const v = videos.find(x=>x._id===id);
  if(!v) return;
 
- /* MAIN VIDEO */
  player.src({ src:v.url, type:"video/mp4" });
 
- /* RELATED (IMAGE THUMB ONLY) */
  videos
  .filter(x=>x._id!==id)
  .slice(0,8)
