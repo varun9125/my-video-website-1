@@ -8,7 +8,7 @@
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
-<!-- ✅ POPUNDER (ADSTERRA) -->
+<!-- POPUNDER (ADSTERRA) -->
 <script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
 
 <!-- VIDEO.JS -->
@@ -51,10 +51,11 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  overflow:hidden;
  cursor:pointer
 }
-.card video{
+.card img{
  width:100%;
  aspect-ratio:16/9;
- object-fit:cover
+ object-fit:cover;
+ display:block
 }
 .card p{
  font-size:13px;
@@ -80,7 +81,6 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- SITE NAME / LOGO (UNCHANGED) -->
 <div class="topLogo">
  <img src="/logo.png" alt="KamaBaba Viral">
 </div>
@@ -90,14 +90,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
-<!-- ✅ NATIVE BANNER (VIDEO KE TURANT NICHE – FORCE VIEW) -->
-<div style="padding:12px">
-<script async data-cfasync="false"
- src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
-
-<!-- INFO (TITLE / VIEWS / LIKE / SHARE – UNTOUCHED) -->
+<!-- ✅ INFO NOW DIRECTLY BELOW VIDEO -->
 <div class="info">
  <h3 id="title">Loading…</h3>
  <div class="meta">👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span></div>
@@ -107,7 +100,14 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- ✅ 160x300 BANNER (RELATED KE UPAR) -->
+<!-- ✅ NATIVE BANNER (INFO KE BAAD) -->
+<div style="padding:12px">
+<script async data-cfasync="false"
+ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
+<!-- 160x300 BANNER -->
 <div style="display:flex;justify-content:center;padding:12px">
 <script>
 atOptions={
@@ -125,7 +125,6 @@ atOptions={
 <div id="related"></div>
 
 <script>
-/* AGE GATE */
 if(localStorage.adult==="yes") ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
@@ -139,7 +138,12 @@ const related=document.getElementById("related");
 let allVideos=[];
 let player=videojs("player");
 
-/* LOAD DATA */
+function thumb(url){
+ if(!url || !url.includes("/video/upload/")) return "/logo.png";
+ return url.replace("/video/upload/","/video/upload/so_2/")
+           .replace(/\.(mp4|webm|mov).*/i,".jpg");
+}
+
 fetch("/api/videos")
 .then(r=>r.json())
 .then(vs=>{
@@ -161,13 +165,12 @@ fetch("/api/videos")
  renderRelated();
 });
 
-/* RELATED – 16:9 SINGLE GRID */
 function renderRelated(){
  related.innerHTML="";
  allVideos.filter(v=>v._id!==id).slice(0,8).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
-  c.innerHTML=`<video src="${v.url}#t=1" muted preload="metadata"></video><p>${v.title}</p>`;
+  c.innerHTML=`<img src="${thumb(v.url)}"><p>${v.title}</p>`;
   c.onclick=()=>location.href="/watch?id="+v._id;
   related.appendChild(c);
  });
@@ -184,7 +187,7 @@ function share(){
  alert("Link copied");
 }
 
-/* ✅ SMARTLINK */
+/* SMARTLINK */
 let opened=false;
 document.addEventListener("click",()=>{
  if(!opened){
