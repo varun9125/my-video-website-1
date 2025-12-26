@@ -39,7 +39,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 
-/* ✅ RELATED : 2 GRID */
+/* RELATED : 2 GRID */
 #related{
  display:grid;
  grid-template-columns:repeat(2,1fr);
@@ -91,7 +91,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
-<!-- INFO DIRECTLY BELOW VIDEO -->
+<!-- INFO BELOW VIDEO -->
 <div class="info">
  <h3 id="title">Loading…</h3>
  <div class="meta">👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span></div>
@@ -139,11 +139,13 @@ const related=document.getElementById("related");
 let allVideos=[];
 let player=videojs("player");
 
-/* THUMBNAIL FROM CLOUDINARY */
-function thumb(url){
- if(!url || !url.includes("/video/upload/")) return "/logo.png";
- return url.replace("/video/upload/","/video/upload/so_2/")
-           .replace(/\.(mp4|webm|mov).*/i,".jpg");
+/* ✅ MANUAL THUMBNAIL FIRST, ELSE AUTO */
+function getThumb(v){
+ if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
+ if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
+ return v.url
+  .replace("/video/upload/","/video/upload/so_2/")
+  .replace(/\.(mp4|webm|mov).*/i,".jpg");
 }
 
 fetch("/api/videos")
@@ -169,10 +171,13 @@ fetch("/api/videos")
 
 function renderRelated(){
  related.innerHTML="";
- allVideos.filter(v=>v._id!==id).slice(0,10).forEach(v=>{
+ allVideos
+ .filter(v=>v._id!==id)
+ .slice(0,10)
+ .forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
-  c.innerHTML=`<img src="${thumb(v.url)}"><p>${v.title}</p>`;
+  c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
   c.onclick=()=>location.href="/watch?id="+v._id;
   related.appendChild(c);
  });
