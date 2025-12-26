@@ -39,10 +39,11 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 
+/* ✅ RELATED : 2 GRID */
 #related{
  display:grid;
- grid-template-columns:1fr;
- gap:14px;
+ grid-template-columns:repeat(2,1fr);
+ gap:12px;
  padding:12px
 }
 .card{
@@ -90,7 +91,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
-<!-- ✅ INFO NOW DIRECTLY BELOW VIDEO -->
+<!-- INFO DIRECTLY BELOW VIDEO -->
 <div class="info">
  <h3 id="title">Loading…</h3>
  <div class="meta">👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span></div>
@@ -100,7 +101,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- ✅ NATIVE BANNER (INFO KE BAAD) -->
+<!-- NATIVE BANNER -->
 <div style="padding:12px">
 <script async data-cfasync="false"
  src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
@@ -138,6 +139,7 @@ const related=document.getElementById("related");
 let allVideos=[];
 let player=videojs("player");
 
+/* THUMBNAIL FROM CLOUDINARY */
 function thumb(url){
  if(!url || !url.includes("/video/upload/")) return "/logo.png";
  return url.replace("/video/upload/","/video/upload/so_2/")
@@ -167,7 +169,7 @@ fetch("/api/videos")
 
 function renderRelated(){
  related.innerHTML="";
- allVideos.filter(v=>v._id!==id).slice(0,8).forEach(v=>{
+ allVideos.filter(v=>v._id!==id).slice(0,10).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`<img src="${thumb(v.url)}"><p>${v.title}</p>`;
