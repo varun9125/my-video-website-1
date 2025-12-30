@@ -8,19 +8,9 @@
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
-<!-- EXOCLICK CLIENT HINTS -->
-<meta http-equiv="Delegate-CH"
-content="Sec-CH-UA https://s.magsrv.com;
-Sec-CH-UA-Mobile https://s.magsrv.com;
-Sec-CH-UA-Platform https://s.magsrv.com;">
-
-<!-- VIDEO.JS -->
+<!-- VIDEO.JS (ONLY PLAYER, NO ADS) -->
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
-
-<!-- GOOGLE IMA -->
-<script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
@@ -40,7 +30,13 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 <body>
 
 <div class="playerWrap">
-  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
+  <video
+    id="player"
+    class="video-js vjs-default-skin"
+    controls
+    playsinline
+    preload="auto">
+  </video>
 </div>
 
 <div class="info">
@@ -65,16 +61,10 @@ const related=document.getElementById("related");
 let allVideos=[];
 const player=videojs("player");
 
-/* 🔥 INIT IMA ONCE */
-player.ima({
- id:"player",
- adTagUrl:"https://s.magsrv.com/v1/vast.php?idzone=236643", // TEST ZONE
- prerollTimeout:5000,
- timeout:5000
-});
-
-/* LOAD VIDEO */
-fetch("/api/videos").then(r=>r.json()).then(vs=>{
+/* LOAD VIDEOS */
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{
  allVideos=Array.isArray(vs)?vs:[];
  const v=allVideos.find(x=>x._id===id || x.id==id);
  if(!v){titleEl.innerText="Video not found";return;}
@@ -83,24 +73,14 @@ fetch("/api/videos").then(r=>r.json()).then(vs=>{
  viewCount.innerText=v.views||0;
  likeCount.innerText=v.likes||0;
 
+ /* 🔥 JUST SET VIDEO — NOTHING ELSE */
  player.src({src:v.url,type:"video/mp4"});
+ player.play().catch(()=>{}); // mobile safe
+
  renderRelated();
 });
 
-/* 🔥 USER CLICK = AD FIRE (IMPORTANT) */
-let adRequested=false;
-player.on("play",()=>{
- if(adRequested) return;
- adRequested=true;
- try{
-  player.ima.initializeAdDisplayContainer();
-  player.ima.requestAds();
- }catch(e){}
-});
-
-/* FAILSAFE */
-player.on("adserror",()=>player.play());
-
+/* RELATED */
 function renderRelated(){
  related.innerHTML="";
  allVideos.filter(v=>v._id!==id && v.id!=id).slice(0,10).forEach(v=>{
@@ -112,6 +92,7 @@ function renderRelated(){
  });
 }
 
+/* LIKE */
 function like(){
  if(sessionStorage["l_"+id])return;
  likeCount.innerText++;
@@ -119,6 +100,7 @@ function like(){
  fetch("/api/like/"+id,{method:"POST"});
 }
 
+/* SHARE */
 function share(){
  navigator.clipboard.writeText(location.href);
  alert("Link copied");
