@@ -8,22 +8,43 @@
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
+<!-- VIDEO.JS -->
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+
+<!-- GOOGLE IMA SDK (FOR EXOCLICK VAST) -->
+<script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
+
+<!-- ADSTERRA POPUNDER -->
+<script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .topLogo{text-align:center;padding:10px;border-bottom:1px solid #222}
 .topLogo img{height:36px}
-.playerWrap{width:100%;aspect-ratio:16/9}
+.playerWrap{width:100%;aspect-ratio:16/9;background:#000}
 .video-js{width:100%;height:100%}
 .info{padding:12px}
 .meta{font-size:13px;color:#aaa}
 .actions button{margin-right:8px;padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
+
 #related{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}
-.card{background:#111;border-radius:8px;overflow:hidden}
+.card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
 .card img{width:100%;aspect-ratio:16/9;object-fit:cover}
 .card p{margin:6px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.moreBtn{
+ grid-column:1/-1;
+ padding:12px;
+ background:#ff0055;
+ border:none;
+ border-radius:10px;
+ color:#fff;
+ font-weight:700;
+ cursor:pointer
+}
+
 footer{border-top:1px solid #222;padding:14px;text-align:center;font-size:13px;color:#aaa}
 footer a{color:#aaa;margin:0 6px;text-decoration:none}
 </style>
@@ -31,19 +52,16 @@ footer a{color:#aaa;margin:0 6px;text-decoration:none}
 
 <body>
 
-<div style="background:#111;padding:8px;text-align:center;font-size:13px">
-Adult content. 18+ only.
-<button onclick="this.parentElement.remove()">I am 18+</button>
-</div>
-
 <div class="topLogo">
  <img src="/logo.png">
 </div>
 
+<!-- PLAYER -->
 <div class="playerWrap">
- <video id="player" class="video-js" controls></video>
+ <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
+<!-- INFO -->
 <div class="info">
  <h3 id="title">Loading…</h3>
  <div class="meta">👁 <span id="views">0</span> · 👍 <span id="likes">0</span></div>
@@ -53,8 +71,29 @@ Adult content. 18+ only.
  </div>
 </div>
 
+<!-- EXOCLICK / ADSTERRA NATIVE -->
+<div style="padding:12px">
+<script async data-cfasync="false"
+ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
 <h3 style="padding-left:12px">Related Videos</h3>
 <div id="related"></div>
+
+<!-- 160x300 BANNER -->
+<div style="display:flex;justify-content:center;padding:12px">
+<script>
+atOptions={
+ 'key':'3dc8adbe32b29fd7a5266d7e0bdfae1a',
+ 'format':'iframe',
+ 'height':300,
+ 'width':160,
+ 'params':{}
+};
+</script>
+<script src="https://evadereprimand.com/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
+</div>
 
 <footer>
  <a href="/privacy-policy.html">Privacy Policy</a> |
@@ -64,6 +103,7 @@ Adult content. 18+ only.
 </footer>
 
 <script>
+/* VIDEO + DATA */
 const id=new URLSearchParams(location.search).get("id");
 const player=videojs("player");
 const titleEl=document.getElementById("title");
@@ -71,23 +111,59 @@ const viewsEl=document.getElementById("views");
 const likesEl=document.getElementById("likes");
 const related=document.getElementById("related");
 
+function getThumb(v){
+ if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
+ if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
+ return v.url
+  .replace("/video/upload/","/video/upload/so_2/")
+  .replace(/\.(mp4|mov|webm).*/i,".jpg");
+}
+
+/* LOAD VIDEOS */
 fetch("/api/videos").then(r=>r.json()).then(vs=>{
  const v=vs.find(x=>x._id===id);
  if(!v)return;
+
  titleEl.innerText=v.title;
  viewsEl.innerText=v.views||0;
  likesEl.innerText=v.likes||0;
+
  player.src({src:v.url,type:"video/mp4"});
 
- vs.filter(x=>x._id!==id).slice(0,8).forEach(r=>{
+ /* EXOCLICK VAST PRE-ROLL */
+ player.ima({
+  id:'player',
+  adTagUrl:'https://s.magsrv.com/v1/vast.php?zoneid=5816342',
+  debug:false
+ });
+
+ player.ready(()=>{
+  player.one('play',()=>{
+   player.ima.initializeAdDisplayContainer();
+   player.ima.requestAds();
+  });
+ });
+
+ /* RELATED */
+ const rel=vs.filter(x=>x._id!==id);
+ rel.slice(0,6).forEach(r=>{
   const c=document.createElement("div");
   c.className="card";
-  c.innerHTML=`<img src="${r.thumbnail||'/logo.png'}"><p>${r.title}</p>`;
+  c.innerHTML=`<img src="${getThumb(r)}"><p>${r.title}</p>`;
   c.onclick=()=>location.href="/watch?id="+r._id;
   related.appendChild(c);
  });
+
+ if(rel.length>6){
+  const m=document.createElement("button");
+  m.className="moreBtn";
+  m.innerText="More Related Videos";
+  m.onclick=()=>location.href="/";
+  related.appendChild(m);
+ }
 });
 
+/* ACTIONS */
 function like(){likesEl.innerText++}
 function share(){
  navigator.clipboard.writeText(location.href);
