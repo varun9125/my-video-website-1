@@ -3,13 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Watch Hot Viral Video | KamaBaba Viral</title>
-
-<!-- SEO -->
-<meta name="description" content="Watch hot desi viral adult videos online on KamaBaba Viral. Trending clips updated daily.">
-<meta name="keywords" content="desi viral videos, adult videos, hot indian clips, kama baba viral">
-<meta name="robots" content="index, follow">
+<title>Watch Video | KamaBaba Viral</title>
 
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
@@ -21,12 +15,17 @@
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 
-<!-- GOOGLE IMA SDK (EXOCLICK VAST) -->
+<!-- GOOGLE IMA SDK (FOR EXOCLICK VAST) -->
 <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
+#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center}
+.ageBox{background:#141414;padding:24px;border-radius:12px;max-width:320px;text-align:center}
+.ageBtns{display:flex;gap:10px;margin-top:18px}
+.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600}
+.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
 
 .topLogo{text-align:center;padding:8px}
 .topLogo img{height:36px}
@@ -36,22 +35,52 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 
 .info{padding:12px}
 .meta{font-size:13px;color:#aaa}
+
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 
+/* RELATED */
 #related{
  display:grid;
  grid-template-columns:repeat(2,1fr);
  gap:12px;
  padding:12px
 }
-.card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
-.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
-.card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card{
+ background:#111;
+ border-radius:8px;
+ overflow:hidden;
+ cursor:pointer
+}
+.card img{
+ width:100%;
+ aspect-ratio:16/9;
+ object-fit:cover;
+ display:block
+}
+.card p{
+ font-size:13px;
+ margin:6px;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis
+}
 </style>
 </head>
 
 <body>
+
+<!-- AGE GATE -->
+<div id="ageGate">
+ <div class="ageBox">
+  <h2>🔞 Adult Content</h2>
+  <p>18+ Only</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="deny()">No</button>
+  </div>
+ </div>
+</div>
 
 <div class="topLogo">
  <img src="/logo.png" alt="KamaBaba Viral">
@@ -72,10 +101,10 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- EXOCLICK 120x150 -->
+<!-- ✅ EXOCLICK 120x150 BANNER -->
 <div style="display:flex;justify-content:center;padding:12px">
  <a href="https://www.exoclick.com/signup/?login=RAVI2104" target="_blank" rel="nofollow">
-  <img src="https://www.exoclick.com/banners/120x150.gif">
+  <img src="https://www.exoclick.com/banners/120x150.gif" border="0">
  </a>
 </div>
 
@@ -83,6 +112,11 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 <div id="related"></div>
 
 <script>
+/* AGE GATE */
+if(localStorage.adult==="yes") ageGate.style.display="none";
+function allow(){localStorage.adult="yes";ageGate.style.display="none"}
+function deny(){location.href="https://google.com"}
+
 const id=new URLSearchParams(location.search).get("id");
 const titleEl=document.getElementById("title");
 const viewCount=document.getElementById("viewCount");
@@ -92,6 +126,7 @@ const related=document.getElementById("related");
 let allVideos=[];
 let player=videojs("player");
 
+/* THUMB FIX */
 function getThumb(v){
  if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
  if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
@@ -103,17 +138,16 @@ fetch("/api/videos")
 .then(r=>r.json())
 .then(vs=>{
  allVideos=Array.isArray(vs)?vs:[];
+ const v=allVideos.find(x=>x._id===id);
+ if(!v) return;
 
- const current = allVideos.find(x=>String(x._id)===String(id));
- if(!current) return;
+ titleEl.innerText=v.title;
+ viewCount.innerText=v.views||0;
+ likeCount.innerText=v.likes||0;
 
- titleEl.innerText=current.title;
- viewCount.innerText=current.views||0;
- likeCount.innerText=current.likes||0;
+ player.src({src:v.url,type:"video/mp4"});
 
- player.src({src:current.url,type:"video/mp4"});
-
- /* EXOCLICK VAST */
+ /* 🔥 EXOCLICK VAST (VIDEO PLAY KE TIME) */
  player.ima({
   id:"player",
   adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
@@ -137,7 +171,7 @@ fetch("/api/videos")
 function renderRelated(){
  related.innerHTML="";
  allVideos
- .filter(v=>String(v._id)!==String(id))
+ .filter(v=>v._id!==id)
  .slice(0,10)
  .forEach(v=>{
   const c=document.createElement("div");
@@ -161,3 +195,11 @@ function share(){
 
 </body>
 </html>
+<script>
+/* 🔒 SAFE FORCE RENDER – RELATED FIX */
+setTimeout(function(){
+  if(allVideos && allVideos.length && related.children.length === 0){
+    renderRelated();
+  }
+}, 800);
+</script>
