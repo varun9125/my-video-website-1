@@ -8,9 +8,13 @@
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
-<!-- VIDEO.JS (ONLY PLAYER, NO ADS) -->
+<!-- VIDEO.JS -->
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+
+<!-- GOOGLE IMA (EXOCLICK IN-STREAM) -->
+<script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
@@ -52,33 +56,52 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 <div id="related"></div>
 
 <script>
-const id=new URLSearchParams(location.search).get("id");
-const titleEl=document.getElementById("title");
-const viewCount=document.getElementById("viewCount");
-const likeCount=document.getElementById("likeCount");
-const related=document.getElementById("related");
+const id = new URLSearchParams(location.search).get("id");
+const titleEl = document.getElementById("title");
+const viewCount = document.getElementById("viewCount");
+const likeCount = document.getElementById("likeCount");
+const related = document.getElementById("related");
 
 let allVideos=[];
-const player=videojs("player");
+const player = videojs("player");
 
-/* LOAD VIDEOS */
+/* 🔥 INIT EXOCLICK (TEST ZONE) */
+player.ima({
+  id: "player",
+  adTagUrl: "https://s.magsrv.com/v1/vast.php?idzone=236643",
+  prerollTimeout: 5000,
+  timeout: 5000
+});
+
+/* LOAD VIDEO */
 fetch("/api/videos")
 .then(r=>r.json())
 .then(vs=>{
- allVideos=Array.isArray(vs)?vs:[];
- const v=allVideos.find(x=>x._id===id || x.id==id);
- if(!v){titleEl.innerText="Video not found";return;}
+ allVideos = Array.isArray(vs)?vs:[];
+ const v = allVideos.find(x=>x._id===id || x.id==id);
+ if(!v){ titleEl.innerText="Video not found"; return; }
 
- titleEl.innerText=v.title;
- viewCount.innerText=v.views||0;
- likeCount.innerText=v.likes||0;
+ titleEl.innerText = v.title;
+ viewCount.innerText = v.views||0;
+ likeCount.innerText = v.likes||0;
 
- /* 🔥 JUST SET VIDEO — NOTHING ELSE */
- player.src({src:v.url,type:"video/mp4"});
- player.play().catch(()=>{}); // mobile safe
-
+ player.src({ src:v.url, type:"video/mp4" });
  renderRelated();
 });
+
+/* 🔥 USER CLICK = AD FIRE */
+let adRequested=false;
+player.on("play",()=>{
+ if(adRequested) return;
+ adRequested=true;
+ try{
+  player.ima.initializeAdDisplayContainer();
+  player.ima.requestAds();
+ }catch(e){}
+});
+
+/* FAILSAFE */
+player.on("adserror",()=>player.play());
 
 /* RELATED */
 function renderRelated(){
