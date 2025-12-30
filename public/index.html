@@ -31,6 +31,53 @@ header{background:#111;padding:12px;border-bottom:1px solid #222}
 .title{font-size:14px;font-weight:600}
 .views{font-size:12px;color:#aaa}
 
+/* PAGINATION */
+#pagination{
+ text-align:center;
+ padding:20px
+}
+#pagination button{
+ margin:4px;
+ padding:6px 12px;
+ border:none;
+ border-radius:6px;
+ background:#1f1f1f;
+ color:#fff;
+ cursor:pointer
+}
+#pagination button.active{
+ background:#ff0055
+}
+
+/* AGE GATE */
+#ageGate{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.95);
+ z-index:9999;
+ display:flex;
+ align-items:center;
+ justify-content:center
+}
+.ageBox{
+ background:#141414;
+ padding:24px;
+ border-radius:12px;
+ text-align:center;
+ max-width:320px
+}
+.ageBtns{display:flex;gap:10px;margin-top:16px}
+.ageBtns button{
+ flex:1;
+ padding:10px;
+ border:none;
+ border-radius:8px;
+ font-weight:600;
+ cursor:pointer
+}
+.yes{background:#0f9d58;color:#fff}
+.no{background:#333;color:#fff}
+
 footer{
  max-width:720px;
  margin:30px auto;
@@ -46,9 +93,16 @@ footer a{color:#aaa;margin:0 6px;text-decoration:none}
 
 <body>
 
-<div style="background:#111;padding:8px;text-align:center;font-size:13px">
-This website contains adult content. 18+ only.
-<button onclick="this.parentElement.remove()" style="margin-left:10px">I am 18+</button>
+<!-- AGE GATE POPUP -->
+<div id="ageGate">
+ <div class="ageBox">
+  <h2>🔞 Adult Content</h2>
+  <p>You must be 18+ to continue</p>
+  <div class="ageBtns">
+   <button class="yes" onclick="allow()">I am 18+</button>
+   <button class="no" onclick="deny()">Exit</button>
+  </div>
+ </div>
 </div>
 
 <header>
@@ -66,6 +120,8 @@ This website contains adult content. 18+ only.
 
 <div class="grid" id="grid"></div>
 
+<div id="pagination"></div>
+
 <footer>
  © 2025 KamaBaba Viral<br><br>
  <a href="/privacy-policy.html">Privacy Policy</a> |
@@ -75,14 +131,54 @@ This website contains adult content. 18+ only.
 </footer>
 
 <script>
-const grid=document.getElementById("grid");
+/* AGE GATE */
+if(localStorage.adult==="yes"){
+ document.getElementById("ageGate").style.display="none";
+}
+function allow(){
+ localStorage.adult="yes";
+ document.getElementById("ageGate").style.display="none";
+}
+function deny(){
+ location.href="https://google.com";
+}
 
-fetch("/api/videos").then(r=>r.json()).then(vs=>{
- (vs||[]).forEach(v=>{
+/* PAGINATION + THUMB FIX */
+const grid=document.getElementById("grid");
+const pagination=document.getElementById("pagination");
+
+let allVideos=[],page=1;
+const perPage=8;
+
+/* AUTO THUMB FOR OLD VIDEOS */
+function getThumb(v){
+ if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
+ if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
+ return v.url
+  .replace("/video/upload/","/video/upload/so_2/")
+  .replace(/\.(mp4|mov|webm).*/i,".jpg");
+}
+
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{
+ allVideos=Array.isArray(vs)?vs:[];
+ draw();
+});
+
+function draw(){
+ grid.innerHTML="";
+ pagination.innerHTML="";
+
+ const total=Math.ceil(allVideos.length/perPage);
+ const start=(page-1)*perPage;
+ const end=start+perPage;
+
+ allVideos.slice(start,end).forEach(v=>{
   const d=document.createElement("div");
   d.className="card";
   d.innerHTML=`
-   <img src="${v.thumbnail||'/logo.png'}">
+   <img src="${getThumb(v)}">
    <div class="info">
     <div class="title">${v.title}</div>
     <div class="views">👁 ${v.views||0}</div>
@@ -90,7 +186,19 @@ fetch("/api/videos").then(r=>r.json()).then(vs=>{
   d.onclick=()=>location.href="/watch?id="+v._id;
   grid.appendChild(d);
  });
-});
+
+ for(let i=1;i<=total;i++){
+  const b=document.createElement("button");
+  b.innerText=i;
+  if(i===page) b.className="active";
+  b.onclick=()=>{
+   page=i;
+   draw();
+   window.scrollTo({top:0,behavior:"smooth"});
+  };
+  pagination.appendChild(b);
+ }
+}
 </script>
 
 </body>
