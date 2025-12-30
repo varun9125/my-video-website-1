@@ -20,12 +20,14 @@ app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
 /* ================= STATIC FILES ================= */
-app.use(express.static(path.join(__dirname, "public"), {
-  maxAge: 0,
-  etag: false,
-}));
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: 0,
+    etag: false,
+  })
+);
 
-/* ================= SITEMAP (FINAL FIX) ================= */
+/* ================= SITEMAP ================= */
 app.get("/sitemap.xml", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "sitemap.xml"));
 });
@@ -51,8 +53,8 @@ mongoose
     console.log("✅ MongoDB connected");
     dbReady = true;
   })
-  .catch(() => {
-    console.log("❌ MongoDB connection failed");
+  .catch((err) => {
+    console.error("❌ MongoDB error:", err.message);
     dbReady = false;
   });
 
@@ -87,18 +89,19 @@ app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-/* API: GET VIDEOS */
+/* ================= API ================= */
+
+// GET VIDEOS
 app.get("/api/videos", async (req, res) => {
   if (!dbReady) return res.json([]);
   const videos = await Video.find().sort({ createdAt: -1 }).lean();
   res.json(videos);
 });
 
-/* API: UPLOAD */
+// UPLOAD VIDEO
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
-    if (!dbReady)
-      return res.status(503).json({ success: false });
+    if (!dbReady) return res.status(503).json({ success: false });
 
     if (req.body.password !== ADMIN_PASSWORD)
       return res.status(401).json({ success: false });
@@ -106,13 +109,20 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
     if (!req.file)
       return res.status(400).json({ success: false });
 
-    const videoUpload = await cloudinary.uploader.upload(req.file.path, {
+    const uploadRes = await cloudinary.uploader.upload(req.file.path, {
       resource_type: "video",
       folder: "kamababa/videos",
       chunk_size: 10 * 1024 * 1024,
+      format: "mp4",
     });
 
     fs.unlink(req.file.path, () => {});
+
+    // 🔥 STREAMING-FRIENDLY URL (FINAL FIX)
+    const streamUrl = uploadRes.secure_url.replace(
+      "/upload/",
+      "/upload/f_mp4,vc_h264/"
+    );
 
     let thumbnailUrl = "";
     if (req.body.thumbnail?.startsWith("data:image")) {
@@ -124,7 +134,7 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
 
     await Video.create({
       title: req.body.title || "Untitled",
-      url: videoUpload.secure_url,
+      url: streamUrl,
       thumbnail: thumbnailUrl,
     });
 
@@ -135,17 +145,23 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
   }
 });
 
-/* API: VIEW */
+// VIEW COUNT
 app.post("/api/view/:id", async (req, res) => {
-  if (dbReady)
-    await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+  if (dbReady) {
+    await Video.findByIdAndUpdate(req.params.id, {
+      $inc: { views: 1 },
+    });
+  }
   res.json({ success: true });
 });
 
-/* API: LIKE */
+// LIKE
 app.post("/api/like/:id", async (req, res) => {
-  if (dbReady)
-    await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
+  if (dbReady) {
+    await Video.findByIdAndUpdate(req.params.id, {
+      $inc: { likes: 1 },
+    });
+  }
   res.json({ success: true });
 });
 
