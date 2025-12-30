@@ -18,7 +18,7 @@ Sec-CH-UA-Platform https://s.magsrv.com;">
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 
-<!-- GOOGLE IMA (EXOCLICK INSTREAM) -->
+<!-- GOOGLE IMA -->
 <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
@@ -27,68 +27,102 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .playerWrap{width:100%;aspect-ratio:16/9;background:#000}
 .video-js{width:100%;height:100%}
 .info{padding:12px}
+.meta{font-size:13px;color:#aaa}
+.actions{display:flex;gap:10px;margin-top:10px}
+.actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
+#related{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}
+.card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
+.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 
 <body>
 
 <div class="playerWrap">
-  <video
-    id="player"
-    class="video-js vjs-default-skin"
-    controls
-    playsinline
-    preload="auto">
-  </video>
+  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
 <div class="info">
   <h3 id="title">Loading…</h3>
+  <div class="meta">👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span></div>
+  <div class="actions">
+    <button onclick="like()">👍 Like</button>
+    <button onclick="share()">🔗 Share</button>
+  </div>
 </div>
 
+<h3 style="padding-left:12px">Related Videos</h3>
+<div id="related"></div>
+
 <script>
-/* ================= LOAD VIDEO ================= */
-const id = new URLSearchParams(location.search).get("id");
-const titleEl = document.getElementById("title");
+const id=new URLSearchParams(location.search).get("id");
+const titleEl=document.getElementById("title");
+const viewCount=document.getElementById("viewCount");
+const likeCount=document.getElementById("likeCount");
+const related=document.getElementById("related");
 
-fetch("/api/videos")
-.then(r=>r.json())
-.then(list=>{
-  const v = list.find(x=>x._id===id || x.id==id);
-  if(!v){
-    titleEl.innerText="Video not found";
-    return;
-  }
+let allVideos=[];
+const player=videojs("player");
 
-  titleEl.innerText = v.title || "Video";
-
-  const player = videojs("player");
-
-  /* SET VIDEO FIRST (VERY IMPORTANT) */
-  player.src({
-    src: v.url,
-    type: "video/mp4"
-  });
-
-  /* ================= EXOCLICK IN-STREAM ================= */
-  player.ima({
-    id: "player",
-    adTagUrl: "https://s.magsrv.com/v1/vast.php?idzone=236643", // TEST ZONE
-    prerollTimeout: 5000,
-    timeout: 5000
-  });
-
-  /* REQUEST ADS AFTER VIDEO IS READY */
-  player.ready(()=>{
-    try{
-      player.ima.initializeAdDisplayContainer();
-      player.ima.requestAds();
-    }catch(e){}
-  });
-
-  /* FAILSAFE */
-  player.on("adserror",()=>player.play());
+/* 🔥 INIT IMA ONCE */
+player.ima({
+ id:"player",
+ adTagUrl:"https://s.magsrv.com/v1/vast.php?idzone=236643", // TEST ZONE
+ prerollTimeout:5000,
+ timeout:5000
 });
+
+/* LOAD VIDEO */
+fetch("/api/videos").then(r=>r.json()).then(vs=>{
+ allVideos=Array.isArray(vs)?vs:[];
+ const v=allVideos.find(x=>x._id===id || x.id==id);
+ if(!v){titleEl.innerText="Video not found";return;}
+
+ titleEl.innerText=v.title;
+ viewCount.innerText=v.views||0;
+ likeCount.innerText=v.likes||0;
+
+ player.src({src:v.url,type:"video/mp4"});
+ renderRelated();
+});
+
+/* 🔥 USER CLICK = AD FIRE (IMPORTANT) */
+let adRequested=false;
+player.on("play",()=>{
+ if(adRequested) return;
+ adRequested=true;
+ try{
+  player.ima.initializeAdDisplayContainer();
+  player.ima.requestAds();
+ }catch(e){}
+});
+
+/* FAILSAFE */
+player.on("adserror",()=>player.play());
+
+function renderRelated(){
+ related.innerHTML="";
+ allVideos.filter(v=>v._id!==id && v.id!=id).slice(0,10).forEach(v=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`<img src="${v.thumbnail||'/logo.png'}"><p>${v.title}</p>`;
+  c.onclick=()=>location.href="/watch?id="+(v._id||v.id);
+  related.appendChild(c);
+ });
+}
+
+function like(){
+ if(sessionStorage["l_"+id])return;
+ likeCount.innerText++;
+ sessionStorage["l_"+id]=1;
+ fetch("/api/like/"+id,{method:"POST"});
+}
+
+function share(){
+ navigator.clipboard.writeText(location.href);
+ alert("Link copied");
+}
 </script>
 
 </body>
