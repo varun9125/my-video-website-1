@@ -195,3 +195,11 @@ function share(){
 
 </body>
 </html>
+<script>
+/* 🔒 SAFE FORCE RENDER – RELATED FIX */
+setTimeout(function(){
+  if(allVideos && allVideos.length && related.children.length === 0){
+    renderRelated();
+  }
+}, 800);
+</script>
