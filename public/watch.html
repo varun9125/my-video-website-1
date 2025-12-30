@@ -21,16 +21,11 @@
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
-
-#ageGate{
- position:fixed;inset:0;background:rgba(0,0,0,.95);
- z-index:9999;display:flex;align-items:center;justify-content:center
-}
+#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center}
 .ageBox{background:#141414;padding:24px;border-radius:12px;max-width:320px;text-align:center}
 .ageBtns{display:flex;gap:10px;margin-top:18px}
 .ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600}
-.yes{background:#0f9d58;color:#fff}
-.no{background:#333;color:#fff}
+.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
 
 .topLogo{text-align:center;padding:8px}
 .topLogo img{height:36px}
@@ -44,7 +39,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 
-/* RELATED */
+/* RELATED : 2 GRID */
 #related{
  display:grid;
  grid-template-columns:repeat(2,1fr);
@@ -52,16 +47,23 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  padding:12px
 }
 .card{
- background:#111;border-radius:8px;
- overflow:hidden;cursor:pointer
+ background:#111;
+ border-radius:8px;
+ overflow:hidden;
+ cursor:pointer
 }
 .card img{
- width:100%;aspect-ratio:16/9;
- object-fit:cover;display:block
+ width:100%;
+ aspect-ratio:16/9;
+ object-fit:cover;
+ display:block
 }
 .card p{
- font-size:13px;margin:6px;
- white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+ font-size:13px;
+ margin:6px;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis
 }
 </style>
 </head>
@@ -89,7 +91,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
-<!-- INFO -->
+<!-- INFO BELOW VIDEO -->
 <div class="info">
  <h3 id="title">Loading…</h3>
  <div class="meta">👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span></div>
@@ -99,25 +101,14 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- ✅ RELATED VIDEOS (ADS SE PEHLE – IMPORTANT) -->
-<h3 style="padding-left:12px">Related Videos</h3>
-<div id="related"></div>
-
-<!-- EXOCLICK 120x150 -->
-<div style="display:flex;justify-content:center;padding:12px">
- <a href="https://www.exoclick.com/signup/?login=RAVI2104" target="_blank" rel="nofollow">
-  <img src="https://www.exoclick.com/banners/120x150.gif" border="0">
- </a>
-</div>
-
-<!-- ADSTERRA NATIVE -->
+<!-- NATIVE BANNER -->
 <div style="padding:12px">
 <script async data-cfasync="false"
  src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
 </div>
 
-<!-- ADSTERRA 160x300 -->
+<!-- 160x300 BANNER -->
 <div style="display:flex;justify-content:center;padding:12px">
 <script>
 atOptions={
@@ -131,14 +122,14 @@ atOptions={
 <script src="https://evadereprimand.com/3d/c8/ad/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
 </div>
 
+<h3 style="padding-left:12px">Related Videos</h3>
+<div id="related"></div>
+
 <script>
-/* AGE GATE */
-const ageGate=document.getElementById("ageGate");
 if(localStorage.adult==="yes") ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
 
-/* DATA */
 const id=new URLSearchParams(location.search).get("id");
 const titleEl=document.getElementById("title");
 const viewCount=document.getElementById("viewCount");
@@ -146,17 +137,17 @@ const likeCount=document.getElementById("likeCount");
 const related=document.getElementById("related");
 
 let allVideos=[];
-const player=videojs("player");
+let player=videojs("player");
 
-/* THUMB FIX */
+/* ✅ MANUAL THUMBNAIL FIRST, ELSE AUTO */
 function getThumb(v){
  if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
  if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
- return v.url.replace("/video/upload/","/video/upload/so_2/")
-             .replace(/\.(mp4|webm|mov).*/i,".jpg");
+ return v.url
+  .replace("/video/upload/","/video/upload/so_2/")
+  .replace(/\.(mp4|webm|mov).*/i,".jpg");
 }
 
-/* LOAD VIDEOS */
 fetch("/api/videos")
 .then(r=>r.json())
 .then(vs=>{
@@ -167,54 +158,50 @@ fetch("/api/videos")
  titleEl.innerText=v.title;
  viewCount.innerText=v.views||0;
  likeCount.innerText=v.likes||0;
-
  player.src({src:v.url,type:"video/mp4"});
 
- /* EXOCLICK VAST (REQUEST ALWAYS) */
- player.ima({
-  id:"player",
-  adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
-  timeout:4000,
-  prerollTimeout:4000
- });
-
- player.one("play",()=>{
-  try{
-   player.ima.initializeAdDisplayContainer();
-   player.ima.requestAds();
-  }catch(e){}
- });
-
- player.on("adserror",()=>player.play());
- player.on("ads-ad-ended",()=>player.play());
+ if(!sessionStorage["v_"+id]){
+  fetch("/api/view/"+id,{method:"POST"});
+  viewCount.innerText++;
+  sessionStorage["v_"+id]=1;
+ }
 
  renderRelated();
 });
 
-/* FORCE RENDER (API slow fallback) */
-setTimeout(()=>{
- if(allVideos.length) renderRelated();
-},600);
-
 function renderRelated(){
  related.innerHTML="";
  allVideos
-  .filter(v=>v._id!==id)
-  .slice(0,10)
-  .forEach(v=>{
-   const c=document.createElement("div");
-   c.className="card";
-   c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
-   c.onclick=()=>location.href="/watch?id="+v._id;
-   related.appendChild(c);
-  });
+ .filter(v=>v._id!==id)
+ .slice(0,10)
+ .forEach(v=>{
+  const c=document.createElement("div");
+  c.className="card";
+  c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
+  c.onclick=()=>location.href="/watch?id="+v._id;
+  related.appendChild(c);
+ });
 }
 
-function like(){likeCount.innerText++}
+function like(){
+ if(sessionStorage["l_"+id])return;
+ fetch("/api/like/"+id,{method:"POST"});
+ likeCount.innerText++;
+ sessionStorage["l_"+id]=1;
+}
 function share(){
  navigator.clipboard.writeText(location.href);
  alert("Link copied");
 }
+
+/* SMARTLINK */
+let opened=false;
+document.addEventListener("click",()=>{
+ if(!opened){
+  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
+  opened=true;
+ }
+},{once:true});
 </script>
 
 </body>
