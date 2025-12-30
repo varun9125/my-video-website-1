@@ -28,9 +28,8 @@ app.use(
   })
 );
 
-/* ================= SITEMAP ROUTE (FIXED) ================= */
+/* ================= SITEMAP (FIXED) ================= */
 app.get("/sitemap.xml", (req, res) => {
-  res.header("Content-Type", "application/xml");
   res.sendFile(path.join(__dirname, "sitemap.xml"));
 });
 
@@ -55,7 +54,10 @@ mongoose
     console.log("✅ MongoDB connected");
     dbReady = true;
   })
-  .catch(() => (dbReady = false));
+  .catch(() => {
+    console.log("❌ MongoDB connection failed");
+    dbReady = false;
+  });
 
 /* ================= MODEL ================= */
 const videoSchema = new mongoose.Schema(
@@ -79,6 +81,7 @@ const upload = multer({
 });
 
 /* ================= ROUTES ================= */
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -176,13 +179,15 @@ app.post("/api/delete/:id", async (req, res) => {
     }
 
     await Video.findByIdAndDelete(req.params.id);
+
     res.json({ success: true });
   } catch (e) {
+    console.error("DELETE ERROR:", e.message);
     res.json({ success: false });
   }
 });
 
-/* START */
+/* ================= START ================= */
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
