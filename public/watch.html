@@ -12,12 +12,9 @@
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 
-<!-- GOOGLE IMA SDK (FOR EXOCLICK VAST) -->
+<!-- GOOGLE IMA SDK -->
 <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
-
-<!-- ADSTERRA POPUNDER -->
-<script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
@@ -25,6 +22,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .topLogo img{height:36px}
 .playerWrap{width:100%;aspect-ratio:16/9;background:#000}
 .video-js{width:100%;height:100%}
+
 .info{padding:12px}
 .meta{font-size:13px;color:#aaa}
 .actions button{margin-right:8px;padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
@@ -71,28 +69,14 @@ footer a{color:#aaa;margin:0 6px;text-decoration:none}
  </div>
 </div>
 
-<!-- EXOCLICK / ADSTERRA NATIVE -->
+<h3 style="padding-left:12px">Related Videos</h3>
+<div id="related"></div>
+
+<!-- ADSTERRA / EXOCLICK NATIVE (NOW BELOW RELATED) -->
 <div style="padding:12px">
 <script async data-cfasync="false"
  src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
 <div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
-
-<h3 style="padding-left:12px">Related Videos</h3>
-<div id="related"></div>
-
-<!-- 160x300 BANNER -->
-<div style="display:flex;justify-content:center;padding:12px">
-<script>
-atOptions={
- 'key':'3dc8adbe32b29fd7a5266d7e0bdfae1a',
- 'format':'iframe',
- 'height':300,
- 'width':160,
- 'params':{}
-};
-</script>
-<script src="https://evadereprimand.com/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
 </div>
 
 <footer>
@@ -103,7 +87,6 @@ atOptions={
 </footer>
 
 <script>
-/* VIDEO + DATA */
 const id=new URLSearchParams(location.search).get("id");
 const player=videojs("player");
 const titleEl=document.getElementById("title");
@@ -114,38 +97,47 @@ const related=document.getElementById("related");
 function getThumb(v){
  if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
  if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
- return v.url
-  .replace("/video/upload/","/video/upload/so_2/")
-  .replace(/\.(mp4|mov|webm).*/i,".jpg");
+ return v.url.replace("/video/upload/","/video/upload/so_2/")
+             .replace(/\.(mp4|mov|webm).*/i,".jpg");
 }
 
-/* LOAD VIDEOS */
-fetch("/api/videos").then(r=>r.json()).then(vs=>{
- const v=vs.find(x=>x._id===id);
- if(!v)return;
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{
+ const video = vs.find(x=>x._id===id);
+ if(!video){ alert("Video not found"); return; }
 
- titleEl.innerText=v.title;
- viewsEl.innerText=v.views||0;
- likesEl.innerText=v.likes||0;
+ titleEl.innerText=video.title;
+ viewsEl.innerText=video.views||0;
+ likesEl.innerText=video.likes||0;
 
- player.src({src:v.url,type:"video/mp4"});
+ player.src({src:video.url,type:"video/mp4"});
 
- /* EXOCLICK VAST PRE-ROLL */
+ /* ✅ EXOCLICK PRE-ROLL (BEFORE VIDEO) */
  player.ima({
   id:'player',
   adTagUrl:'https://s.magsrv.com/v1/vast.php?zoneid=5816342',
-  debug:false
+  timeout:5000,
+  prerollTimeout:5000
  });
 
  player.ready(()=>{
   player.one('play',()=>{
-   player.ima.initializeAdDisplayContainer();
-   player.ima.requestAds();
+   try{
+    player.ima.initializeAdDisplayContainer();
+    player.ima.requestAds();
+   }catch(e){
+    player.play();
+   }
   });
  });
 
- /* RELATED */
- const rel=vs.filter(x=>x._id!==id);
+ player.on('adserror',()=>player.play());
+
+ /* ✅ RELATED VIDEOS FIX */
+ related.innerHTML="";
+ const rel = vs.filter(v=>v._id!==id);
+
  rel.slice(0,6).forEach(r=>{
   const c=document.createElement("div");
   c.className="card";
@@ -155,11 +147,11 @@ fetch("/api/videos").then(r=>r.json()).then(vs=>{
  });
 
  if(rel.length>6){
-  const m=document.createElement("button");
-  m.className="moreBtn";
-  m.innerText="More Related Videos";
-  m.onclick=()=>location.href="/";
-  related.appendChild(m);
+  const btn=document.createElement("button");
+  btn.className="moreBtn";
+  btn.innerText="More Related Videos";
+  btn.onclick=()=>location.href="/";
+  related.appendChild(btn);
  }
 });
 
