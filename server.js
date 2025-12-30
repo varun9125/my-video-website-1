@@ -19,13 +19,16 @@ app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
-// ✅ PUBLIC FOLDER (index.html, watch.html, sitemap.xml etc)
-app.use(
-  express.static(path.join(__dirname, "public"), {
-    maxAge: 0,
-    etag: false,
-  })
-);
+/* ================= STATIC FILES ================= */
+app.use(express.static(path.join(__dirname, "public"), {
+  maxAge: 0,
+  etag: false,
+}));
+
+/* ================= SITEMAP (FINAL FIX) ================= */
+app.get("/sitemap.xml", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "sitemap.xml"));
+});
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
@@ -42,6 +45,7 @@ mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.MONGO_URI, {
     serverSelectionTimeoutMS: 10000,
+    maxPoolSize: 10,
   })
   .then(() => {
     console.log("✅ MongoDB connected");
@@ -75,57 +79,70 @@ const upload = multer({
 
 /* ================= ROUTES ================= */
 
-// Home
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Watch
 app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-// Videos API
+/* API: GET VIDEOS */
 app.get("/api/videos", async (req, res) => {
   if (!dbReady) return res.json([]);
   const videos = await Video.find().sort({ createdAt: -1 }).lean();
   res.json(videos);
 });
 
-// Upload
+/* API: UPLOAD */
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
-    if (!dbReady) return res.status(503).json({ success: false });
+    if (!dbReady)
+      return res.status(503).json({ success: false });
+
     if (req.body.password !== ADMIN_PASSWORD)
       return res.status(401).json({ success: false });
+
+    if (!req.file)
+      return res.status(400).json({ success: false });
 
     const videoUpload = await cloudinary.uploader.upload(req.file.path, {
       resource_type: "video",
       folder: "kamababa/videos",
+      chunk_size: 10 * 1024 * 1024,
     });
 
     fs.unlink(req.file.path, () => {});
 
+    let thumbnailUrl = "";
+    if (req.body.thumbnail?.startsWith("data:image")) {
+      const thumb = await cloudinary.uploader.upload(req.body.thumbnail, {
+        folder: "kamababa/thumbs",
+      });
+      thumbnailUrl = thumb.secure_url;
+    }
+
     await Video.create({
       title: req.body.title || "Untitled",
       url: videoUpload.secure_url,
-      thumbnail: "",
+      thumbnail: thumbnailUrl,
     });
 
     res.json({ success: true });
   } catch (e) {
+    console.error("UPLOAD ERROR:", e.message);
     res.status(500).json({ success: false });
   }
 });
 
-// View
+/* API: VIEW */
 app.post("/api/view/:id", async (req, res) => {
   if (dbReady)
     await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
   res.json({ success: true });
 });
 
-// Like
+/* API: LIKE */
 app.post("/api/like/:id", async (req, res) => {
   if (dbReady)
     await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
