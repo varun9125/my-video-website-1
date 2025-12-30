@@ -5,39 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
 <title>KamaBaba Viral Videos 🔥 | Adult Desi Viral Clips & Hot Videos</title>
-
-<!-- ✅ BASIC SEO -->
-<meta name="description" content="Watch latest desi viral adult videos, hot clips, and trending private videos on KamaBaba Viral. Updated daily with new content." />
-<meta name="keywords" content="desi viral videos, adult videos, hot desi clips, private video, indian viral mms" />
+<meta name="description" content="Watch latest desi viral adult videos, hot clips, and trending private videos on KamaBaba Viral." />
+<meta name="keywords" content="desi viral videos, adult videos, hot desi clips, private video" />
 <meta name="robots" content="index, follow" />
-
-<!-- ✅ FIXED CANONICAL (IMPORTANT) -->
-<link rel="canonical" href="https://my-video-website-1-1.onrender.com/" />
+<link rel="canonical" href="https://kamababaviral.com/" />
 
 <link rel="icon" href="/favicon.ico" />
 <meta name="theme-color" content="#000000" />
 
-<!-- ✅ OPEN GRAPH -->
-<meta property="og:title" content="KamaBaba Viral Videos 🔥" />
-<meta property="og:description" content="Watch trending adult desi viral videos and hot clips." />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://my-video-website-1-1.onrender.com/" />
-<meta property="og:image" content="https://my-video-website-1-1.onrender.com/logo.png" />
-
-<!-- ✅ SCHEMA -->
-<script type="application/ld+json">
-{
- "@context":"https://schema.org",
- "@type":"WebSite",
- "name":"KamaBaba Viral",
- "url":"https://my-video-website-1-1.onrender.com/",
- "potentialAction":{
-  "@type":"SearchAction",
-  "target":"https://my-video-website-1-1.onrender.com/?q={search_term_string}",
-  "query-input":"required name=search_term_string"
- }
-}
-</script>
+<!-- ✅ EXOCLICK CLIENT HINTS -->
+<meta http-equiv="Delegate-CH"
+content="Sec-CH-UA https://s.magsrv.com;
+Sec-CH-UA-Mobile https://s.magsrv.com;
+Sec-CH-UA-Platform https://s.magsrv.com;">
 
 <style>
 body{margin:0;background:#0b0b0b;color:#fff;font-family:system-ui}
@@ -105,40 +85,23 @@ footer a{color:#aaa;margin:0 6px;text-decoration:none}
   <img src="/logo.png" alt="KamaBaba Viral Logo">
   <span>KamaBaba Viral</span>
  </div>
- <div class="tags">
-  <button class="active">All</button>
-  <button>Hot</button>
-  <button>Desi</button>
-  <button>Viral</button>
- </div>
 </header>
+
+<!-- 🔥 EXOCLICK NATIVE (TOP) -->
+<div style="max-width:720px;margin:14px auto">
+<script async src="https://a.exoclick.com/native?zoneid=YOUR_NATIVE_ZONE_ID"></script>
+</div>
 
 <!-- VIDEO GRID -->
 <div class="grid" id="grid"></div>
 
-<!-- 🔥 NATIVE AD (UNCHANGED) -->
-<div style="max-width:720px;margin:20px auto;padding:12px">
-<script async data-cfasync="false"
- src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+<!-- 🔥 EXOCLICK BANNER 160x300 -->
+<div style="display:flex;justify-content:center;margin:20px 0">
+<script async src="https://a.exoclick.com/banner?zoneid=YOUR_BANNER_ZONE_ID"></script>
 </div>
 
 <!-- PAGINATION -->
 <div id="pagination"></div>
-
-<!-- 🔥 160x300 BANNER (UNCHANGED) -->
-<div style="display:flex;justify-content:center;margin:20px 0">
-<script>
-atOptions={
- 'key':'3dc8adbe32b29fd7a5266d7e0bdfae1a',
- 'format':'iframe',
- 'height':300,
- 'width':160,
- 'params':{}
-};
-</script>
-<script src="https://evadereprimand.com/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
-</div>
 
 <footer>
  © 2025 KamaBaba Viral<br><br>
@@ -149,24 +112,24 @@ atOptions={
 </footer>
 
 <script>
+/* AGE GATE */
 if(localStorage.adult==="yes"){ageGate.style.display="none";}
 function allow(){localStorage.adult="yes";ageGate.style.display="none";}
 function deny(){location.href="https://google.com";}
 
+/* DATA + PAGINATION */
 const grid=document.getElementById("grid");
 const pagination=document.getElementById("pagination");
 let allVideos=[],page=1,perPage=8;
 
 function getThumb(v){
- if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
- if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
- return v.url.replace("/video/upload/","/video/upload/so_2/")
-             .replace(/\.(mp4|mov|webm).*/i,".jpg");
+ if(v.thumbnail) return v.thumbnail;
+ return "/logo.png";
 }
 
-fetch("/api/videos").then(r=>r.json()).then(vs=>{
- allVideos=Array.isArray(vs)?vs:[]; draw();
-});
+fetch("/api/videos")
+.then(r=>r.json())
+.then(vs=>{ allVideos=Array.isArray(vs)?vs:[]; draw(); });
 
 function draw(){
  grid.innerHTML=""; pagination.innerHTML="";
@@ -175,10 +138,10 @@ function draw(){
  allVideos.slice(start,start+perPage).forEach(v=>{
   const d=document.createElement("div");
   d.className="card";
-  d.innerHTML=`<img src="${getThumb(v)}" alt="${v.title}">
+  d.innerHTML=`<img src="${getThumb(v)}">
   <div class="info"><div class="title">${v.title}</div>
   <div class="views">👁 ${v.views||0}</div></div>`;
-  d.onclick=()=>location.href="/watch?id="+v._id;
+  d.onclick=()=>location.href="/watch?id="+(v._id||v.id);
   grid.appendChild(d);
  });
  for(let i=1;i<=total;i++){
