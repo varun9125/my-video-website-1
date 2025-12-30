@@ -12,77 +12,110 @@
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 
-<!-- GOOGLE IMA SDK -->
+<!-- IMA SDK -->
 <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .topLogo{text-align:center;padding:10px;border-bottom:1px solid #222}
-.topLogo img{height:36px}
 .playerWrap{width:100%;aspect-ratio:16/9;background:#000}
 .video-js{width:100%;height:100%}
+.info{padding:12px}
+#related{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}
+.card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
+.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.card p{margin:6px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+footer{border-top:1px solid #222;padding:14px;text-align:center;font-size:13px;color:#aaa}
 </style>
 </head>
 
 <body>
 
 <div class="topLogo">
- <img src="/logo.png" alt="KamaBaba Viral">
+ <img src="/logo.png" height="36">
 </div>
 
+<!-- PLAYER -->
 <div class="playerWrap">
- <video
-   id="player"
-   class="video-js vjs-default-skin"
-   controls
-   preload="auto"
-   playsinline>
- </video>
+ <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
+
+<div class="info">
+ <h3 id="title">Loading…</h3>
+</div>
+
+<h3 style="padding-left:12px">Related Videos</h3>
+<div id="related"></div>
+
+<!-- ✅ ADSTERRA NATIVE (RELATED KE BAAD) -->
+<div style="padding:12px">
+<script async data-cfasync="false"
+ src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
+<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
+</div>
+
+<footer>
+ <a href="/privacy-policy.html">Privacy Policy</a> |
+ <a href="/terms.html">Terms</a> |
+ <a href="/dmca.html">DMCA</a> |
+ <a href="/contact.html">Contact</a>
+</footer>
 
 <script>
 const id = new URLSearchParams(location.search).get("id");
 const player = videojs("player");
+const titleEl = document.getElementById("title");
+const related = document.getElementById("related");
+
+function getThumb(v){
+ if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
+ if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
+ return v.url.replace("/video/upload/","/video/upload/so_2/")
+             .replace(/\.(mp4|mov|webm).*/i,".jpg");
+}
 
 fetch("/api/videos")
-.then(r => r.json())
-.then(vs => {
- const video = vs.find(v => v._id === id);
- if(!video){
-   alert("Video not found");
-   return;
- }
+.then(r=>r.json())
+.then(videos=>{
+ if(!Array.isArray(videos)){alert("API error");return;}
 
- // MAIN VIDEO SOURCE
- player.src({ src: video.url, type: "video/mp4" });
+ const video = videos.find(v=>v._id===id);
+ if(!video){alert("Video not found");return;}
 
- // INIT IMA (SAFE MODE)
+ // ✅ TITLE
+ titleEl.innerText = video.title;
+
+ // ✅ VIDEO ALWAYS PLAYS
+ player.src({src: video.url, type:"video/mp4"});
+
+ // ✅ EXOCLICK VAST (TRY ONLY)
  player.ima({
-   id: "player",
-   adTagUrl: "https://s.magsrv.com/v1/vast.php?zoneid=5816342",
-   debug: false,
-   timeout: 4000,
-   prerollTimeout: 4000
+   id:"player",
+   adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
+   timeout:3000,
+   prerollTimeout:3000
  });
 
- // USER CLICK = PLAY
- player.one("play", function () {
-   try {
+ player.one("play",()=>{
+   try{
      player.ima.initializeAdDisplayContainer();
      player.ima.requestAds();
-   } catch (e) {
-     // ignore ad failure
-   }
+   }catch(e){}
  });
 
- // 🔑 HARD FAILSAFE
- player.on("adserror", function () {
-   player.play();
- });
+ // HARD FAILSAFE
+ player.on("adserror",()=>player.play());
+ player.on("ads-ad-ended",()=>player.play());
 
- player.on("ads-ad-ended", function () {
-   player.play();
+ // ✅ RELATED ALWAYS RENDER
+ related.innerHTML="";
+ videos.filter(v=>v._id!==id).slice(0,6).forEach(v=>{
+   const c=document.createElement("div");
+   c.className="card";
+   c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
+   c.onclick=()=>location.href="/watch?id="+v._id;
+   related.appendChild(c);
  });
 });
 </script>
