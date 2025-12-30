@@ -13,15 +13,13 @@ const PORT = process.env.PORT || 3000;
 
 /* ================= BASIC CONFIG ================= */
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-const BASE_URL =
-  process.env.BASE_URL || "https://my-video-website-1-1.onrender.com";
 
 /* ================= MIDDLEWARE ================= */
 app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
-// ✅ STATIC FILES (sitemap.xml yahin se serve hoga)
+// ✅ PUBLIC FOLDER (index.html, watch.html, sitemap.xml etc)
 app.use(
   express.static(path.join(__dirname, "public"), {
     maxAge: 0,
@@ -44,7 +42,6 @@ mongoose.set("strictQuery", false);
 mongoose
   .connect(process.env.MONGO_URI, {
     serverSelectionTimeoutMS: 10000,
-    maxPoolSize: 10,
   })
   .then(() => {
     console.log("✅ MongoDB connected");
@@ -78,109 +75,61 @@ const upload = multer({
 
 /* ================= ROUTES ================= */
 
+// Home
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// Watch
 app.get("/watch", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "watch.html"));
 });
 
-/* GET VIDEOS */
+// Videos API
 app.get("/api/videos", async (req, res) => {
   if (!dbReady) return res.json([]);
   const videos = await Video.find().sort({ createdAt: -1 }).lean();
   res.json(videos);
 });
 
-/* UPLOAD */
+// Upload
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
-    if (!dbReady)
-      return res.status(503).json({ success: false, error: "DB not ready" });
-
+    if (!dbReady) return res.status(503).json({ success: false });
     if (req.body.password !== ADMIN_PASSWORD)
-      return res.status(401).json({ success: false, error: "Wrong password" });
-
-    if (!req.file)
-      return res.status(400).json({ success: false, error: "No video" });
+      return res.status(401).json({ success: false });
 
     const videoUpload = await cloudinary.uploader.upload(req.file.path, {
       resource_type: "video",
       folder: "kamababa/videos",
-      chunk_size: 10 * 1024 * 1024,
     });
 
     fs.unlink(req.file.path, () => {});
 
-    let thumbnailUrl = "";
-    if (req.body.thumbnail?.startsWith("data:image")) {
-      const thumb = await cloudinary.uploader.upload(req.body.thumbnail, {
-        folder: "kamababa/thumbs",
-      });
-      thumbnailUrl = thumb.secure_url;
-    }
-
     await Video.create({
       title: req.body.title || "Untitled",
       url: videoUpload.secure_url,
-      thumbnail: thumbnailUrl,
+      thumbnail: "",
     });
 
     res.json({ success: true });
   } catch (e) {
-    console.error("UPLOAD ERROR:", e.message);
     res.status(500).json({ success: false });
   }
 });
 
-/* VIEW */
+// View
 app.post("/api/view/:id", async (req, res) => {
   if (dbReady)
     await Video.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
   res.json({ success: true });
 });
 
-/* LIKE */
+// Like
 app.post("/api/like/:id", async (req, res) => {
   if (dbReady)
     await Video.findByIdAndUpdate(req.params.id, { $inc: { likes: 1 } });
   res.json({ success: true });
-});
-
-/* DELETE */
-app.post("/api/delete/:id", async (req, res) => {
-  try {
-    if (req.body.password !== ADMIN_PASSWORD)
-      return res.status(401).json({ success: false });
-
-    if (!dbReady)
-      return res.status(503).json({ success: false });
-
-    const video = await Video.findById(req.params.id);
-    if (!video) return res.json({ success: false });
-
-    const videoPublicId =
-      "kamababa/videos/" + video.url.split("/").pop().split(".")[0];
-
-    await cloudinary.uploader.destroy(videoPublicId, {
-      resource_type: "video",
-    });
-
-    if (video.thumbnail) {
-      const thumbPublicId =
-        "kamababa/thumbs/" +
-        video.thumbnail.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(thumbPublicId);
-    }
-
-    await Video.findByIdAndDelete(req.params.id);
-
-    res.json({ success: true });
-  } catch (e) {
-    console.error("DELETE ERROR:", e.message);
-    res.json({ success: false });
-  }
 });
 
 /* ================= START ================= */
