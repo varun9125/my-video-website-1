@@ -6,23 +6,10 @@
 
 <title>Watch Hot Viral Video | KamaBaba Viral</title>
 
-<!-- ✅ SEO BASIC -->
+<!-- SEO -->
 <meta name="description" content="Watch hot desi viral adult videos online on KamaBaba Viral. Trending clips updated daily.">
 <meta name="keywords" content="desi viral videos, adult videos, hot indian clips, kama baba viral">
 <meta name="robots" content="index, follow">
-
-<!-- ✅ OPEN GRAPH -->
-<meta property="og:type" content="video.other">
-<meta property="og:title" content="Watch Hot Viral Video | KamaBaba Viral">
-<meta property="og:description" content="Watch trending desi viral adult videos online.">
-<meta property="og:image" content="https://my-video-website-1-1.onrender.com/logo.png">
-<meta property="og:url" content="https://my-video-website-1-1.onrender.com/watch">
-
-<!-- ✅ TWITTER -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Watch Viral Video | KamaBaba Viral">
-<meta name="twitter:description" content="Trending adult desi viral videos.">
-<meta name="twitter:image" content="https://my-video-website-1-1.onrender.com/logo.png">
 
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
@@ -34,17 +21,12 @@
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 
-<!-- GOOGLE IMA SDK (FOR EXOCLICK VAST) -->
+<!-- GOOGLE IMA SDK (EXOCLICK VAST) -->
 <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
-#ageGate{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:9999;display:flex;align-items:center;justify-content:center}
-.ageBox{background:#141414;padding:24px;border-radius:12px;max-width:320px;text-align:center}
-.ageBtns{display:flex;gap:10px;margin-top:18px}
-.ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600}
-.yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
 
 .topLogo{text-align:center;padding:8px}
 .topLogo img{height:36px}
@@ -54,7 +36,6 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 
 .info{padding:12px}
 .meta{font-size:13px;color:#aaa}
-
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 
@@ -71,18 +52,6 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 </head>
 
 <body>
-
-<!-- AGE GATE -->
-<div id="ageGate">
- <div class="ageBox">
-  <h2>🔞 Adult Content</h2>
-  <p>18+ Only</p>
-  <div class="ageBtns">
-   <button class="yes" onclick="allow()">I am 18+</button>
-   <button class="no" onclick="deny()">No</button>
-  </div>
- </div>
-</div>
 
 <div class="topLogo">
  <img src="/logo.png" alt="KamaBaba Viral">
@@ -106,7 +75,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 <!-- EXOCLICK 120x150 -->
 <div style="display:flex;justify-content:center;padding:12px">
  <a href="https://www.exoclick.com/signup/?login=RAVI2104" target="_blank" rel="nofollow">
-  <img src="https://www.exoclick.com/banners/120x150.gif" border="0">
+  <img src="https://www.exoclick.com/banners/120x150.gif">
  </a>
 </div>
 
@@ -114,10 +83,6 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 <div id="related"></div>
 
 <script>
-if(localStorage.adult==="yes") ageGate.style.display="none";
-function allow(){localStorage.adult="yes";ageGate.style.display="none"}
-function deny(){location.href="https://google.com"}
-
 const id=new URLSearchParams(location.search).get("id");
 const titleEl=document.getElementById("title");
 const viewCount=document.getElementById("viewCount");
@@ -138,15 +103,17 @@ fetch("/api/videos")
 .then(r=>r.json())
 .then(vs=>{
  allVideos=Array.isArray(vs)?vs:[];
- const v=allVideos.find(x=>x._id===id);
- if(!v) return;
 
- titleEl.innerText=v.title;
- viewCount.innerText=v.views||0;
- likeCount.innerText=v.likes||0;
+ const current = allVideos.find(x=>String(x._id)===String(id));
+ if(!current) return;
 
- player.src({src:v.url,type:"video/mp4"});
+ titleEl.innerText=current.title;
+ viewCount.innerText=current.views||0;
+ likeCount.innerText=current.likes||0;
 
+ player.src({src:current.url,type:"video/mp4"});
+
+ /* EXOCLICK VAST */
  player.ima({
   id:"player",
   adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
@@ -169,7 +136,10 @@ fetch("/api/videos")
 
 function renderRelated(){
  related.innerHTML="";
- allVideos.filter(v=>v._id!==id).slice(0,10).forEach(v=>{
+ allVideos
+ .filter(v=>String(v._id)!==String(id))
+ .slice(0,10)
+ .forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
@@ -186,28 +156,6 @@ function like(){
 function share(){
  navigator.clipboard.writeText(location.href);
  alert("Link copied");
-}
-</script>
-
-<!-- ✅ VIDEO STRUCTURED DATA -->
-<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "VideoObject",
- "name": "Hot Desi Viral Video",
- "description": "Watch hot trending desi viral adult video online.",
- "thumbnailUrl": ["https://my-video-website-1-1.onrender.com/logo.png"],
- "uploadDate": "2025-01-01",
- "contentUrl": "https://my-video-website-1-1.onrender.com/watch",
- "embedUrl": "https://my-video-website-1-1.onrender.com/watch",
- "publisher": {
-  "@type": "Organization",
-  "name": "KamaBaba Viral",
-  "logo": {
-   "@type": "ImageObject",
-   "url": "https://my-video-website-1-1.onrender.com/logo.png"
-  }
- }
 }
 </script>
 
