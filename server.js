@@ -21,17 +21,13 @@ app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 
+// ✅ STATIC FILES (sitemap.xml yahin se serve hoga)
 app.use(
   express.static(path.join(__dirname, "public"), {
     maxAge: 0,
     etag: false,
   })
 );
-
-/* ================= SITEMAP (FIXED) ================= */
-app.get("/sitemap.xml", (req, res) => {
-  res.sendFile(path.join(__dirname, "sitemap.xml"));
-});
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
