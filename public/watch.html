@@ -15,7 +15,7 @@
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 
-<!-- GOOGLE IMA SDK -->
+<!-- GOOGLE IMA SDK (FOR EXOCLICK VAST) -->
 <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
@@ -39,7 +39,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 
-/* RELATED : 2 GRID */
+/* RELATED */
 #related{
  display:grid;
  grid-template-columns:repeat(2,1fr);
@@ -91,7 +91,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
-<!-- INFO BELOW VIDEO -->
+<!-- INFO -->
 <div class="info">
  <h3 id="title">Loading…</h3>
  <div class="meta">👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span></div>
@@ -101,31 +101,18 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- NATIVE BANNER -->
-<div style="padding:12px">
-<script async data-cfasync="false"
- src="https://pl28304315.effectivegatecpm.com/75174a0c15fdc41fe820fb9dadf17605/invoke.js"></script>
-<div id="container-75174a0c15fdc41fe820fb9dadf17605"></div>
-</div>
-
-<!-- 160x300 BANNER -->
+<!-- ✅ EXOCLICK 120x150 BANNER -->
 <div style="display:flex;justify-content:center;padding:12px">
-<script>
-atOptions={
- 'key':'3dc8adbe32b29fd7a5266d7e0bdfae1a',
- 'format':'iframe',
- 'height':300,
- 'width':160,
- 'params':{}
-};
-</script>
-<script src="https://evadereprimand.com/3d/c8/ad/3dc8adbe32b29fd7a5266d7e0bdfae1a/invoke.js"></script>
+ <a href="https://www.exoclick.com/signup/?login=RAVI2104" target="_blank" rel="nofollow">
+  <img src="https://www.exoclick.com/banners/120x150.gif" border="0">
+ </a>
 </div>
 
 <h3 style="padding-left:12px">Related Videos</h3>
 <div id="related"></div>
 
 <script>
+/* AGE GATE */
 if(localStorage.adult==="yes") ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
@@ -139,13 +126,12 @@ const related=document.getElementById("related");
 let allVideos=[];
 let player=videojs("player");
 
-/* ✅ MANUAL THUMBNAIL FIRST, ELSE AUTO */
+/* THUMB FIX */
 function getThumb(v){
  if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
  if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
- return v.url
-  .replace("/video/upload/","/video/upload/so_2/")
-  .replace(/\.(mp4|webm|mov).*/i,".jpg");
+ return v.url.replace("/video/upload/","/video/upload/so_2/")
+             .replace(/\.(mp4|webm|mov).*/i,".jpg");
 }
 
 fetch("/api/videos")
@@ -158,13 +144,26 @@ fetch("/api/videos")
  titleEl.innerText=v.title;
  viewCount.innerText=v.views||0;
  likeCount.innerText=v.likes||0;
+
  player.src({src:v.url,type:"video/mp4"});
 
- if(!sessionStorage["v_"+id]){
-  fetch("/api/view/"+id,{method:"POST"});
-  viewCount.innerText++;
-  sessionStorage["v_"+id]=1;
- }
+ /* 🔥 EXOCLICK VAST (VIDEO PLAY KE TIME) */
+ player.ima({
+  id:"player",
+  adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
+  timeout:4000,
+  prerollTimeout:4000
+ });
+
+ player.one("play",()=>{
+  try{
+   player.ima.initializeAdDisplayContainer();
+   player.ima.requestAds();
+  }catch(e){}
+ });
+
+ player.on("adserror",()=>player.play());
+ player.on("ads-ad-ended",()=>player.play());
 
  renderRelated();
 });
@@ -185,7 +184,6 @@ function renderRelated(){
 
 function like(){
  if(sessionStorage["l_"+id])return;
- fetch("/api/like/"+id,{method:"POST"});
  likeCount.innerText++;
  sessionStorage["l_"+id]=1;
 }
@@ -193,15 +191,6 @@ function share(){
  navigator.clipboard.writeText(location.href);
  alert("Link copied");
 }
-
-/* SMARTLINK */
-let opened=false;
-document.addEventListener("click",()=>{
- if(!opened){
-  window.open("https://www.effectivegatecpm.com/t08q3aadri?key=17e7075568b797a5f86e95c5711c322a","_blank");
-  opened=true;
- }
-},{once:true});
 </script>
 
 </body>
