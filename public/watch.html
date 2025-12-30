@@ -101,10 +101,10 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- 🔥 EXOCLICK 728x90 BANNER (ADDED AS REQUESTED) -->
+<!-- ✅ EXOCLICK 120x150 BANNER (AS REQUESTED) -->
 <div style="display:flex;justify-content:center;padding:12px">
  <a href="https://www.exoclick.com/signup/?login=RAVI2104" target="_blank" rel="nofollow">
-  <img src="https://www.exoclick.com/banners/728x90.gif" width="728" height="90" border="0">
+  <img src="https://www.exoclick.com/banners/120x150.gif" border="0">
  </a>
 </div>
 
@@ -167,7 +167,7 @@ fetch("/api/videos")
 
  player.src({src:v.url,type:"video/mp4"});
 
- /* EXOCLICK VAST */
+ /* 🔥 EXOCLICK VAST (REQUEST ALWAYS FIRES) */
  player.ima({
   id:"player",
   adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
@@ -190,13 +190,16 @@ fetch("/api/videos")
 
 function renderRelated(){
  related.innerHTML="";
- allVideos.filter(v=>v._id!==id).slice(0,10).forEach(v=>{
-  const c=document.createElement("div");
-  c.className="card";
-  c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
-  c.onclick=()=>location.href="/watch?id="+v._id;
-  related.appendChild(c);
- });
+ allVideos
+  .filter(v=>v._id!==id)
+  .slice(0,10)
+  .forEach(v=>{
+   const c=document.createElement("div");
+   c.className="card";
+   c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
+   c.onclick=()=>location.href="/watch?id="+v._id;
+   related.appendChild(c);
+  });
 }
 
 function like(){likeCount.innerText++}
