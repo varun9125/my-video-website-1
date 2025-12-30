@@ -5,21 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Watch Video | KamaBaba Viral</title>
 
-<!-- BASIC SEO -->
-<meta name="description" content="Watch hot desi viral adult videos online on KamaBaba Viral. Trending clips updated daily.">
 <meta name="robots" content="index, follow">
-
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
-<!-- 🔥 ADSTERRA POPUNDER -->
+<!-- ADSTERRA POPUNDER -->
 <script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
 
 <!-- VIDEO.JS -->
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 
-<!-- GOOGLE IMA SDK (EXOCLICK VAST) -->
+<!-- EXOCLICK VAST -->
 <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
@@ -36,7 +33,6 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 
-/* RELATED */
 #related{
  display:grid;
  grid-template-columns:repeat(2,1fr);
@@ -55,12 +51,10 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  <img src="/logo.png" alt="KamaBaba Viral">
 </div>
 
-<!-- PLAYER -->
 <div class="playerWrap">
  <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
 </div>
 
-<!-- INFO -->
 <div class="info">
  <h3 id="title">Loading…</h3>
  <div class="meta">👁 <span id="viewCount">0</span> 👍 <span id="likeCount">0</span></div>
@@ -70,85 +64,9 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- 🔥 EXOCLICK 120x150 BANNER -->
+<!-- EXOCLICK BANNER -->
 <div style="display:flex;justify-content:center;padding:12px">
  <a href="https://www.exoclick.com/signup/?login=RAVI2104" target="_blank" rel="nofollow">
-  <img src="https://www.exoclick.com/banners/120x150.gif" border="0">
+  <img src="https://www.exoclick.com/banners/120x150.gif">
  </a>
-</div>
-
-<h3 style="padding-left:12px">Related Videos</h3>
-<div id="related"></div>
-
-<script>
-const id=new URLSearchParams(location.search).get("id");
-const titleEl=document.getElementById("title");
-const viewCount=document.getElementById("viewCount");
-const likeCount=document.getElementById("likeCount");
-const related=document.getElementById("related");
-
-let allVideos=[];
-let player=videojs("player");
-
-function getThumb(v){
- if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
- if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
- return v.url.replace("/video/upload/","/video/upload/so_2/")
-             .replace(/\.(mp4|webm|mov).*/i,".jpg");
-}
-
-fetch("/api/videos")
-.then(r=>r.json())
-.then(vs=>{
- allVideos = Array.isArray(vs) ? vs : [];
- const v = allVideos.find(x => x._id === id);
- if(!v) return;
-
- titleEl.innerText = v.title;
- viewCount.innerText = v.views || 0;
- likeCount.innerText = v.likes || 0;
-
- player.src({src:v.url,type:"video/mp4"});
-
- /* 🔥 EXOCLICK VAST */
- player.ima({
-  id:"player",
-  adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
-  timeout:5000,
-  prerollTimeout:5000
- });
-
- player.one("play",()=>{
-  try{
-   player.ima.initializeAdDisplayContainer();
-   player.ima.requestAds();
-  }catch(e){}
- });
-
- renderRelated();
-});
-
-function renderRelated(){
- related.innerHTML="";
- allVideos.filter(v=>v._id!==id).slice(0,10).forEach(v=>{
-  const c=document.createElement("div");
-  c.className="card";
-  c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
-  c.onclick=()=>location.href="/watch?id="+v._id;
-  related.appendChild(c);
- });
-}
-
-function like(){
- if(sessionStorage["l_"+id])return;
- likeCount.innerText++;
- sessionStorage["l_"+id]=1;
-}
-function share(){
- navigator.clipboard.writeText(location.href);
- alert("Link copied");
-}
-</script>
-
-</body>
-</html>
+</div
