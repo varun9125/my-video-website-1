@@ -184,3 +184,9 @@ app.post("/api/delete/:id", async (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+const path = require("path");
+
+// sitemap.xml serve
+app.get("/sitemap.xml", (req, res) => {
+  res.sendFile(path.join(__dirname, "sitemap.xml"));
+});
