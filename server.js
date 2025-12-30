@@ -1,7 +1,3 @@
-// sitemap.xml serve
-app.get("/sitemap.xml", (req, res) => {
-  res.sendFile(path.join(__dirname, "sitemap.xml"));
-});
 require("dotenv").config();
 
 const express = require("express");
@@ -31,6 +27,12 @@ app.use(
     etag: false,
   })
 );
+
+/* ================= SITEMAP ROUTE (FIXED) ================= */
+app.get("/sitemap.xml", (req, res) => {
+  res.header("Content-Type", "application/xml");
+  res.sendFile(path.join(__dirname, "sitemap.xml"));
+});
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
@@ -70,14 +72,13 @@ const videoSchema = new mongoose.Schema(
 
 const Video = mongoose.model("Video", videoSchema);
 
-/* ================= MULTER (FAST) ================= */
+/* ================= MULTER ================= */
 const upload = multer({
   dest: "/tmp",
   limits: { fileSize: 500 * 1024 * 1024 },
 });
 
 /* ================= ROUTES ================= */
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -148,18 +149,17 @@ app.post("/api/like/:id", async (req, res) => {
   res.json({ success: true });
 });
 
-/* DELETE VIDEO */
+/* DELETE */
 app.post("/api/delete/:id", async (req, res) => {
   try {
     if (req.body.password !== ADMIN_PASSWORD)
-      return res.status(401).json({ success: false, error: "Wrong password" });
+      return res.status(401).json({ success: false });
 
     if (!dbReady)
-      return res.status(503).json({ success: false, error: "DB not ready" });
+      return res.status(503).json({ success: false });
 
     const video = await Video.findById(req.params.id);
-    if (!video)
-      return res.json({ success: false, error: "Video not found" });
+    if (!video) return res.json({ success: false });
 
     const videoPublicId =
       "kamababa/videos/" + video.url.split("/").pop().split(".")[0];
@@ -176,10 +176,8 @@ app.post("/api/delete/:id", async (req, res) => {
     }
 
     await Video.findByIdAndDelete(req.params.id);
-
     res.json({ success: true });
   } catch (e) {
-    console.error("DELETE ERROR:", e.message);
     res.json({ success: false });
   }
 });
@@ -188,4 +186,3 @@ app.post("/api/delete/:id", async (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-const path = require("path");
