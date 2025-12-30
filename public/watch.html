@@ -145,3 +145,12 @@ function share(){
 
 </body>
 </html>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const v = document.querySelector("video");
+  v.addEventListener("error", () => {
+    console.error("VIDEO ERROR:", v.error);
+    alert("VIDEO ERROR CODE: " + v.error.code);
+  });
+});
+</script>
