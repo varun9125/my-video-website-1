@@ -19,61 +19,70 @@
 <style>
 body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .topLogo{text-align:center;padding:10px;border-bottom:1px solid #222}
-.playerWrap{width:100%;aspect-ratio:16/9;background:#000;position:relative}
+.topLogo img{height:36px}
+.playerWrap{width:100%;aspect-ratio:16/9;background:#000}
 .video-js{width:100%;height:100%}
-#playOverlay{
- position:absolute;inset:0;display:flex;
- align-items:center;justify-content:center;
- background:rgba(0,0,0,.5);z-index:10;
- cursor:pointer;font-size:22px;font-weight:700
-}
 </style>
 </head>
 
 <body>
 
 <div class="topLogo">
- <img src="/logo.png" height="36">
+ <img src="/logo.png" alt="KamaBaba Viral">
 </div>
 
 <div class="playerWrap">
- <div id="playOverlay">▶ Play Video</div>
- <video id="player" class="video-js vjs-default-skin" preload="auto" playsinline></video>
+ <video
+   id="player"
+   class="video-js vjs-default-skin"
+   controls
+   preload="auto"
+   playsinline>
+ </video>
 </div>
 
 <script>
-const id=new URLSearchParams(location.search).get("id");
-const player=videojs("player");
-const overlay=document.getElementById("playOverlay");
+const id = new URLSearchParams(location.search).get("id");
+const player = videojs("player");
 
-fetch("/api/videos").then(r=>r.json()).then(vs=>{
- const video=vs.find(v=>v._id===id);
- if(!video){alert("Video not found");return;}
+fetch("/api/videos")
+.then(r => r.json())
+.then(vs => {
+ const video = vs.find(v => v._id === id);
+ if(!video){
+   alert("Video not found");
+   return;
+ }
 
- player.src({src:video.url,type:"video/mp4"});
+ // MAIN VIDEO SOURCE
+ player.src({ src: video.url, type: "video/mp4" });
 
- // INIT IMA ONCE
+ // INIT IMA (SAFE MODE)
  player.ima({
-  id:'player',
-  adTagUrl:'https://s.magsrv.com/v1/vast.php?zoneid=5816342',
-  timeout:5000,
-  prerollTimeout:5000
+   id: "player",
+   adTagUrl: "https://s.magsrv.com/v1/vast.php?zoneid=5816342",
+   debug: false,
+   timeout: 4000,
+   prerollTimeout: 4000
  });
 
- overlay.onclick=()=>{
-  overlay.style.display="none";
-
-  // IMPORTANT: user click ke exact moment par
-  player.ima.initializeAdDisplayContainer();
-  player.ima.requestAds();
- };
-
- player.on('adserror',()=>{
-  player.play();
+ // USER CLICK = PLAY
+ player.one("play", function () {
+   try {
+     player.ima.initializeAdDisplayContainer();
+     player.ima.requestAds();
+   } catch (e) {
+     // ignore ad failure
+   }
  });
 
- player.on('ads-ad-ended',()=>{
-  player.play();
+ // 🔑 HARD FAILSAFE
+ player.on("adserror", function () {
+   player.play();
+ });
+
+ player.on("ads-ad-ended", function () {
+   player.play();
  });
 });
 </script>
