@@ -8,14 +8,21 @@
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
 
-<!-- POPUNDER (ADSTERRA) -->
-<script src="https://evadereprimand.com/a6/9b/c2/a69bc275c867abe7e6a529134517bc9c.js"></script>
+<!-- ✅ EXOCLICK CLIENT HINTS (MANDATORY) -->
+<meta http-equiv="Delegate-CH"
+content="Sec-CH-UA https://s.magsrv.com;
+Sec-CH-UA-Mobile https://s.magsrv.com;
+Sec-CH-UA-Arch https://s.magsrv.com;
+Sec-CH-UA-Platform https://s.magsrv.com;
+Sec-CH-UA-Platform-Version https://s.magsrv.com;
+Sec-CH-UA-Full-Version https://s.magsrv.com;
+Sec-CH-UA-Full-Version-List https://s.magsrv.com;">
 
 <!-- VIDEO.JS -->
 <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
 <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
 
-<!-- GOOGLE IMA SDK (FOR EXOCLICK VAST) -->
+<!-- GOOGLE IMA SDK -->
 <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/videojs-ima@1.11.0/dist/videojs.ima.min.js"></script>
 
@@ -26,45 +33,18 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .ageBtns{display:flex;gap:10px;margin-top:18px}
 .ageBtns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:600}
 .yes{background:#0f9d58;color:#fff}.no{background:#333;color:#fff}
-
 .topLogo{text-align:center;padding:8px}
 .topLogo img{height:36px}
-
 .playerWrap{width:100%;aspect-ratio:16/9;background:#000}
 .video-js{width:100%;height:100%}
-
 .info{padding:12px}
 .meta{font-size:13px;color:#aaa}
-
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
-
-/* RELATED */
-#related{
- display:grid;
- grid-template-columns:repeat(2,1fr);
- gap:12px;
- padding:12px
-}
-.card{
- background:#111;
- border-radius:8px;
- overflow:hidden;
- cursor:pointer
-}
-.card img{
- width:100%;
- aspect-ratio:16/9;
- object-fit:cover;
- display:block
-}
-.card p{
- font-size:13px;
- margin:6px;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis
-}
+#related{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:12px}
+.card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
+.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 
@@ -88,7 +68,14 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 
 <!-- PLAYER -->
 <div class="playerWrap">
- <video id="player" class="video-js vjs-default-skin" controls playsinline preload="auto"></video>
+ <video id="player"
+  class="video-js vjs-default-skin"
+  controls
+  autoplay
+  muted
+  playsinline
+  preload="auto">
+ </video>
 </div>
 
 <!-- INFO -->
@@ -99,13 +86,6 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
   <button onclick="like()">👍 Like</button>
   <button onclick="share()">🔗 Share</button>
  </div>
-</div>
-
-<!-- ✅ EXOCLICK 120x150 BANNER -->
-<div style="display:flex;justify-content:center;padding:12px">
- <a href="https://www.exoclick.com/signup/?login=RAVI2104" target="_blank" rel="nofollow">
-  <img src="https://www.exoclick.com/banners/120x150.gif" border="0">
- </a>
 </div>
 
 <h3 style="padding-left:12px">Related Videos</h3>
@@ -124,12 +104,19 @@ const likeCount=document.getElementById("likeCount");
 const related=document.getElementById("related");
 
 let allVideos=[];
-let player=videojs("player");
+let player = videojs("player",{autoplay:true,muted:true,playsinline:true});
 
-/* THUMB FIX */
+/* 🔥 EXOCLICK IN-STREAM (TEST ZONE) */
+player.ima({
+ id:"player",
+ adTagUrl:"https://s.magsrv.com/v1/vast.php?idzone=236643",
+ timeout:5000,
+ prerollTimeout:5000
+});
+
 function getThumb(v){
- if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
- if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
+ if(v.thumbnail) return v.thumbnail;
+ if(!v.url) return "/logo.png";
  return v.url.replace("/video/upload/","/video/upload/so_2/")
              .replace(/\.(mp4|webm|mov).*/i,".jpg");
 }
@@ -137,8 +124,8 @@ function getThumb(v){
 fetch("/api/videos")
 .then(r=>r.json())
 .then(vs=>{
- allVideos=Array.isArray(vs)?vs:[];
- const v=allVideos.find(x=>x._id===id);
+ allVideos = Array.isArray(vs)?vs:[];
+ const v = allVideos.find(x=>x._id===id);
  if(!v) return;
 
  titleEl.innerText=v.title;
@@ -147,33 +134,20 @@ fetch("/api/videos")
 
  player.src({src:v.url,type:"video/mp4"});
 
- /* 🔥 EXOCLICK VAST (VIDEO PLAY KE TIME) */
- player.ima({
-  id:"player",
-  adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
-  timeout:4000,
-  prerollTimeout:4000
+ player.ready(()=>{
+  player.ima.initializeAdDisplayContainer();
+  player.ima.requestAds();
+  player.play();
  });
-
- player.one("play",()=>{
-  try{
-   player.ima.initializeAdDisplayContainer();
-   player.ima.requestAds();
-  }catch(e){}
- });
-
- player.on("adserror",()=>player.play());
- player.on("ads-ad-ended",()=>player.play());
 
  renderRelated();
 });
 
+player.on("adserror",()=>player.play());
+
 function renderRelated(){
  related.innerHTML="";
- allVideos
- .filter(v=>v._id!==id)
- .slice(0,10)
- .forEach(v=>{
+ allVideos.filter(v=>v._id!==id).slice(0,10).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
@@ -195,11 +169,3 @@ function share(){
 
 </body>
 </html>
-<script>
-/* 🔒 SAFE FORCE RENDER – RELATED FIX */
-setTimeout(function(){
-  if(allVideos && allVideos.length && related.children.length === 0){
-    renderRelated();
-  }
-}, 800);
-</script>
