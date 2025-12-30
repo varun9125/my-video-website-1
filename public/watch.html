@@ -3,7 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Watch Video | KamaBaba Viral</title>
+
+<title>Watch Hot Viral Video | KamaBaba Viral</title>
+
+<!-- ✅ SEO BASIC -->
+<meta name="description" content="Watch hot desi viral adult videos online on KamaBaba Viral. Trending clips updated daily.">
+<meta name="keywords" content="desi viral videos, adult videos, hot indian clips, kama baba viral">
+<meta name="robots" content="index, follow">
+
+<!-- ✅ OPEN GRAPH -->
+<meta property="og:type" content="video.other">
+<meta property="og:title" content="Watch Hot Viral Video | KamaBaba Viral">
+<meta property="og:description" content="Watch trending desi viral adult videos online.">
+<meta property="og:image" content="https://my-video-website-1-1.onrender.com/logo.png">
+<meta property="og:url" content="https://my-video-website-1-1.onrender.com/watch">
+
+<!-- ✅ TWITTER -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Watch Viral Video | KamaBaba Viral">
+<meta name="twitter:description" content="Trending adult desi viral videos.">
+<meta name="twitter:image" content="https://my-video-website-1-1.onrender.com/logo.png">
 
 <link rel="icon" href="/favicon.ico">
 <meta name="theme-color" content="#000000">
@@ -39,32 +58,15 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 .actions{display:flex;gap:10px;margin-top:10px}
 .actions button{padding:8px 14px;border:none;border-radius:8px;background:#1c1c1c;color:#fff}
 
-/* RELATED */
 #related{
  display:grid;
  grid-template-columns:repeat(2,1fr);
  gap:12px;
  padding:12px
 }
-.card{
- background:#111;
- border-radius:8px;
- overflow:hidden;
- cursor:pointer
-}
-.card img{
- width:100%;
- aspect-ratio:16/9;
- object-fit:cover;
- display:block
-}
-.card p{
- font-size:13px;
- margin:6px;
- white-space:nowrap;
- overflow:hidden;
- text-overflow:ellipsis
-}
+.card{background:#111;border-radius:8px;overflow:hidden;cursor:pointer}
+.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.card p{font-size:13px;margin:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 
@@ -101,7 +103,7 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
  </div>
 </div>
 
-<!-- ✅ EXOCLICK 120x150 BANNER -->
+<!-- EXOCLICK 120x150 -->
 <div style="display:flex;justify-content:center;padding:12px">
  <a href="https://www.exoclick.com/signup/?login=RAVI2104" target="_blank" rel="nofollow">
   <img src="https://www.exoclick.com/banners/120x150.gif" border="0">
@@ -112,7 +114,6 @@ body{margin:0;background:#000;color:#fff;font-family:system-ui}
 <div id="related"></div>
 
 <script>
-/* AGE GATE */
 if(localStorage.adult==="yes") ageGate.style.display="none";
 function allow(){localStorage.adult="yes";ageGate.style.display="none"}
 function deny(){location.href="https://google.com"}
@@ -126,7 +127,6 @@ const related=document.getElementById("related");
 let allVideos=[];
 let player=videojs("player");
 
-/* THUMB FIX */
 function getThumb(v){
  if(v.thumbnail && v.thumbnail.trim()!=="") return v.thumbnail;
  if(!v.url || !v.url.includes("/video/upload/")) return "/logo.png";
@@ -147,7 +147,6 @@ fetch("/api/videos")
 
  player.src({src:v.url,type:"video/mp4"});
 
- /* 🔥 EXOCLICK VAST (VIDEO PLAY KE TIME) */
  player.ima({
   id:"player",
   adTagUrl:"https://s.magsrv.com/v1/vast.php?zoneid=5816342",
@@ -170,10 +169,7 @@ fetch("/api/videos")
 
 function renderRelated(){
  related.innerHTML="";
- allVideos
- .filter(v=>v._id!==id)
- .slice(0,10)
- .forEach(v=>{
+ allVideos.filter(v=>v._id!==id).slice(0,10).forEach(v=>{
   const c=document.createElement("div");
   c.className="card";
   c.innerHTML=`<img src="${getThumb(v)}"><p>${v.title}</p>`;
@@ -193,13 +189,27 @@ function share(){
 }
 </script>
 
+<!-- ✅ VIDEO STRUCTURED DATA -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "VideoObject",
+ "name": "Hot Desi Viral Video",
+ "description": "Watch hot trending desi viral adult video online.",
+ "thumbnailUrl": ["https://my-video-website-1-1.onrender.com/logo.png"],
+ "uploadDate": "2025-01-01",
+ "contentUrl": "https://my-video-website-1-1.onrender.com/watch",
+ "embedUrl": "https://my-video-website-1-1.onrender.com/watch",
+ "publisher": {
+  "@type": "Organization",
+  "name": "KamaBaba Viral",
+  "logo": {
+   "@type": "ImageObject",
+   "url": "https://my-video-website-1-1.onrender.com/logo.png"
+  }
+ }
+}
+</script>
+
 </body>
 </html>
-<script>
-/* 🔒 SAFE FORCE RENDER – RELATED FIX */
-setTimeout(function(){
-  if(allVideos && allVideos.length && related.children.length === 0){
-    renderRelated();
-  }
-}, 800);
-</script>
